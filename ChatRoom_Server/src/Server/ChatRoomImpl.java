@@ -7,15 +7,42 @@ import java.util.List;
 
 import Interface.ChatRoomInterface;
 import Interface.ChatUserInterface;
+import Utilities.MessageQueue;
 
 public class ChatRoomImpl extends UnicastRemoteObject implements
 		ChatRoomInterface {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -69354807108325143L;
 	private List<Object> clients;
+	private static MessageQueue queue;
 
 	protected ChatRoomImpl() throws RemoteException {
 		super();
 		this.clients = new ArrayList<Object>();
+		queue = new MessageQueue();
+	}
+
+	public void waitForMessages() {
+		while (true) {
+			String message = null;
+			try {
+				message = queue.dequeue();
+			} catch (InterruptedException ie) {
+				System.out
+						.println("Server has encountered an Interrupted Exception, please restart ChatRoom_Server");
+				break;
+			}
+			try {
+				this.broadcastMessage(message);
+			} catch (RemoteException re) {
+				System.out
+						.println("Server has encountered a Remote Exception, please restart ChatRoom_Server");
+				break;
+			}
+		}
 	}
 
 	public boolean broadcastMessage(String message) throws RemoteException {
@@ -51,7 +78,8 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		if (message == null)
 			return false;
 
-		return this.broadcastMessage(message);
+		queue.enqueue(message);
+		return true;
 	}
 
 	@Override
