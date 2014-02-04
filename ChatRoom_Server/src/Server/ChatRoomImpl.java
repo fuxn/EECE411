@@ -12,24 +12,28 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		ChatRoomInterface {
 
 	private List<Object> clients;
-	private String message;
 
 	protected ChatRoomImpl() throws RemoteException {
 		super();
 		this.clients = new ArrayList<Object>();
 	}
 
-	public void broadcastMessage() throws RemoteException {
+	public boolean broadcastMessage(String message) throws RemoteException {
 		for (Object client : this.clients) {
-			if (!(client instanceof ChatUserInterface))
+			if (!(client instanceof ChatUserInterface)) {
 				System.out.println("Wrong type of client");
+				return false;
+			}
 
-			if (((ChatUserInterface) client).broadCastMessage(this.message))
+			if (((ChatUserInterface) client).broadCastMessage(message)) {
 				System.out.println("broadcast succeed");
-			else
+			} else {
 				System.out.println("boradcast failed");
+				return false;
+			}
 		}
 
+		return true;
 	}
 
 	@Override
@@ -43,13 +47,21 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public void sendMessage(String message) throws RemoteException {
+	public boolean postMessage(String message) throws RemoteException {
 		if (message == null)
-			return;
+			return false;
 
-		this.message = message;
+		return this.broadcastMessage(message);
+	}
 
-		this.broadcastMessage();
+	@Override
+	public boolean unregister(ChatUserInterface client) throws RemoteException {
+		if (client == null || !this.clients.contains(client)) {
+			System.out.println("Client does not exist");
+			return false;
+		}
+
+		return this.clients.remove(client);
 	}
 
 }

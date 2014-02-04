@@ -6,8 +6,9 @@ import java.rmi.server.UnicastRemoteObject;
 import Interface.ChatRoomInterface;
 import Interface.ChatUserInterface;
 
-public class ChatUserImpl extends UnicastRemoteObject implements ChatUserInterface {
-	
+public class ChatUserImpl extends UnicastRemoteObject implements
+		ChatUserInterface {
+
 	private String userName;
 
 	protected ChatUserImpl(String userName) throws RemoteException {
@@ -21,11 +22,11 @@ public class ChatUserImpl extends UnicastRemoteObject implements ChatUserInterfa
 			return false;
 
 		else {
-			System.out.println("Message from Server : "+message);
+			System.out.println("Message from Server : " + message);
 			return true;
 		}
 	}
-	
+
 	public boolean register(ChatRoomInterface chatRoom) {
 		if (chatRoom == null) {
 			return false;
@@ -41,17 +42,31 @@ public class ChatUserImpl extends UnicastRemoteObject implements ChatUserInterfa
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		
+
 		return false;
 	}
-	
+
+	public boolean unregister(ChatRoomInterface chatRoom) {
+		if (chatRoom == null) {
+			return false;
+		}
+
+		try {
+			return chatRoom.unregister(this);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
 	public void send(ChatRoomInterface chatRoom, String message) {
 		if (message == null || chatRoom == null) {
 			return;
 		}
 
 		try {
-			chatRoom.sendMessage(this.userName + ": " + message);
+			chatRoom.postMessage(this.userName + ": " + message);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
