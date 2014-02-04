@@ -33,6 +33,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 			} catch (InterruptedException ie) {
 				System.out
 						.println("Server has encountered an Interrupted Exception, please restart ChatRoom_Server");
+				ie.printStackTrace();
 				break;
 			}
 			try {
@@ -40,6 +41,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 			} catch (RemoteException re) {
 				System.out
 						.println("Server has encountered a Remote Exception, please restart ChatRoom_Server");
+				re.printStackTrace();
 				break;
 			}
 		}
