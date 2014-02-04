@@ -1,5 +1,9 @@
 package Client;
 
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -10,8 +14,9 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		ChatUserInterface {
 
 	private String userName;
+	private ChatRoomInterface chatRoom;
 
-	protected ChatUserImpl(String userName) throws RemoteException {
+	public ChatUserImpl(String userName) throws RemoteException {
 		super();
 		this.userName = userName;
 	}
@@ -27,16 +32,28 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		}
 	}
 
-	public boolean register(ChatRoomInterface chatRoom) {
-		if (chatRoom == null) {
+	private Boolean connectToServer(String host) throws MalformedURLException,
+			RemoteException, NotBoundException {
+		if (System.getSecurityManager() == null) {
+			System.setSecurityManager(new RMISecurityManager());
+		}
+
+		this.chatRoom = (ChatRoomInterface) Naming.lookup("rmi://" + host
+				+ "/ChatRoom");
+
+		return this.register();
+	}
+
+	private boolean register() {
+		if (this.chatRoom == null) {
 			return false;
 		}
 		try {
 			if (!chatRoom.register(this)) {
-				System.out.println("Failed to connected to chat room..");
+				System.out.println("Failed to register to chat room..");
 				return false;
 			} else {
-				System.out.println("Successed to connected to chat room..");
+				System.out.println("Successed to register to chat room..");
 				return true;
 			}
 		} catch (RemoteException e) {
@@ -46,8 +63,8 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		return false;
 	}
 
-	public boolean unregister(ChatRoomInterface chatRoom) {
-		if (chatRoom == null) {
+	public boolean unregister() {
+		if (this.chatRoom == null) {
 			return false;
 		}
 
@@ -60,16 +77,48 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		return false;
 	}
 
-	public void send(ChatRoomInterface chatRoom, String message) {
-		if (message == null || chatRoom == null) {
-			return;
+	public boolean post(String message) {
+		if (message == null || this.chatRoom == null) {
+			return false;
 		}
 
 		try {
-			chatRoom.postMessage(this.userName + ": " + message);
+			return this.chatRoom.postMessage(this.userName + ": " + message);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+		return false;
+	}
+
+	public boolean initializeClient() {
+		try {
+
+			if (!this
+					.connectToServer("dhcp-128-189-249-196.ubcsecure.wireless.ubc.ca"))
+				return this.autoRetry();
+			else
+				return true;
+
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	public boolean autoRetry() throws MalformedURLException, RemoteException,
+			NotBoundException {
+		int count = 5;
+		while (count > 0) {
+			if (this.connectToServer("dhcp-128-189-249-196.ubcsecure.wireless.ubc.ca"))
+				return true;
+		}
+		System.out.println("Connect to Server failed..");
+		return false;
 	}
 
 }
