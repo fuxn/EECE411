@@ -5,13 +5,15 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 import Client.ChatUserImpl;
-import Client.MessageQueue;
+import Client.Client;
 import Interface.ChatRoomInterface;
+import Utilities.MessageQueue;
 
 public class ClientRun {
 
 	static GUI gui;
 	static MessageQueue _queue;
+	static MessageQueue _serverQueue;
 
 	public static void main(String[] args) {
 		// create a shared buffer where the GUI add the messages thet need to
@@ -53,9 +55,9 @@ public class ClientRun {
 		// remotely
 		// and, in turn, updates the local GUI
 
-		ChatUserImpl client = null;
+		Client client = null;
 		try {
-			client = new ChatUserImpl("Me");
+			client = new Client("Me");
 			if (!client.initializeClient()) {
 				gui.addToTextArea("Connect to Server Failed..");
 			} else {
@@ -95,6 +97,19 @@ public class ClientRun {
 					}
 				}
 			}
+
+			_serverQueue = client.getMessageQueue();
+			String message;
+			try {
+				// wait until the user enters a new chat message
+				message = _serverQueue.dequeue();
+			} catch (InterruptedException ie) {
+				break;
+			}
+
+			// update the GUI with the message entered by the user
+			gui.addToTextArea("Remote:> " + message);
+
 		} // end while loop
 	}
 

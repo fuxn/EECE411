@@ -7,7 +7,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import Client.MessageQueue;
+import Utilities.MessageQueue;
 
 public class GUI extends JPanel implements ActionListener {
     protected JTextField textField;
