@@ -2,7 +2,6 @@ package Utilities;
 
 import java.util.LinkedList;
 
-import Interface.MessageInterface;
 
 /* a synchronized queue */
 public class MessageQueue {
@@ -19,16 +18,16 @@ public class MessageQueue {
 	}
 
 	/* gets the first element of the queue or blocks if the queue is empty */
-	public synchronized MessageInterface dequeue() throws InterruptedException {
+	public synchronized Message dequeue() throws InterruptedException {
 		while (_queue.isEmpty()) {
 			wait();
 		}
 
-		return (MessageInterface) _queue.removeFirst();
+		return (Message) _queue.removeFirst();
 	}
 
 	/* add a new element to the queue */
-	public synchronized void enqueue(MessageInterface m) {
+	public synchronized void enqueue(Message m) {
 		_queue.addLast(m);
 		notify();
 	}

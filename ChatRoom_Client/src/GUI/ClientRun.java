@@ -1,5 +1,8 @@
 package GUI;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -18,6 +21,38 @@ public class ClientRun {
 		// be sent out by the main thread. The main thread stays in a loop
 		// and when a new message shows up in the buffer it sends it out
 		// to the chat server (using RMI)
+		
+		System.out.println("Please Enter Host Name : ");
+		String host = null;
+		 
+		try{
+		    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+		    String s = bufferRead.readLine();
+	 
+		    if(s != null && !s.trim().isEmpty())
+		    	host = s;
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		System.out.println("Please Enter User Name : ");
+		
+		String user = null;
+		 
+		try{
+		    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+		    String s = bufferRead.readLine();
+	 
+		    if(s != null && !s.trim().isEmpty())
+		    	user = s;
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		
 		_queue = new MessageQueue();
 
 		// instantiate the GUI - in a new thread
@@ -55,8 +90,8 @@ public class ClientRun {
 
 		Client client = null;
 		try {
-			client = new Client("Me");
-			if (!client.initializeClient()) {
+			client = new Client(user);
+			if (!client.initializeClient(host)) {
 				gui.addToTextArea("Connect to Server Failed..");
 			} else {
 				gui.addToTextArea("Connected to Server..");
@@ -87,10 +122,8 @@ public class ClientRun {
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (NotBoundException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -102,6 +135,7 @@ public class ClientRun {
 				// wait until the user enters a new chat message
 				message = _serverQueue.dequeue();
 			} catch (InterruptedException ie) {
+				ie.printStackTrace();
 				break;
 			}
 

@@ -10,10 +10,12 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		ChatUserInterface {
 
 	MessageQueue queue;
+	private String userName;
 
-	public ChatUserImpl() throws RemoteException {
+	public ChatUserImpl(String userName) throws RemoteException {
 		super();
 	    queue = new MessageQueue();
+	    this.userName = userName;
 	}
 
 	@Override
@@ -24,6 +26,12 @@ public class ChatUserImpl extends UnicastRemoteObject implements
 		System.out.println("Message from Server : " + message);
 		queue.enqueue(message);
 		return true;
+	}
+	
+
+	@Override
+	public String getUserName() throws RemoteException {
+		return userName;
 	}
 	
 	public MessageQueue getMessageQueue(){

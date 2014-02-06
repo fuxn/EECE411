@@ -21,12 +21,12 @@ public class Client {
 		this.userName = userName;
 	}
 
-	public boolean initializeClient() {
+	public boolean initializeClient(String host) {
 
 		try {
-			this.client = new ChatUserImpl();
+			this.client = new ChatUserImpl(this.userName);
 			if (!this
-					.connectToServer("dhcp-128-189-251-171.ubcsecure.wireless.ubc.ca"))
+					.connectToServer(host))
 				return this.autoRetry();
 			else
 				return true;
@@ -73,6 +73,7 @@ public class Client {
 		}
 
 		try {
+			System.out.println("posting");
 			return this.chatRoom.postMessage(new Message(this.client,message));
 		} catch (RemoteException e) {
 			e.printStackTrace();

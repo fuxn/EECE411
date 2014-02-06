@@ -7,7 +7,7 @@ import java.util.List;
 
 import Interface.ChatRoomInterface;
 import Interface.ChatUserInterface;
-import Interface.MessageInterface;
+import Utilities.Message;
 import Utilities.MessageQueue;
 
 public class ChatRoomImpl extends UnicastRemoteObject implements
@@ -28,7 +28,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 
 	public void waitForMessages() {
 		while (true) {
-			MessageInterface message = null;
+			Message message = null;
 			try {
 				message = queue.dequeue();
 			} catch (InterruptedException ie) {
@@ -48,17 +48,17 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		}
 	}
 
-	public boolean broadcastMessage(MessageInterface message) throws RemoteException {
+	public boolean broadcastMessage(Message message) throws RemoteException {
 		for (Object client : this.clients) {
 			if (!(client instanceof ChatUserInterface)) {
 				System.out.println("Wrong type of client");
 				return false;
 			}
 			
-			if(client.equals(message.getClient()))
-				continue;
+		/*	if(client.equals(message.getClient()))
+				continue;*/
 
-			if (((ChatUserInterface) client).broadCastMessage(message.getClient()+":>"+message.getMessage())) {
+			if (((ChatUserInterface) client).broadCastMessage(message.getClient().getUserName()+":>"+message.getMessage())) {
 				System.out.println("broadcast succeed");
 			} else {
 				System.out.println("boradcast failed");
@@ -80,10 +80,11 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public boolean postMessage(MessageInterface message) throws RemoteException {
+	public boolean postMessage(Message message) throws RemoteException {
 		if (message == null)
 			return false;
 
+		System.out.println(message.getMessage());
 		queue.enqueue(message);
 		return true;
 	}
