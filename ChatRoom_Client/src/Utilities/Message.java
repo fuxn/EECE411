@@ -1,12 +1,12 @@
 package Utilities;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 import Interface.ChatUserInterface;
-import Interface.MessageInterface;
 
-public class Message extends UnicastRemoteObject implements MessageInterface{
+public class Message implements Serializable{
 
 	ChatUserInterface client;
 	String message;
