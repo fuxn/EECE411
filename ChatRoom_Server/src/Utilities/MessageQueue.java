@@ -2,19 +2,18 @@ package Utilities;
 
 import java.util.LinkedList;
 
-
 /* a synchronized queue */
 public class MessageQueue {
 
 	/* the actual queue */
-	private LinkedList _queue;
+	private LinkedList<Message> _queue;
 
 	/*
 	 * the constructor - it simply creates the LinkedList where the queue
 	 * elements are stored
 	 */
 	public MessageQueue() {
-		_queue = new LinkedList();
+		_queue = new LinkedList<Message>();
 	}
 
 	/* gets the first element of the queue or blocks if the queue is empty */

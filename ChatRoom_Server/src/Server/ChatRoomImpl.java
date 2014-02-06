@@ -31,6 +31,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 			Message message = null;
 			try {
 				message = queue.dequeue();
+				System.out.println("Message Received: " + message);
 			} catch (InterruptedException ie) {
 				System.out
 						.println("Server has encountered an Interrupted Exception, please restart ChatRoom_Server");
@@ -40,10 +41,8 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 			try {
 				this.broadcastMessage(message);
 			} catch (RemoteException re) {
-				System.out
-						.println("Server has encountered a Remote Exception, please restart ChatRoom_Server");
+				System.out.println("Server has encountered a Remote Exception");
 				re.printStackTrace();
-				break;
 			}
 		}
 	}
@@ -60,9 +59,11 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 
 			if (((ChatUserInterface) client).broadCastMessage(message
 					.getClient().getUserName() + ":>" + message.getMessage())) {
-				System.out.println("broadcast succeed");
+				System.out.println("broadcast message from "
+						+ message.getClient().getUserName() + " succeed");
 			} else {
-				System.out.println("boradcast failed");
+				System.out.println("broadcast message from "
+						+ message.getClient().getUserName() + " failed");
 				return false;
 			}
 		}
