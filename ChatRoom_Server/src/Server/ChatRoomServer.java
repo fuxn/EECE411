@@ -17,7 +17,7 @@ public class ChatRoomServer {
 					.getHostAddress();
 
 			ChatRoomImpl chatRoom = new ChatRoomImpl();
-			Naming.rebind("rmi://localhost/ChatRoom", chatRoom);
+			Naming.rebind("ChatRoom", chatRoom);
 
 			System.out.println("ChatRoom is running on server : "
 					+ serverHostName + " @ " + serverIpAddress);

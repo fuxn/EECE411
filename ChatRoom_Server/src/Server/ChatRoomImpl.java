@@ -54,11 +54,12 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 				System.out.println("Wrong type of client");
 				return false;
 			}
-			
-		/*	if(client.equals(message.getClient()))
-				continue;*/
 
-			if (((ChatUserInterface) client).broadCastMessage(message.getClient().getUserName()+":>"+message.getMessage())) {
+			if (client.equals(message.getClient()))
+				continue;
+
+			if (((ChatUserInterface) client).broadCastMessage(message
+					.getClient().getUserName() + ":>" + message.getMessage())) {
 				System.out.println("broadcast succeed");
 			} else {
 				System.out.println("boradcast failed");

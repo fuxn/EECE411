@@ -15,6 +15,8 @@ public class ClientRun {
 	static GUI gui;
 	static MessageQueue _queue;
 	static MessageQueue _serverQueue;
+	
+	static Client client;
 
 	public static void main(String[] args) {
 		// create a shared buffer where the GUI add the messages thet need to
@@ -88,7 +90,6 @@ public class ClientRun {
 		// remotely
 		// and, in turn, updates the local GUI
 
-		Client client = null;
 		try {
 			client = new Client(user);
 			if (!client.initializeClient(host)) {
@@ -101,48 +102,55 @@ public class ClientRun {
 			e.printStackTrace();
 		}
 
-		while (true) {
-			String s;
-			try {
-				// wait until the user enters a new chat message
-				s = _queue.dequeue();
-			} catch (InterruptedException ie) {
-				break;
-			}
-
-			// update the GUI with the message entered by the user
-			gui.addToTextArea("Me:> " + s);
-
-			// print it to System.out (or send it to the RMI server)
-			if (client != null) {
-				if (!client.post(s)) {
-					gui.addToTextArea("Failed to connect to server, Reconnecting..");
+		(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
 					try {
-						client.autoRetry();
-					} catch (MalformedURLException e) {
-						e.printStackTrace();
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					} catch (NotBoundException e) {
-						e.printStackTrace();
+						String message = _queue.dequeue();
+						// wait until the user enters a new chat message
+						// update the GUI with the message entered by the user
+						gui.addToTextArea("Me:> " + message);
+						// print it to System.out (or send it to the RMI server)
+						if (client != null) {
+							if (!client.post(message)) {
+								gui.addToTextArea("Failed to connect to server, Reconnecting..");
+								try {
+									client.autoRetry();
+								} catch (MalformedURLException e) {
+									e.printStackTrace();
+								} catch (RemoteException e) {
+									e.printStackTrace();
+								} catch (NotBoundException e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					} catch (InterruptedException ie) {
+						break;
 					}
 				}
 			}
+		})).start();
 
-			_serverQueue = client.getMessageQueue();
-			String message;
-			try {
-				// wait until the user enters a new chat message
-				message = _serverQueue.dequeue();
-			} catch (InterruptedException ie) {
-				ie.printStackTrace();
-				break;
-			}
+		_serverQueue = client.getMessageQueue();
+		(new Thread(new Runnable() {
+			@Override
+            public void run() {
+				while (true) {
+					try {
+						// wait until the user enters a new chat message
+						// update the GUI with the message entered by the user
+						gui.addToTextArea(_serverQueue.dequeue());
+					} catch (InterruptedException ie) {
+						ie.printStackTrace();
+						break;
+					}
+				}
+            }
+			
+		})).start();
 
-			// update the GUI with the message entered by the user
-			gui.addToTextArea(message);
-
-		} // end while loop
 	}
 
 }
