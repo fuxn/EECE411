@@ -7,7 +7,7 @@ import java.util.List;
 
 import Interface.ChatRoomInterface;
 import Interface.ChatUserInterface;
-import Utilities.Message;
+import Interface.MessageInterface;
 import Utilities.MessageQueue;
 
 public class ChatRoomImpl extends UnicastRemoteObject implements
@@ -28,7 +28,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 
 	public void waitForMessages() {
 		while (true) {
-			Message message = null;
+			MessageInterface message = null;
 			try {
 				message = queue.dequeue();
 			} catch (InterruptedException ie) {
@@ -48,7 +48,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		}
 	}
 
-	public boolean broadcastMessage(Message message) throws RemoteException {
+	public boolean broadcastMessage(MessageInterface message) throws RemoteException {
 		for (Object client : this.clients) {
 			if (!(client instanceof ChatUserInterface)) {
 				System.out.println("Wrong type of client");
@@ -80,7 +80,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public boolean postMessage(Message message) throws RemoteException {
+	public boolean postMessage(MessageInterface message) throws RemoteException {
 		if (message == null)
 			return false;
 

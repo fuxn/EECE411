@@ -1,8 +1,9 @@
 package Utilities;
 
 import Interface.ChatUserInterface;
+import Interface.MessageInterface;
 
-public class Message {
+public class Message implements MessageInterface{
 
 	private ChatUserInterface client;
 	private String message;

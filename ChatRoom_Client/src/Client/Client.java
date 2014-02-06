@@ -11,6 +11,7 @@ import Utilities.Message;
 import Utilities.MessageQueue;
 
 public class Client {
+	
 	private String userName;
 	private ChatRoomInterface chatRoom;
 	private ChatUserImpl client;
@@ -25,7 +26,7 @@ public class Client {
 		try {
 			this.client = new ChatUserImpl();
 			if (!this
-					.connectToServer("dhcp-128-189-249-196.ubcsecure.wireless.ubc.ca"))
+					.connectToServer("dhcp-128-189-251-171.ubcsecure.wireless.ubc.ca"))
 				return this.autoRetry();
 			else
 				return true;
