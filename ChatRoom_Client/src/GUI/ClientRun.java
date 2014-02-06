@@ -4,9 +4,7 @@ import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import Client.ChatUserImpl;
 import Client.Client;
-import Interface.ChatRoomInterface;
 import Utilities.MessageQueue;
 
 public class ClientRun {
@@ -108,7 +106,7 @@ public class ClientRun {
 			}
 
 			// update the GUI with the message entered by the user
-			gui.addToTextArea("Remote:> " + message);
+			gui.addToTextArea(message);
 
 		} // end while loop
 	}

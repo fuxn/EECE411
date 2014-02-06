@@ -3,8 +3,10 @@ package Interface;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import Utilities.Message;
+
 public interface ChatRoomInterface extends Remote {
 	public boolean register(ChatUserInterface client) throws RemoteException;
 	public boolean unregister(ChatUserInterface client) throws RemoteException;
-    public boolean postMessage(String message) throws RemoteException;
+    public boolean postMessage(Message message) throws RemoteException;
 }

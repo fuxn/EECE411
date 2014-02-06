@@ -7,6 +7,7 @@ import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 
 import Interface.ChatRoomInterface;
+import Utilities.Message;
 import Utilities.MessageQueue;
 
 public class Client {
@@ -71,7 +72,7 @@ public class Client {
 		}
 
 		try {
-			return this.chatRoom.postMessage(this.userName + ": " + message);
+			return this.chatRoom.postMessage(new Message(this.client,message));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}

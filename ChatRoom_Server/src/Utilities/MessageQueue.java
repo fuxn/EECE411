@@ -17,16 +17,16 @@ public class MessageQueue {
 	}
 
 	/* gets the first element of the queue or blocks if the queue is empty */
-	public synchronized String dequeue() throws InterruptedException {
+	public synchronized Message dequeue() throws InterruptedException {
 		while (_queue.isEmpty()) {
 			wait();
 		}
 
-		return (String) _queue.removeFirst();
+		return (Message) _queue.removeFirst();
 	}
 
 	/* add a new element to the queue */
-	public synchronized void enqueue(String m) {
+	public synchronized void enqueue(Message m) {
 		_queue.addLast(m);
 		notify();
 	}
