@@ -1,8 +1,5 @@
-package com.fangchi.eece411.A2.ClientBootstrap;
+package com.fangchi.eece411.A2;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -10,19 +7,24 @@ import java.rmi.RemoteException;
 import com.fangchi.eece411.A2.Client.Client;
 import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
-public class ClientRun {
+public class ClientBootstrap {
 
 	static GUI gui;
 	static MessageQueue _queue;
 	static MessageQueue _serverQueue;
 
 	static Client client;
+	static String host;
+	static String user;
 
 	public static void main(String[] args) {
 
 		// Promote user to enter host address & user name
+		
+		 host = args[0];
+		 user = args[1];
 
-		System.out.println("Please Enter Host Name : ");
+		/*System.out.println("Please Enter Host Name : ");
 		String host = null;
 
 		try {
@@ -50,7 +52,7 @@ public class ClientRun {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+*/
 		// create a shared buffer where the GUI add the messages thet need to
 		// be sent out by the main thread. The main thread stays in a loop
 		// and when a new message shows up in the buffer it sends it out
@@ -120,7 +122,7 @@ public class ClientRun {
 							if (!client.post(message)) {
 								gui.addToTextArea("Failed to connect to server, Reconnecting..");
 								try {
-									client.autoRetry();
+									client.autoRetry(host);
 								} catch (MalformedURLException e) {
 									e.printStackTrace();
 								} catch (RemoteException e) {

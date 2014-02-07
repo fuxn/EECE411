@@ -28,7 +28,7 @@ public class Client {
 		try {
 			this.client = new ChatUserImpl(this.userName);
 			if (!this.connectToServer(host))
-				return this.autoRetry();
+				return this.autoRetry(host);
 			else
 				return true;
 
@@ -44,11 +44,11 @@ public class Client {
 	}
 
 	// Try to connect to server 5 times
-	public boolean autoRetry() throws MalformedURLException, RemoteException,
+	public boolean autoRetry(String host) throws MalformedURLException, RemoteException,
 			NotBoundException {
 		int count = 5;
 		while (count > 0) {
-			if (this.connectToServer("dhcp-128-189-249-196.ubcsecure.wireless.ubc.ca"))
+			if (this.connectToServer(host))
 				return true;
 		}
 		System.out.println("Connect to Server failed..");

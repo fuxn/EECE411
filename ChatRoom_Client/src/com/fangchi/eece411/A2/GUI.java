@@ -1,4 +1,4 @@
-package com.fangchi.eece411.A2.ClientBootstrap;
+package com.fangchi.eece411.A2;
 
 /* TextDemo.java requires no other files. */
 
