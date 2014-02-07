@@ -1,4 +1,4 @@
-package GUI;
+package com.fangchi.eece411.A2.ClientBootstrap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,54 +7,55 @@ import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import Client.Client;
-import Utilities.MessageQueue;
+import com.fangchi.eece411.A2.Client.Client;
+import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
 public class ClientRun {
 
 	static GUI gui;
 	static MessageQueue _queue;
 	static MessageQueue _serverQueue;
-	
+
 	static Client client;
 
 	public static void main(String[] args) {
+
+		// Promote user to enter host address & user name
+
+		System.out.println("Please Enter Host Name : ");
+		String host = null;
+
+		try {
+			BufferedReader bufferRead = new BufferedReader(
+					new InputStreamReader(System.in));
+			String s = bufferRead.readLine();
+
+			if (s != null && !s.trim().isEmpty())
+				host = s;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("Please Enter User Name : ");
+
+		String user = null;
+
+		try {
+			BufferedReader bufferRead = new BufferedReader(
+					new InputStreamReader(System.in));
+			String s = bufferRead.readLine();
+
+			if (s != null && !s.trim().isEmpty())
+				user = s;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// create a shared buffer where the GUI add the messages thet need to
 		// be sent out by the main thread. The main thread stays in a loop
 		// and when a new message shows up in the buffer it sends it out
 		// to the chat server (using RMI)
-		
-		System.out.println("Please Enter Host Name : ");
-		String host = null;
-		 
-		try{
-		    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
-		    String s = bufferRead.readLine();
-	 
-		    if(s != null && !s.trim().isEmpty())
-		    	host = s;
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		System.out.println("Please Enter User Name : ");
-		
-		String user = null;
-		 
-		try{
-		    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
-		    String s = bufferRead.readLine();
-	 
-		    if(s != null && !s.trim().isEmpty())
-		    	user = s;
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		
+
 		_queue = new MessageQueue();
 
 		// instantiate the GUI - in a new thread
@@ -90,6 +91,7 @@ public class ClientRun {
 		// remotely
 		// and, in turn, updates the local GUI
 
+		// Create a client instance and connect to server
 		try {
 			client = new Client(user);
 			if (!client.initializeClient(host)) {
@@ -102,6 +104,8 @@ public class ClientRun {
 			e.printStackTrace();
 		}
 
+		// create a thread which monitors the message queue, post messages to
+		// server as soon as the user inputs message
 		(new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -133,22 +137,24 @@ public class ClientRun {
 			}
 		})).start();
 
+		// Create a thread which monitors the message queue shared by client and
+		// server, display messages sent by server
 		_serverQueue = client.getMessageQueue();
 		(new Thread(new Runnable() {
 			@Override
-            public void run() {
+			public void run() {
 				while (true) {
 					try {
-						// wait until the user enters a new chat message
-						// update the GUI with the message entered by the user
+						// wait until the server sends a new chat message
+						// update the GUI with the message
 						gui.addToTextArea(_serverQueue.dequeue());
 					} catch (InterruptedException ie) {
 						ie.printStackTrace();
 						break;
 					}
 				}
-            }
-			
+			}
+
 		})).start();
 
 	}

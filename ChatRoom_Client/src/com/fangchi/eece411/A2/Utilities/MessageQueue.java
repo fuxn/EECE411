@@ -1,4 +1,4 @@
-package Utilities;
+package com.fangchi.eece411.A2.Utilities;
 
 import java.util.LinkedList;
 

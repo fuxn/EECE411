@@ -1,9 +1,9 @@
-package Interface;
+package com.fangchi.eece411.A2.Interface;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import Utilities.Message;
+import com.fangchi.eece411.A2.Utilities.Message;
 
 
 public interface ChatRoomInterface extends Remote {

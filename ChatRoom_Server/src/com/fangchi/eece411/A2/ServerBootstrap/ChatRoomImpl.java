@@ -1,14 +1,14 @@
-package Server;
+package com.fangchi.eece411.A2.ServerBootstrap;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import Interface.ChatRoomInterface;
-import Interface.ChatUserInterface;
-import Utilities.Message;
-import Utilities.MessageQueue;
+import com.fangchi.eece411.A2.Interface.ChatRoomInterface;
+import com.fangchi.eece411.A2.Interface.ChatUserInterface;
+import com.fangchi.eece411.A2.Utilities.Message;
+import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
 public class ChatRoomImpl extends UnicastRemoteObject implements
 		ChatRoomInterface {
@@ -26,6 +26,8 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		queue = new MessageQueue();
 	}
 
+	// wait until a message received from client, broadcast the message to other
+	// clients
 	public void waitForMessages() {
 		while (true) {
 			Message message = null;
@@ -47,6 +49,7 @@ public class ChatRoomImpl extends UnicastRemoteObject implements
 		}
 	}
 
+	//broadcast messages to other clients
 	public boolean broadcastMessage(Message message) throws RemoteException {
 		for (Object client : this.clients) {
 			if (!(client instanceof ChatUserInterface)) {

@@ -1,10 +1,10 @@
-package Client;
+package com.fangchi.eece411.A2.Client;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-import Interface.ChatUserInterface;
-import Utilities.MessageQueue;
+import com.fangchi.eece411.A2.Interface.ChatUserInterface;
+import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
 public class ChatUserImpl extends UnicastRemoteObject implements
 		ChatUserInterface {

@@ -1,4 +1,4 @@
-package Client;
+package com.fangchi.eece411.A2.Client;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -6,12 +6,12 @@ import java.rmi.NotBoundException;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 
-import Interface.ChatRoomInterface;
-import Utilities.Message;
-import Utilities.MessageQueue;
+import com.fangchi.eece411.A2.Interface.ChatRoomInterface;
+import com.fangchi.eece411.A2.Utilities.Message;
+import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
 public class Client {
-	
+
 	private String userName;
 	private ChatRoomInterface chatRoom;
 	private ChatUserImpl client;
@@ -21,12 +21,13 @@ public class Client {
 		this.userName = userName;
 	}
 
+	// create a client instance and connect to server, automatically call
+	// re-connect if the initial connection failed
 	public boolean initializeClient(String host) {
 
 		try {
 			this.client = new ChatUserImpl(this.userName);
-			if (!this
-					.connectToServer(host))
+			if (!this.connectToServer(host))
 				return this.autoRetry();
 			else
 				return true;
@@ -42,6 +43,7 @@ public class Client {
 		return false;
 	}
 
+	// Try to connect to server 5 times
 	public boolean autoRetry() throws MalformedURLException, RemoteException,
 			NotBoundException {
 		int count = 5;
@@ -53,6 +55,7 @@ public class Client {
 		return false;
 	}
 
+	// unregister client from server
 	public boolean unregister() {
 		if (this.chatRoom == null) {
 			return false;
@@ -67,6 +70,8 @@ public class Client {
 		return false;
 	}
 
+	
+	//post a message to server
 	public boolean post(String message) {
 		if (message == null || this.chatRoom == null) {
 			return false;
@@ -74,13 +79,14 @@ public class Client {
 
 		try {
 			System.out.println("posting");
-			return this.chatRoom.postMessage(new Message(this.client,message));
+			return this.chatRoom.postMessage(new Message(this.client, message));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 		return false;
 	}
 
+	//connect to server
 	private Boolean connectToServer(String host) throws MalformedURLException,
 			RemoteException, NotBoundException {
 		if (System.getSecurityManager() == null) {
@@ -93,6 +99,7 @@ public class Client {
 		return this.register();
 	}
 
+	//register client to server
 	private boolean register() {
 		if (this.chatRoom == null) {
 			return false;
@@ -112,6 +119,7 @@ public class Client {
 		return false;
 	}
 
+	//get the message queue shared by client and server
 	public MessageQueue getMessageQueue() {
 		return this.client.queue;
 	}

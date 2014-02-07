@@ -1,4 +1,4 @@
-package GUI;
+package com.fangchi.eece411.A2.ClientBootstrap;
 
 /* TextDemo.java requires no other files. */
 
@@ -7,7 +7,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import Utilities.MessageQueue;
+import com.fangchi.eece411.A2.Utilities.MessageQueue;
 
 public class GUI extends JPanel implements ActionListener {
     protected JTextField textField;

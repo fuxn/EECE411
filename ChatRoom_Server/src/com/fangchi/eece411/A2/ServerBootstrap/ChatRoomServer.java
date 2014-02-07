@@ -1,4 +1,4 @@
-package Server;
+package com.fangchi.eece411.A2.ServerBootstrap;
 
 import java.net.InetAddress;
 import java.rmi.Naming;

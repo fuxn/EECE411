@@ -1,10 +1,10 @@
-package Utilities;
+package com.fangchi.eece411.A2.Utilities;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-import Interface.ChatUserInterface;
+import com.fangchi.eece411.A2.Interface.ChatUserInterface;
 
 public class Message implements Serializable{
 
