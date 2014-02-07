@@ -1,4 +1,4 @@
-package com.fangchi.eece411.A2.ServerBootstrap;
+package com.fangchi.eece411.A2;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;

@@ -1,10 +1,10 @@
-package com.fangchi.eece411.A2.ServerBootstrap;
+package com.fangchi.eece411.A2;
 
 import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 
-public class ChatRoomServer {
+public class ServerBootstrap {
 
 	public static void main(String[] argv) {
 		try {
