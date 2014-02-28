@@ -5,11 +5,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import Exception.InvalidKeyException;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Interface.ConsistentHashInterface;
@@ -32,7 +34,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public PlanetLabNode getNode(Object key) throws InexistentKeyException,
+	private PlanetLabNode getNode(byte[] key) throws InexistentKeyException,
 			InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -50,9 +52,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
-			InternalKVStoreFailureException {
-		PlanetLabNode node = this.getNode(key);
+			InternalKVStoreFailureException, InvalidKeyException {
+		if (key.length != 32)
+			throw new InvalidKeyException("Illegal Key Size.");
 
+		PlanetLabNode node = this.getNode(key);
 		try {
 			String server = InetAddress.getLocalHost().getHostName();
 			if (node.getHostName().equals(server)) {
@@ -70,9 +74,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public byte[] get(byte[] key) throws InexistentKeyException,
-			InternalKVStoreFailureException {
-		PlanetLabNode node = this.getNode(key);
+			InternalKVStoreFailureException, InvalidKeyException {
+		if (key.length != 32)
+			throw new InvalidKeyException("Illegal Key Size.");
 
+		PlanetLabNode node = this.getNode(key);
 		try {
 			String server = InetAddress.getLocalHost().getHostName();
 			if (node.getHostName().equals(server)) {
@@ -90,9 +96,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public byte[] remove(byte[] key) throws InexistentKeyException,
-			InternalKVStoreFailureException {
-		PlanetLabNode node = this.getNode(key);
+			InternalKVStoreFailureException, InvalidKeyException {
+		if (key.length != 32)
+			throw new InvalidKeyException("Illegal Key Size.");
 
+		PlanetLabNode node = this.getNode(key);
 		try {
 			String server = InetAddress.getLocalHost().getHostName();
 			if (node.getHostName().equals(server)) {
@@ -123,7 +131,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 			out.flush();
 
 			byte[] reply = new byte[1025];
-			in.read(reply);
+			int bytesRcvd;
+			int totalBytesRcvd = 0;
+			while (totalBytesRcvd < reply.length) {
+				if ((bytesRcvd = in.read(reply, totalBytesRcvd, reply.length
+						- totalBytesRcvd)) == -1)
+					throw new SocketException("connection close prematurely.");
+				totalBytesRcvd += bytesRcvd;
+			}
 			return reply;
 
 		} catch (IOException e) {

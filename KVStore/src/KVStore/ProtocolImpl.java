@@ -5,11 +5,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
+import Exception.InvalidKeyException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
@@ -27,7 +29,7 @@ public class ProtocolImpl {
 		nodes.add(new PlanetLabNode("planetlab-4.eecs.cwru.edu"));
 
 		this.cHash = new ConsistentHash(3, nodes);
-		//this.initializeServer();
+		// this.initializeServer();
 	}
 
 	public void initializeServer() {
@@ -59,11 +61,28 @@ public class ProtocolImpl {
 				OutputStream writer = this.clientSocket.getOutputStream();
 
 				int command = reader.read();
-				byte[] key = new byte[32];
-				byte[] value = new byte[1024];
 
-				reader.read(key);
-				reader.read(value);
+				byte[] key = new byte[32];
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < key.length) {
+					if ((bytesRcvd = reader.read(key, totalBytesRcvd,
+							key.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+
+				byte[] value = new byte[1024];
+				bytesRcvd = 0;
+				totalBytesRcvd = 0;
+				while (totalBytesRcvd < value.length) {
+					if ((bytesRcvd = reader.read(value, totalBytesRcvd,
+							value.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
 
 				try {
 					byte[] results = this.exec(command, key, value);
@@ -79,6 +98,8 @@ public class ProtocolImpl {
 				} catch (InternalKVStoreFailureException internalException) {
 					writer.write(new byte[] { 0x04 });
 					writer.flush();
+				} catch (InvalidKeyException invalideKeyException) {
+					writer.write(new byte[] { 0x21 });
 				}
 
 			} catch (IOException ex) {
@@ -88,7 +109,7 @@ public class ProtocolImpl {
 
 		private byte[] exec(int command, byte[] key, byte[] value)
 				throws InexistentKeyException, UnrecognizedCommandException,
-				InternalKVStoreFailureException {
+				InternalKVStoreFailureException, InvalidKeyException {
 
 			if (command == 1)
 				return cHash.put(key, value);
