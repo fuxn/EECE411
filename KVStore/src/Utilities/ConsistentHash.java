@@ -40,6 +40,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			throw new InternalKVStoreFailureException();
 
 		int hash = key.hashCode();
+		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
 			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
 					.tailMap(hash);
@@ -62,7 +63,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.put(key, value);
 			} else {
-				return this.remoteRequest(1, key, value, server);
+				return this.remoteRequest(1, key, value, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {
@@ -84,7 +85,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.get(key);
 			} else {
-				return this.remoteRequest(1, key, null, server);
+				return this.remoteRequest(1, key, null, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {
@@ -106,7 +107,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.remove(key);
 			} else {
-				return this.remoteRequest(1, key, null, server);
+				return this.remoteRequest(1, key, null, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {

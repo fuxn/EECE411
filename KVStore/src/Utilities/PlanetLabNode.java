@@ -15,10 +15,8 @@ public class PlanetLabNode {
 	}
 
 	public byte[] put(Object key, byte[] value) throws InexistentKeyException {
-		if (!this.values.containsKey(key.hashCode()))
-			throw new InexistentKeyException();
-
 		this.values.put(key.hashCode(), value);
+		System.out.println(this.values);
 		return Message.formateReplyMessage(0, null);
 	}
 
@@ -33,6 +31,7 @@ public class PlanetLabNode {
 		if (!this.values.containsKey(key.hashCode()))
 			throw new InexistentKeyException();
 		this.values.remove(key.hashCode());
+		System.out.println(this.values);
 		return Message.formateReplyMessage(0, null);
 	}
 

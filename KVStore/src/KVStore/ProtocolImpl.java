@@ -47,6 +47,7 @@ public class ProtocolImpl {
 
 	class Client extends Thread {
 		private Socket clientSocket = null;
+		private boolean checkForReplyValue = false;
 
 		public Client(Socket clientSocket) {
 			this.clientSocket = clientSocket;
@@ -61,6 +62,10 @@ public class ProtocolImpl {
 				OutputStream writer = this.clientSocket.getOutputStream();
 
 				int command = reader.read();
+				if (command == 1)
+					this.checkForReplyValue = true;
+				else
+					this.checkForReplyValue = false;
 
 				byte[] key = new byte[32];
 				int bytesRcvd;
@@ -74,18 +79,21 @@ public class ProtocolImpl {
 				}
 
 				byte[] value = new byte[1024];
-				bytesRcvd = 0;
-				totalBytesRcvd = 0;
-				while (totalBytesRcvd < value.length) {
-					if ((bytesRcvd = reader.read(value, totalBytesRcvd,
-							value.length - totalBytesRcvd)) == -1)
-						throw new SocketException(
-								"connection close prematurely.");
-					totalBytesRcvd += bytesRcvd;
+				if (this.checkForReplyValue) {
+					bytesRcvd = 0;
+					totalBytesRcvd = 0;
+					while (totalBytesRcvd < value.length) {
+						if ((bytesRcvd = reader.read(value, totalBytesRcvd,
+								value.length - totalBytesRcvd)) == -1)
+							throw new SocketException(
+									"connection close prematurely.");
+						totalBytesRcvd += bytesRcvd;
+					}
 				}
 
 				try {
 					byte[] results = this.exec(command, key, value);
+					System.out.println("result " + results.toString());
 					writer.write(results);
 					writer.flush();
 
@@ -120,9 +128,7 @@ public class ProtocolImpl {
 			else
 				throw new UnrecognizedCommandException();
 
-			System.out.println(command);
 			return null;
-
 		}
 
 	}
