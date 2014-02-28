@@ -1,5 +1,8 @@
 package KVStore;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,5 +56,66 @@ public class Message {
 
 		System.out.println("message size" + message.size());
 		return message;
+	}
+
+	public static byte[] checkReplyValue(int command, InputStream in) {
+		try {
+			int errorCode = in.read();
+			System.out.println("error code : " + errorCode);
+			if (errorCode == 0 && Message.isCheckReplyValue(command)) {
+				byte[] reply = new byte[1024];
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < reply.length) {
+					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+							reply.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+				System.out.println("reply : " + reply.toString());
+				return reply;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static byte[] checkRequestValue(int command, InputStream in) {
+		try {
+			if (Message.isCheckRequestValue(command)) {
+				byte[] value = new byte[1024];
+				int bytesRcvd = 0;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < value.length) {
+					if ((bytesRcvd = in.read(value, totalBytesRcvd,
+							value.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+				return value;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static boolean isCheckReplyValue(int command) {
+		if (command == 2)
+			return true;
+		else
+			return false;
+	}
+
+	public static boolean isCheckRequestValue(int command) {
+		if (command == 1)
+			return true;
+		else
+			return false;
 	}
 }

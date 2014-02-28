@@ -31,7 +31,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public void addNode(PlanetLabNode node) {
 		for (int i = 0; i < this.numberOfReplicas; i++) {
-			this.circle.put(node.hashCode(), node);
+			this.circle.put(node.getHostName().hashCode(), node);
 		}
 	}
 
@@ -120,6 +120,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	private byte[] remoteRequest(int command, byte[] key, byte[] value,
 			String server) {
+		byte[] reply = null;
 		try {
 			Socket socket = new Socket(server, 4560);
 			System.out.println("Connecting to : " + socket.getInetAddress());
@@ -132,24 +133,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 			out.write(v);
 			out.flush();
 
-			byte[] reply = new byte[1025];
-			int bytesRcvd;
-			int totalBytesRcvd = 0;
-			while (totalBytesRcvd < reply.length) {
-				if ((bytesRcvd = in.read(reply, totalBytesRcvd, reply.length
-						- totalBytesRcvd)) == -1)
-					throw new SocketException("connection close prematurely.");
-				totalBytesRcvd += bytesRcvd;
-			}
-			return reply;
-
+			reply = Message.checkReplyValue(command, in);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		return null;
-
+		return reply;
 	}
-
 }

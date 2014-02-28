@@ -15,6 +15,7 @@ import Exception.InvalidKeyException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
+import Utilities.Message;
 import Utilities.PlanetLabNode;
 
 public class ProtocolImpl {
@@ -47,7 +48,6 @@ public class ProtocolImpl {
 
 	class Client extends Thread {
 		private Socket clientSocket = null;
-		private boolean checkForReplyValue = false;
 
 		public Client(Socket clientSocket) {
 			this.clientSocket = clientSocket;
@@ -62,11 +62,6 @@ public class ProtocolImpl {
 				OutputStream writer = this.clientSocket.getOutputStream();
 
 				int command = reader.read();
-				if (command == 1)
-					this.checkForReplyValue = true;
-				else
-					this.checkForReplyValue = false;
-
 				byte[] key = new byte[32];
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
@@ -78,18 +73,7 @@ public class ProtocolImpl {
 					totalBytesRcvd += bytesRcvd;
 				}
 
-				byte[] value = new byte[1024];
-				if (this.checkForReplyValue) {
-					bytesRcvd = 0;
-					totalBytesRcvd = 0;
-					while (totalBytesRcvd < value.length) {
-						if ((bytesRcvd = reader.read(value, totalBytesRcvd,
-								value.length - totalBytesRcvd)) == -1)
-							throw new SocketException(
-									"connection close prematurely.");
-						totalBytesRcvd += bytesRcvd;
-					}
-				}
+				byte[] value = Message.checkRequestValue(command, reader);
 
 				try {
 					byte[] results = this.exec(command, key, value);
