@@ -3,6 +3,7 @@ package Utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -11,9 +12,9 @@ import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import Exception.InvalidKeyException;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
+import Exception.InvalidKeyException;
 import Interface.ConsistentHashInterface;
 
 public class ConsistentHash implements ConsistentHashInterface {
@@ -39,7 +40,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		int hash = key.hashCode();
+		int hash = new BigInteger(key).hashCode();
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
 			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
