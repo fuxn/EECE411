@@ -46,8 +46,9 @@ public class Message {
 	}
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
+		int errorCode = -2;
 		try {
-			int errorCode = in.read();
+			errorCode = in.read();
 			System.out.println("command : " + command);
 			System.out.println("error code : " + errorCode);
 			if (errorCode == 0 && Message.isCheckReplyValue(command)) {
@@ -63,13 +64,13 @@ public class Message {
 					totalBytesRcvd += bytesRcvd;
 				}
 				System.out.println("reply : " + reply.toString());
-				return reply;
+				return Message.formateReplyMessage(errorCode, reply);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return Message.formateReplyMessage(errorCode, null);
 	}
 
 	public static byte[] checkRequestValue(int command, InputStream in) {
