@@ -14,23 +14,24 @@ public class PlanetLabNode {
 		this.hostName = hostName;
 	}
 
-	public byte[] put(Object key, byte[] value) throws InexistentKeyException {
-		this.values.put(key.hashCode(), value);
+	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException {
+		this.values.put(new String(key).hashCode(), value);
 		System.out.println(this.values);
 		return Message.formateReplyMessage(0, null);
 	}
 
-	public byte[] get(Object key) throws InexistentKeyException {
-		if (!this.values.containsKey(key.hashCode()))
+	public byte[] get(byte[] key) throws InexistentKeyException {
+		if (!this.values.containsKey(new String(key).hashCode()))
 			throw new InexistentKeyException();
 
-		return Message.formateReplyMessage(0, this.values.get(key.hashCode()));
+		return Message.formateReplyMessage(0,
+				this.values.get(new String(key).hashCode()));
 	}
 
-	public byte[] remove(Object key) throws InexistentKeyException {
-		if (!this.values.containsKey(key.hashCode()))
+	public byte[] remove(byte[] key) throws InexistentKeyException {
+		if (!this.values.containsKey(new String(key).hashCode()))
 			throw new InexistentKeyException();
-		this.values.remove(key.hashCode());
+		this.values.remove(new String(key).hashCode());
 		System.out.println(this.values);
 		return Message.formateReplyMessage(0, null);
 	}

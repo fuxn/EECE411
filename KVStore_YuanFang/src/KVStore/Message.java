@@ -61,6 +61,7 @@ public class Message {
 	public static byte[] checkReplyValue(int command, InputStream in) {
 		try {
 			int errorCode = in.read();
+			System.out.println("command " + command);
 			System.out.println("error code : " + errorCode);
 			if (errorCode == 0 && Message.isCheckReplyValue(command)) {
 				byte[] reply = new byte[1024];
@@ -85,6 +86,7 @@ public class Message {
 
 	public static byte[] checkRequestValue(int command, InputStream in) {
 		try {
+			System.out.println("command " + command);
 			if (Message.isCheckRequestValue(command)) {
 				byte[] value = new byte[1024];
 				int bytesRcvd = 0;

@@ -3,10 +3,8 @@ package Utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.SortedMap;
@@ -40,7 +38,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		int hash = new BigInteger(key).hashCode();
+		int hash = new String(key).hashCode();
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
 			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
@@ -86,7 +84,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.get(key);
 			} else {
-				return this.remoteRequest(1, key, null, node.getHostName());
+				return this.remoteRequest(2, key, null, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {
@@ -108,7 +106,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.remove(key);
 			} else {
-				return this.remoteRequest(1, key, null, node.getHostName());
+				return this.remoteRequest(3, key, null, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {

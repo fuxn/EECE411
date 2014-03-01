@@ -77,10 +77,12 @@ public class ProtocolImpl {
 
 				try {
 					byte[] results = this.exec(command, key, value);
-					System.out.println("result " + results.toString());
-					writer.write(results);
-					writer.flush();
-
+					if (results != null) {
+						System.out.println("result " + results);
+						writer.write(results);
+						writer.flush();
+					}
+					
 				} catch (InexistentKeyException ex) {
 					writer.write(new byte[] { 0x01 });
 					writer.flush();
@@ -106,13 +108,11 @@ public class ProtocolImpl {
 			if (command == 1)
 				return cHash.put(key, value);
 			else if (command == 2)
-				value = cHash.get(key);
+				return cHash.get(key);
 			else if (command == 3)
 				return cHash.remove(key);
 			else
 				throw new UnrecognizedCommandException();
-
-			return null;
 		}
 
 	}

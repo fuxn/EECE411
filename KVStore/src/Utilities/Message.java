@@ -48,8 +48,10 @@ public class Message {
 	public static byte[] checkReplyValue(int command, InputStream in) {
 		try {
 			int errorCode = in.read();
+			System.out.println("command : " + command);
 			System.out.println("error code : " + errorCode);
 			if (errorCode == 0 && Message.isCheckReplyValue(command)) {
+				System.out.println("Checking reply value.. ");
 				byte[] reply = new byte[1024];
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
@@ -72,7 +74,9 @@ public class Message {
 
 	public static byte[] checkRequestValue(int command, InputStream in) {
 		try {
+			System.out.println("command : " + command);
 			if (Message.isCheckRequestValue(command)) {
+				System.out.println("Checking request value.. ");
 				byte[] value = new byte[1024];
 				int bytesRcvd = 0;
 				int totalBytesRcvd = 0;
