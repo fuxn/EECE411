@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Message {
@@ -25,7 +26,6 @@ public class Message {
 	}
 
 	public static byte[] formateReplyMessage(Integer errorCode, byte[] value) {
-		System.out.println(errorCode);
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(errorCode.byteValue());
 		if (value != null && value.length > 0) {
@@ -53,8 +53,6 @@ public class Message {
 		for (int i = 0; i < cmd.length; i++) {
 			message.add(cmd[i]);
 		}
-
-		System.out.println("message size" + message.size());
 		return message;
 	}
 
@@ -76,7 +74,7 @@ public class Message {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
-				System.out.println("reply : " + reply.toString());
+				System.out.println("reply : " + Arrays.toString(reply));
 				return Message.formateReplyMessage(errorCode, reply);
 			}
 		} catch (IOException e) {

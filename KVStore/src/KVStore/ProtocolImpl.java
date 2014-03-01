@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import Exception.InexistentKeyException;
@@ -78,11 +79,12 @@ public class ProtocolImpl {
 				try {
 					byte[] results = this.exec(command, key, value);
 					if (results != null) {
-						System.out.println("result " + results);
+						System.out
+								.println("result " + Arrays.toString(results));
 						writer.write(results);
 						writer.flush();
 					}
-					
+
 				} catch (InexistentKeyException ex) {
 					writer.write(new byte[] { 0x01 });
 					writer.flush();

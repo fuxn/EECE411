@@ -1,5 +1,6 @@
 package Utilities;
 
+import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -16,7 +17,10 @@ public class PlanetLabNode {
 
 	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException {
 		this.values.put(new String(key).hashCode(), value);
-		System.out.println(this.values);
+		for (Integer index : values.keySet()) {
+			System.out.println("key: " + index + " value: "
+					+ Arrays.toString(values.get(index)));
+		}
 		return Message.formateReplyMessage(0, null);
 	}
 
@@ -32,7 +36,12 @@ public class PlanetLabNode {
 		if (!this.values.containsKey(new String(key).hashCode()))
 			throw new InexistentKeyException();
 		this.values.remove(new String(key).hashCode());
-		System.out.println(this.values);
+		if (!this.values.isEmpty()) {
+			for (Integer index : values.keySet()) {
+				System.out.println("key: " + index + " value: "
+						+ Arrays.toString(values.get(index)));
+			}
+		}
 		return Message.formateReplyMessage(0, null);
 	}
 
