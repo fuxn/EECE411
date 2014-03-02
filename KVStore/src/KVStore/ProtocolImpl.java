@@ -13,9 +13,11 @@ import java.util.Collection;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
+import Exception.SystemOverloadException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
+import Utilities.ErrorEnum;
 import Utilities.Message;
 import Utilities.MessageQueue;
 import Utilities.MessageUtilities;
@@ -49,7 +51,13 @@ public class ProtocolImpl {
 					System.out.println("Server waiting for client");
 					while (true) {
 						Socket client = serverSocket.accept();
-						onReceiveMessage(client);
+						try {
+							onReceiveMessage(client);
+						} catch (SystemOverloadException e) {
+							OutputStream writer = client.getOutputStream();
+							writer.write(ErrorEnum.SYS_OVERLOAD.getCode());
+							writer.flush();
+						}
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -64,7 +72,12 @@ public class ProtocolImpl {
 		new Thread(new ExecuteCommand()).start();
 	}
 
-	private static void onReceiveMessage(Socket client) {
+	private static void onReceiveMessage(Socket client)
+			throws SystemOverloadException {
+
+		if (ProtocolImpl.queue.isOverload())
+			throw new SystemOverloadException();
+
 		try {
 			InputStream reader = client.getInputStream();
 
@@ -121,16 +134,16 @@ public class ProtocolImpl {
 						}
 
 					} catch (InexistentKeyException ex) {
-						writer.write(new byte[] { 0x01 });
+						writer.write(ErrorEnum.INEXISTENT_KEY.getCode());
 						writer.flush();
 					} catch (UnrecognizedCommandException uc) {
-						writer.write(new byte[] { 0x05 });
+						writer.write(ErrorEnum.UNRECOGNIZED_COMMAND.getCode());
 						writer.flush();
 					} catch (InternalKVStoreFailureException internalException) {
-						writer.write(new byte[] { 0x04 });
+						writer.write(ErrorEnum.INTERNAL_FAILURE.getCode());
 						writer.flush();
 					} catch (InvalidKeyException invalideKeyException) {
-						writer.write(new byte[] { 0x21 });
+						writer.write(ErrorEnum.INVALID_KEY.getCode());
 					}
 
 				} catch (IOException ex) {
