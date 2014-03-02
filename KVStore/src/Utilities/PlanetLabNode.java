@@ -21,14 +21,14 @@ public class PlanetLabNode {
 			System.out.println("key: " + index + " value: "
 					+ Arrays.toString(values.get(index)));
 		}
-		return Message.formateReplyMessage(0, null);
+		return MessageUtilities.formateReplyMessage(0, null);
 	}
 
 	public byte[] get(byte[] key) throws InexistentKeyException {
 		if (!this.values.containsKey(new String(key).hashCode()))
 			throw new InexistentKeyException();
 
-		return Message.formateReplyMessage(0,
+		return MessageUtilities.formateReplyMessage(0,
 				this.values.get(new String(key).hashCode()));
 	}
 
@@ -42,7 +42,7 @@ public class PlanetLabNode {
 						+ Arrays.toString(values.get(index)));
 			}
 		}
-		return Message.formateReplyMessage(0, null);
+		return MessageUtilities.formateReplyMessage(0, null);
 	}
 
 	public String getHostName() {

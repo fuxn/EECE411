@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Message {
+public class MessageUtilities {
 
 	public static byte[] formateRequestMessage(Integer command, byte[] key,
 			byte[] value) {
@@ -52,7 +52,7 @@ public class Message {
 			errorCode = in.read();
 			System.out.println("command : " + command);
 			System.out.println("error code : " + errorCode);
-			if (errorCode == 0 && Message.isCheckReplyValue(command)) {
+			if (errorCode == 0 && MessageUtilities.isCheckReplyValue(command)) {
 				System.out.println("Checking reply value.. ");
 				byte[] reply = new byte[1024];
 				int bytesRcvd;
@@ -65,19 +65,19 @@ public class Message {
 					totalBytesRcvd += bytesRcvd;
 				}
 				System.out.println("reply : " + Arrays.toString(reply));
-				return Message.formateReplyMessage(errorCode, reply);
+				return MessageUtilities.formateReplyMessage(errorCode, reply);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return Message.formateReplyMessage(errorCode, null);
+		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
 
 	public static byte[] checkRequestValue(int command, InputStream in) {
 		try {
 			System.out.println("command : " + command);
-			if (Message.isCheckRequestValue(command)) {
+			if (MessageUtilities.isCheckRequestValue(command)) {
 				System.out.println("Checking request value.. ");
 				byte[] value = new byte[1024];
 				int bytesRcvd = 0;

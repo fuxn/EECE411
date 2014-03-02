@@ -17,12 +17,16 @@ import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
 import Utilities.Message;
+import Utilities.MessageQueue;
+import Utilities.MessageUtilities;
 import Utilities.PlanetLabNode;
 
 public class ProtocolImpl {
 
 	private int portNumber = 4560;
 	private ConsistentHashInterface cHash;
+	private static MessageQueue queue;
+	static ServerSocket serverSocket;
 
 	public ProtocolImpl() {
 		Collection<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
@@ -31,75 +35,109 @@ public class ProtocolImpl {
 		nodes.add(new PlanetLabNode("planetlab-4.eecs.cwru.edu"));
 
 		this.cHash = new ConsistentHash(3, nodes);
+		ProtocolImpl.queue = new MessageQueue();
 		// this.initializeServer();
 	}
 
 	public void initializeServer() {
-		try {
-			ServerSocket serverSocket = new ServerSocket(this.portNumber);
-			System.out.println("Server waiting for client");
-			while (true) {
-				Socket client = serverSocket.accept();
-				new Client(client).start();
+
+		(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					serverSocket = new ServerSocket(portNumber);
+					System.out.println("Server waiting for client");
+					while (true) {
+						Socket client = serverSocket.accept();
+						onReceiveMessage(client);
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-		} catch (Exception ie) {
-			ie.printStackTrace();
-		}
+		})).start();
+
 	}
 
-	class Client extends Thread {
-		private Socket clientSocket = null;
+	public void startExeCommand() {
+		new Thread(new ExecuteCommand()).start();
+	}
 
-		public Client(Socket clientSocket) {
-			this.clientSocket = clientSocket;
+	private static void onReceiveMessage(Socket client) {
+		try {
+			InputStream reader = client.getInputStream();
+
+			int command = reader.read();
+			byte[] key = new byte[32];
+			int bytesRcvd;
+			int totalBytesRcvd = 0;
+			while (totalBytesRcvd < key.length) {
+				if ((bytesRcvd = reader.read(key, totalBytesRcvd, key.length
+						- totalBytesRcvd)) == -1)
+					throw new SocketException("connection close prematurely.");
+
+				totalBytesRcvd += bytesRcvd;
+			}
+
+			byte[] value = MessageUtilities.checkRequestValue(command, reader);
+
+			ProtocolImpl.queue.enqueue(new Message(client, command, key, value));
+
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
+	}
+
+	private class ExecuteCommand extends Thread {
+		private Socket clientSocket = null;
+		private Message message;
+
 		public void run() {
-			try {
-				System.out.println("new connection accepted: "
-						+ this.clientSocket.getInetAddress());
-
-				InputStream reader = this.clientSocket.getInputStream();
-				OutputStream writer = this.clientSocket.getOutputStream();
-
-				int command = reader.read();
-				byte[] key = new byte[32];
-				int bytesRcvd;
-				int totalBytesRcvd = 0;
-				while (totalBytesRcvd < key.length) {
-					if ((bytesRcvd = reader.read(key, totalBytesRcvd,
-							key.length - totalBytesRcvd)) == -1)
-						throw new SocketException(
-								"connection close prematurely.");
-					totalBytesRcvd += bytesRcvd;
-				}
-
-				byte[] value = Message.checkRequestValue(command, reader);
-
+			while (true) {
 				try {
-					byte[] results = this.exec(command, key, value);
-					if (results != null) {
-						System.out
-								.println("result " + Arrays.toString(results));
-						writer.write(results);
+					Message message = ProtocolImpl.queue.dequeue();
+					this.clientSocket = message.getClient();
+
+					System.out.println("new connection accepted: "
+							+ this.clientSocket.getInetAddress());
+
+					OutputStream writer = this.clientSocket.getOutputStream();
+
+					try {
+						byte[] results = this.exec(this.message.getCommand(),
+								this.message.getKey(), this.message.getValue());
+						if (results != null) {
+							System.out.println("result "
+									+ Arrays.toString(results));
+							writer.write(results);
+							writer.flush();
+						}
+
+					} catch (InexistentKeyException ex) {
+						writer.write(new byte[] { 0x01 });
 						writer.flush();
+					} catch (UnrecognizedCommandException uc) {
+						writer.write(new byte[] { 0x05 });
+						writer.flush();
+					} catch (InternalKVStoreFailureException internalException) {
+						writer.write(new byte[] { 0x04 });
+						writer.flush();
+					} catch (InvalidKeyException invalideKeyException) {
+						writer.write(new byte[] { 0x21 });
 					}
 
-				} catch (InexistentKeyException ex) {
-					writer.write(new byte[] { 0x01 });
-					writer.flush();
-				} catch (UnrecognizedCommandException uc) {
-					writer.write(new byte[] { 0x05 });
-					writer.flush();
-				} catch (InternalKVStoreFailureException internalException) {
-					writer.write(new byte[] { 0x04 });
-					writer.flush();
-				} catch (InvalidKeyException invalideKeyException) {
-					writer.write(new byte[] { 0x21 });
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-
-			} catch (IOException ex) {
-				ex.printStackTrace();
 			}
 		}
 

@@ -127,11 +127,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();
 
-			byte[] v = Message.formateRequestMessage(command, key, value);
+			byte[] v = MessageUtilities.formateRequestMessage(command, key, value);
 			out.write(v);
 			out.flush();
 
-			reply = Message.checkReplyValue(command, in);
+			reply = MessageUtilities.checkReplyValue(command, in);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
