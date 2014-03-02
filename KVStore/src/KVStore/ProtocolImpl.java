@@ -101,7 +101,7 @@ public class ProtocolImpl {
 		public void run() {
 			while (true) {
 				try {
-					Message message = ProtocolImpl.queue.dequeue();
+					this.message = ProtocolImpl.queue.dequeue();
 					this.clientSocket = message.getClient();
 
 					System.out.println("new connection accepted: "
