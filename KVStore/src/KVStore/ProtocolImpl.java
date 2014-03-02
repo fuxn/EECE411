@@ -82,7 +82,8 @@ public class ProtocolImpl {
 
 			byte[] value = MessageUtilities.checkRequestValue(command, reader);
 
-			ProtocolImpl.queue.enqueue(new Message(client, command, key, value));
+			ProtocolImpl.queue
+					.enqueue(new Message(client, command, key, value));
 
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
