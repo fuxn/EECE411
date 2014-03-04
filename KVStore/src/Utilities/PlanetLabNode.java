@@ -35,7 +35,7 @@ public class PlanetLabNode {
 	}
 
 	public byte[] get(byte[] key) throws InexistentKeyException {
-		if (!this.values.containsKey(new String(key).hashCode()))
+		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
 		return MessageUtilities.formateReplyMessage(
@@ -44,21 +44,31 @@ public class PlanetLabNode {
 	}
 
 	public byte[] remove(byte[] key) throws InexistentKeyException {
-		if (!this.values.containsKey(new String(key).hashCode()))
+		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
+
 		this.values.remove(new String(key).hashCode());
+
 		if (!this.values.isEmpty()) {
 			for (Integer index : values.keySet()) {
 				System.out.println("key: " + index + " value: "
 						+ Arrays.toString(values.get(index)));
 			}
 		}
+
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
 	public String getHostName() {
 		return this.hostName;
+	}
+
+	private boolean isInexistentKey(byte[] key) {
+		if (!this.values.containsKey(new String(key).hashCode()))
+			return true;
+		else
+			return false;
 	}
 
 }

@@ -29,7 +29,7 @@ public class ProtocolImpl {
 	private int portNumber = 4560;
 	private ConsistentHashInterface cHash;
 	private static MessageQueue queue;
-	static ServerSocket serverSocket;
+	private static ServerSocket serverSocket;
 
 	public ProtocolImpl() {
 		Collection<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
@@ -39,7 +39,7 @@ public class ProtocolImpl {
 
 		this.cHash = new ConsistentHash(3, nodes);
 		ProtocolImpl.queue = new MessageQueue();
-		// this.initializeServer();
+
 	}
 
 	public void initializeServer() {
@@ -58,11 +58,14 @@ public class ProtocolImpl {
 							OutputStream writer = client.getOutputStream();
 							writer.write(ErrorEnum.SYS_OVERLOAD.getCode());
 							writer.flush();
+						} catch (InternalKVStoreFailureException e) {
+							OutputStream writer = client.getOutputStream();
+							writer.write(ErrorEnum.INTERNAL_FAILURE.getCode());
+							writer.flush();
 						}
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+
 				}
 			}
 		})).start();
@@ -74,7 +77,7 @@ public class ProtocolImpl {
 	}
 
 	private static void onReceiveMessage(Socket client)
-			throws SystemOverloadException {
+			throws SystemOverloadException, InternalKVStoreFailureException {
 
 		if (ProtocolImpl.queue.isOverload())
 			throw new SystemOverloadException();
@@ -100,11 +103,9 @@ public class ProtocolImpl {
 					.enqueue(new Message(client, command, key, value));
 
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		}
 
 	}
@@ -127,6 +128,7 @@ public class ProtocolImpl {
 					try {
 						byte[] results = this.exec(this.message.getCommand(),
 								this.message.getKey(), this.message.getValue());
+
 						if (results != null) {
 							System.out.println("result "
 									+ Arrays.toString(results));
@@ -162,7 +164,8 @@ public class ProtocolImpl {
 
 		private byte[] exec(int command, byte[] key, byte[] value)
 				throws InexistentKeyException, UnrecognizedCommandException,
-				InternalKVStoreFailureException, InvalidKeyException, OutOfSpaceException {
+				InternalKVStoreFailureException, InvalidKeyException,
+				OutOfSpaceException {
 
 			if (command == 1)
 				return cHash.put(key, value);
