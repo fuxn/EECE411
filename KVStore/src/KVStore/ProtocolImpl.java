@@ -13,6 +13,7 @@ import java.util.Collection;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
+import Exception.OutOfSpaceException;
 import Exception.SystemOverloadException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
@@ -144,6 +145,10 @@ public class ProtocolImpl {
 						writer.flush();
 					} catch (InvalidKeyException invalideKeyException) {
 						writer.write(ErrorEnum.INVALID_KEY.getCode());
+						writer.flush();
+					} catch (OutOfSpaceException e) {
+						writer.write(ErrorEnum.OUT_OF_SPACE.getCode());
+						writer.flush();
 					}
 
 				} catch (IOException ex) {
@@ -157,7 +162,7 @@ public class ProtocolImpl {
 
 		private byte[] exec(int command, byte[] key, byte[] value)
 				throws InexistentKeyException, UnrecognizedCommandException,
-				InternalKVStoreFailureException, InvalidKeyException {
+				InternalKVStoreFailureException, InvalidKeyException, OutOfSpaceException {
 
 			if (command == 1)
 				return cHash.put(key, value);

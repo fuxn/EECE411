@@ -31,7 +31,7 @@ public class MessageQueue {
 	}
 
 	public boolean isOverload() {
-		if (_queue.size() > 500)
+		if (_queue.size() > 40000)
 			return true;
 
 		return false;

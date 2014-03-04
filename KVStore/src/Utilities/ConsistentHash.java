@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
+import Exception.OutOfSpaceException;
 import Interface.ConsistentHashInterface;
 
 public class ConsistentHash implements ConsistentHashInterface {
@@ -52,7 +53,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
-			InternalKVStoreFailureException, InvalidKeyException {
+			InternalKVStoreFailureException, InvalidKeyException, OutOfSpaceException {
 		if (key.length != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
@@ -66,10 +67,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			}
 
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		}
-		return null;
 
 	}
 
@@ -88,11 +87,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 			}
 
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		}
 
-		return null;
 	}
 
 	public byte[] remove(byte[] key) throws InexistentKeyException,
@@ -110,14 +107,12 @@ public class ConsistentHash implements ConsistentHashInterface {
 			}
 
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		}
-		return node.remove(key);
 	}
 
 	private byte[] remoteRequest(int command, byte[] key, byte[] value,
-			String server) {
+			String server) throws InternalKVStoreFailureException {
 		byte[] reply = null;
 		try {
 			Socket socket = new Socket(server, 4560);
@@ -133,8 +128,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 			reply = MessageUtilities.checkReplyValue(command, in);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalKVStoreFailureException();
 		}
 		return reply;
 	}

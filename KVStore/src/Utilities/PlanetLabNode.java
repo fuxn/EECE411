@@ -5,6 +5,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import Exception.InexistentKeyException;
+import Exception.OutOfSpaceException;
 
 public class PlanetLabNode {
 
@@ -15,8 +16,16 @@ public class PlanetLabNode {
 		this.hostName = hostName;
 	}
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException {
-		this.values.put(new String(key).hashCode(), value);
+	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
+			OutOfSpaceException {
+		if (this.values.size() > 40000)
+			throw new OutOfSpaceException();
+
+		try {
+			this.values.put(new String(key).hashCode(), value);
+		} catch (OutOfMemoryError e) {
+			throw new OutOfSpaceException();
+		}
 		for (Integer index : values.keySet()) {
 			System.out.println("key: " + index + " value: "
 					+ Arrays.toString(values.get(index)));
