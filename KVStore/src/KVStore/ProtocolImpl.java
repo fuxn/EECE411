@@ -126,6 +126,7 @@ public class ProtocolImpl {
 					OutputStream writer = this.clientSocket.getOutputStream();
 
 					try {
+
 						byte[] results = this.exec(this.message.getCommand(),
 								this.message.getKey(), this.message.getValue());
 
@@ -166,15 +167,14 @@ public class ProtocolImpl {
 				throws InexistentKeyException, UnrecognizedCommandException,
 				InternalKVStoreFailureException, InvalidKeyException,
 				OutOfSpaceException {
-
-			if (command == 1)
-				return cHash.put(key, value);
-			else if (command == 2)
-				return cHash.get(key);
-			else if (command == 3)
-				return cHash.remove(key);
-			else
-				throw new UnrecognizedCommandException();
+				if (command == 1)
+					return cHash.put(key, value);
+				else if (command == 2)
+					return cHash.get(key);
+				else if (command == 3)
+					return cHash.remove(key);
+				else
+					throw new UnrecognizedCommandException();
 		}
 
 	}

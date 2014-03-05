@@ -48,28 +48,34 @@ public class MessageUtilities {
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
 		int errorCode = -2;
-		try {
-			errorCode = in.read();
-			System.out.println("command : " + command);
-			System.out.println("error code : " + errorCode);
-			if (errorCode == 0 && MessageUtilities.isCheckReplyValue(command)) {
-				System.out.println("Checking reply value.. ");
-				byte[] reply = new byte[1024];
-				int bytesRcvd;
-				int totalBytesRcvd = 0;
-				while (totalBytesRcvd < reply.length) {
-					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
-							reply.length - totalBytesRcvd)) == -1)
-						throw new SocketException(
-								"connection close prematurely.");
-					totalBytesRcvd += bytesRcvd;
+		long endTimeMillis = System.currentTimeMillis() + 10000;
+		while (System.currentTimeMillis() > endTimeMillis) {
+			try {
+				errorCode = in.read();
+				System.out.println("command : " + command);
+				System.out.println("error code : " + errorCode);
+				if (errorCode == 0
+						&& MessageUtilities.isCheckReplyValue(command)) {
+					System.out.println("Checking reply value.. ");
+					byte[] reply = new byte[1024];
+					int bytesRcvd;
+					int totalBytesRcvd = 0;
+					while ((totalBytesRcvd < reply.length)
+							&& (System.currentTimeMillis() > endTimeMillis)) {
+						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+								reply.length - totalBytesRcvd)) == -1)
+							throw new SocketException(
+									"connection close prematurely.");
+						totalBytesRcvd += bytesRcvd;
+					}
+					System.out.println("reply : " + Arrays.toString(reply));
+					return MessageUtilities.formateReplyMessage(errorCode,
+							reply);
 				}
-				System.out.println("reply : " + Arrays.toString(reply));
-				return MessageUtilities.formateReplyMessage(errorCode, reply);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
