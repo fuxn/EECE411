@@ -11,13 +11,28 @@ public class MessageUtilities {
 
 	public static byte[] formateRequestMessage(Integer command, String key,
 			String value) {
-		StringBuilder message = new StringBuilder();
-		message.append(String.valueOf(command));
-		message.append(key);
-		if (value != null)
-			message.append(value);
+		List<Byte> message = new ArrayList<Byte>();
+		message.add(command.byteValue());
 
-		return message.toString().getBytes();
+		if (key != null) {
+			byte[] keyByte = key.getBytes();
+			for (int i = 0; i < keyByte.length; i++) {
+				message.add(keyByte[i]);
+			}
+		}
+
+		if (value != null) {
+			byte[] valueByte = value.getBytes();
+			for (int i = 0; i < valueByte.length; i++) {
+				message.add(valueByte[i]);
+			}
+		}
+
+		byte[] request = new byte[message.size()];
+		for (int i = 0; i < message.size(); i++) {
+			request[i] = (Byte) message.get(i);
+		}
+		return request;
 	}
 
 	public static byte[] formateReplyMessage(Integer errorCode, String value) {
