@@ -49,7 +49,7 @@ public class MessageUtilities {
 	public static byte[] checkReplyValue(int command, InputStream in) {
 		int errorCode = -2;
 		long endTimeMillis = System.currentTimeMillis() + 10000;
-		while (System.currentTimeMillis() > endTimeMillis) {
+		while (System.currentTimeMillis() < endTimeMillis) {
 			try {
 				errorCode = in.read();
 				System.out.println("command : " + command);
