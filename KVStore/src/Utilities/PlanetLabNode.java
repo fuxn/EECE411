@@ -10,40 +10,40 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private String hostName;
-	private SortedMap<Integer, byte[]> values = new TreeMap<Integer, byte[]>();
+	private SortedMap<Integer, String> values = new TreeMap<Integer, String>();
 
 	public PlanetLabNode(String hostName) {
 		this.hostName = hostName;
 	}
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
+	public byte[] put(String key, String value) throws InexistentKeyException,
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
 
 		try {
-			this.values.put(new String(key).hashCode(), value);
+			this.values.put(key.hashCode(), value);
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
 		}
 		for (Integer index : values.keySet()) {
-			System.out.println("key: " + index + " value: "
-					+ Arrays.toString(values.get(index)));
+			System.out
+					.println("key: " + index + " value: " + values.get(index));
 		}
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] get(byte[] key) throws InexistentKeyException {
+	public byte[] get(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(),
-				this.values.get(new String(key).hashCode()));
+				this.values.get(key.hashCode()));
 	}
 
-	public byte[] remove(byte[] key) throws InexistentKeyException {
+	public byte[] remove(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
@@ -52,7 +52,7 @@ public class PlanetLabNode {
 		if (!this.values.isEmpty()) {
 			for (Integer index : values.keySet()) {
 				System.out.println("key: " + index + " value: "
-						+ Arrays.toString(values.get(index)));
+						+ values.get(index));
 			}
 		}
 
@@ -64,11 +64,8 @@ public class PlanetLabNode {
 		return this.hostName;
 	}
 
-	private boolean isInexistentKey(byte[] key) {
-		if (!this.values.containsKey(new String(key).hashCode()))
-			return true;
-		else
-			return false;
+	private boolean isInexistentKey(String key) {
+		return (!this.values.containsKey(key.hashCode()));
 	}
 
 }

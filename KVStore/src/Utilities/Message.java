@@ -6,10 +6,10 @@ public class Message {
 
 	private Socket client;
 	private int command;
-	private byte[] key;
-	private byte[] value;
+	private String key;
+	private String value;
 
-	public Message(Socket client, Integer command, byte[] key, byte[] value) {
+	public Message(Socket client, Integer command, String key, String value) {
 		this.client = client;
 		this.command = command;
 		this.key = key;
@@ -24,11 +24,11 @@ public class Message {
 		return this.command;
 	}
 
-	public byte[] getKey() {
+	public String getKey() {
 		return this.key;
 	}
 
-	public byte[] getValue() {
+	public String getValue() {
 		return this.value;
 	}
 }

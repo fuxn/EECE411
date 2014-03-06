@@ -3,47 +3,28 @@ package Utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class MessageUtilities {
 
-	public static byte[] formateRequestMessage(Integer command, byte[] key,
-			byte[] value) {
-		List<Byte> message = new ArrayList<Byte>();
-		message.add(command.byteValue());
-
-		for (int i = 0; i < key.length; i++) {
-			message.add(key[i]);
-		}
-
+	public static byte[] formateRequestMessage(Integer command, String key,
+			String value) {
+		StringBuilder message = new StringBuilder();
+		message.append(String.valueOf(command));
+		message.append(key);
 		if (value != null)
-			for (int i = 0; i < value.length; i++) {
-				message.add(value[i]);
-			}
+			message.append(value);
 
-		byte[] request = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			request[i] = (Byte) message.get(i);
-		}
-		return request;
+		return message.toString().getBytes();
 	}
 
-	public static byte[] formateReplyMessage(Integer errorCode, byte[] value) {
-		List<Byte> message = new ArrayList<Byte>();
-		message.add(errorCode.byteValue());
-		if (value != null && value.length > 0) {
-			for (int i = 0; i < value.length; i++) {
-				message.add(value[i]);
-			}
-		}
+	public static byte[] formateReplyMessage(Integer errorCode, String value) {
 
-		byte[] reply = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			reply[i] = message.get(i);
-		}
-		return reply;
+		StringBuilder message = new StringBuilder();
+		message.append(String.valueOf(errorCode));
+		message.append(value);
+
+		return message.toString().getBytes();
 	}
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
@@ -70,7 +51,7 @@ public class MessageUtilities {
 					}
 					System.out.println("reply : " + Arrays.toString(reply));
 					return MessageUtilities.formateReplyMessage(errorCode,
-							reply);
+							new String(reply));
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -105,16 +86,10 @@ public class MessageUtilities {
 	}
 
 	public static boolean isCheckReplyValue(int command) {
-		if (command == 2)
-			return true;
-		else
-			return false;
+		return (command == 2);
 	}
 
 	public static boolean isCheckRequestValue(int command) {
-		if (command == 1)
-			return true;
-		else
-			return false;
+		return (command == 1);
 	}
 }

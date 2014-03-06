@@ -34,27 +34,27 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	private PlanetLabNode getNode(byte[] key) throws InexistentKeyException,
+	private PlanetLabNode getNode(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		int hash = new String(key).hashCode();
+		int hash = key.hashCode();
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
 			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
 					.tailMap(hash);
 			hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
 					.firstKey();
-		} else
-			throw new InexistentKeyException();
+		}
 
 		return this.circle.get(hash);
 	}
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
-			InternalKVStoreFailureException, InvalidKeyException, OutOfSpaceException {
-		if (key.length != 32)
+	public byte[] put(String key, String value) throws InexistentKeyException,
+			InternalKVStoreFailureException, InvalidKeyException,
+			OutOfSpaceException {
+		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		PlanetLabNode node = this.getNode(key);
@@ -72,9 +72,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public byte[] get(byte[] key) throws InexistentKeyException,
+	public byte[] get(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length != 32)
+		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		PlanetLabNode node = this.getNode(key);
@@ -92,9 +92,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public byte[] remove(byte[] key) throws InexistentKeyException,
+	public byte[] remove(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length != 32)
+		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		PlanetLabNode node = this.getNode(key);
@@ -111,7 +111,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	private byte[] remoteRequest(int command, byte[] key, byte[] value,
+	private byte[] remoteRequest(int command, String key, String value,
 			String server) throws InternalKVStoreFailureException {
 		byte[] reply = null;
 		try {
@@ -122,7 +122,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();
 
-			byte[] v = MessageUtilities.formateRequestMessage(command, key, value);
+			byte[] v = MessageUtilities.formateRequestMessage(command, key,
+					value);
 			out.write(v);
 			out.flush();
 

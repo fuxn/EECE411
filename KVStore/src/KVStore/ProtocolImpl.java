@@ -100,7 +100,7 @@ public class ProtocolImpl {
 			byte[] value = MessageUtilities.checkRequestValue(command, reader);
 
 			ProtocolImpl.queue
-					.enqueue(new Message(client, command, key, value));
+					.enqueue(new Message(client, command, new String(key), new String(value)));
 
 		} catch (SocketException e) {
 			throw new InternalKVStoreFailureException();
@@ -163,7 +163,7 @@ public class ProtocolImpl {
 			}
 		}
 
-		private byte[] exec(int command, byte[] key, byte[] value)
+		private byte[] exec(int command, String key, String value)
 				throws InexistentKeyException, UnrecognizedCommandException,
 				InternalKVStoreFailureException, InvalidKeyException,
 				OutOfSpaceException {
