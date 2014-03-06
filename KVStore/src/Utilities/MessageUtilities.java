@@ -3,7 +3,9 @@ package Utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MessageUtilities {
 
@@ -20,12 +22,19 @@ public class MessageUtilities {
 
 	public static byte[] formateReplyMessage(Integer errorCode, String value) {
 
-		StringBuilder message = new StringBuilder();
-		message.append(String.valueOf(errorCode));
-		if (value != null)
-			message.append(value);
+		List<Byte> message = new ArrayList<Byte>(errorCode.byteValue());
+		if (value != null) {
+			byte[] valueByte = value.getBytes();
+			for (int i = 0; i < valueByte.length; i++) {
+				message.add(valueByte[i]);
+			}
+		}
 
-		return message.toString().getBytes();
+		byte[] reply = new byte[message.size()];
+		for (int i = 0; i < message.size(); i++) {
+			reply[i] = message.get(i);
+		}
+		return reply;
 	}
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
