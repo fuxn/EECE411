@@ -22,7 +22,8 @@ public class MessageUtilities {
 
 	public static byte[] formateReplyMessage(Integer errorCode, String value) {
 
-		List<Byte> message = new ArrayList<Byte>(errorCode.byteValue());
+		List<Byte> message = new ArrayList<Byte>();
+		message.add(errorCode.byteValue());
 		if (value != null) {
 			byte[] valueByte = value.getBytes();
 			for (int i = 0; i < valueByte.length; i++) {
