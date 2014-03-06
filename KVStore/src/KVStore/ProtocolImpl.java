@@ -100,7 +100,7 @@ public class ProtocolImpl {
 			byte[] value = MessageUtilities.checkRequestValue(command, reader);
 
 			ProtocolImpl.queue
-					.enqueue(new Message(client, command, new String(key), new String(value)));
+					.enqueue(new Message(client, command, key, value));
 
 		} catch (SocketException e) {
 			throw new InternalKVStoreFailureException();

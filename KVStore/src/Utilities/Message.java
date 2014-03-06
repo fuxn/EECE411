@@ -9,11 +9,13 @@ public class Message {
 	private String key;
 	private String value;
 
-	public Message(Socket client, Integer command, String key, String value) {
+	public Message(Socket client, Integer command, byte[] key, byte[] value) {
 		this.client = client;
 		this.command = command;
-		this.key = key;
-		this.value = value;
+		if (key != null)
+			this.key = new String(key);
+		if (value != null)
+			this.value = new String(value);
 	}
 
 	public Socket getClient() {
