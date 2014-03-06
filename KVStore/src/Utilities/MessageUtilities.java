@@ -22,7 +22,8 @@ public class MessageUtilities {
 
 		StringBuilder message = new StringBuilder();
 		message.append(String.valueOf(errorCode));
-		message.append(value);
+		if (value != null)
+			message.append(value);
 
 		return message.toString().getBytes();
 	}
