@@ -3,9 +3,11 @@ package KVStore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,11 +35,13 @@ public class ProtocolImpl {
 
 	public ProtocolImpl() {
 		Collection<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
-		nodes.add(new PlanetLabNode("pl-node-1.csl.sri.com"));
-		nodes.add(new PlanetLabNode("planetlab2.cs.stevens-tech.edu"));
-		nodes.add(new PlanetLabNode("planetlab-4.eecs.cwru.edu"));
+		try {
+			nodes.add(new PlanetLabNode(InetAddress.getLocalHost()
+					.getHostName()));
+		} catch (UnknownHostException e) {
+		}
 
-		this.cHash = new ConsistentHash(3, nodes);
+		this.cHash = new ConsistentHash(1, nodes);
 		ProtocolImpl.queue = new MessageQueue();
 
 	}
@@ -120,8 +124,7 @@ public class ProtocolImpl {
 					this.message = ProtocolImpl.queue.dequeue();
 					this.clientSocket = message.getClient();
 
-					System.out.println("new connection accepted: "
-							+ this.clientSocket.getInetAddress());
+					System.out.println("new command executed: ");
 
 					OutputStream writer = this.clientSocket.getOutputStream();
 
@@ -167,14 +170,14 @@ public class ProtocolImpl {
 				throws InexistentKeyException, UnrecognizedCommandException,
 				InternalKVStoreFailureException, InvalidKeyException,
 				OutOfSpaceException {
-				if (command == 1)
-					return cHash.put(key, value);
-				else if (command == 2)
-					return cHash.get(key);
-				else if (command == 3)
-					return cHash.remove(key);
-				else
-					throw new UnrecognizedCommandException();
+			if (command == 1)
+				return cHash.put(key, value);
+			else if (command == 2)
+				return cHash.get(key);
+			else if (command == 3)
+				return cHash.remove(key);
+			else
+				throw new UnrecognizedCommandException();
 		}
 
 	}

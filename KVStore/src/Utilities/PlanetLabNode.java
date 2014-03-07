@@ -1,6 +1,5 @@
 package Utilities;
 
-import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -39,8 +38,7 @@ public class PlanetLabNode {
 			throw new InexistentKeyException();
 
 		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(),
-				this.values.get(key.hashCode()));
+				ErrorEnum.SUCCESS.getCode(), this.values.get(key.hashCode()));
 	}
 
 	public byte[] remove(String key) throws InexistentKeyException {
