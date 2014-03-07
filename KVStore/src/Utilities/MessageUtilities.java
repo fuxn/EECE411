@@ -68,7 +68,7 @@ public class MessageUtilities {
 					int bytesRcvd;
 					int totalBytesRcvd = 0;
 					while ((totalBytesRcvd < reply.length)
-							&& (System.currentTimeMillis() > endTimeMillis)) {
+							&& (System.currentTimeMillis() < endTimeMillis)) {
 						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
 								reply.length - totalBytesRcvd)) == -1)
 							throw new SocketException(
@@ -78,7 +78,8 @@ public class MessageUtilities {
 					System.out.println("reply : " + Arrays.toString(reply));
 					return MessageUtilities.formateReplyMessage(errorCode,
 							new String(reply));
-				}
+				} else
+					break;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
