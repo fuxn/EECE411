@@ -1,4 +1,4 @@
-package Utilities;
+package Utilities.Message;
 
 import java.io.IOException;
 import java.io.InputStream;

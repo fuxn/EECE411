@@ -18,168 +18,95 @@ import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.SystemOverloadException;
 import Exception.UnrecognizedCommandException;
+import Interface.EventListener;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
 import Utilities.ErrorEnum;
-import Utilities.Message;
-import Utilities.MessageQueue;
-import Utilities.MessageUtilities;
 import Utilities.PlanetLabNode;
+import Utilities.Message.Message;
+import Utilities.Message.MessageQueue;
+import Utilities.Message.MessageUtilities;
+import Utilities.Thread.ThreadPool;
 
-public class ProtocolImpl {
+public class ProtocolImpl implements EventListener {
 
 	private int portNumber = 4560;
 	private ConsistentHashInterface cHash;
-	private static MessageQueue queue;
+	private static ThreadPool threadPool;
+
 	private static ServerSocket serverSocket;
+	private static int maxConnections = 50;
+	private static int maxThreads = 5;
+	private static int maxTasks = 40000;
 
-	public ProtocolImpl() {
-		Collection<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
-		try {
-			nodes.add(new PlanetLabNode(InetAddress.getLocalHost()
-					.getHostName()));
-		} catch (UnknownHostException e) {
-		}
+	private int numConnection = 0;
 
+	static volatile boolean keepRunning = true;
+
+	public ProtocolImpl(Collection<PlanetLabNode> nodes) {
 		this.cHash = new ConsistentHash(1, nodes);
-		ProtocolImpl.queue = new MessageQueue();
 
-	}
-
-	public void initializeServer() {
-
-		(new Thread(new Runnable() {
+		threadPool = new ThreadPool(maxThreads, maxTasks);
+		Runtime.getRuntime().addShutdownHook(new Thread(){
 			@Override
-			public void run() {
+			public void run(){
 				try {
-					serverSocket = new ServerSocket(portNumber);
-					System.out.println("Server waiting for client");
-					while (true) {
-						Socket client = serverSocket.accept();
-						try {
-							onReceiveMessage(client);
-						} catch (SystemOverloadException e) {
-							OutputStream writer = client.getOutputStream();
-							writer.write(ErrorEnum.SYS_OVERLOAD.getCode());
-							writer.flush();
-						} catch (InternalKVStoreFailureException e) {
-							OutputStream writer = client.getOutputStream();
-							writer.write(ErrorEnum.INTERNAL_FAILURE.getCode());
-							writer.flush();
-						}
-					}
-				} catch (IOException e) {
-
-				}
-			}
-		})).start();
-
-	}
-
-	public void startExeCommand() {
-		new Thread(new ExecuteCommand()).start();
-	}
-
-	private static void onReceiveMessage(Socket client)
-			throws SystemOverloadException, InternalKVStoreFailureException {
-
-		if (ProtocolImpl.queue.isOverload())
-			throw new SystemOverloadException();
-
-		try {
-			InputStream reader = client.getInputStream();
-
-			int command = reader.read();
-			byte[] key = new byte[32];
-			int bytesRcvd;
-			int totalBytesRcvd = 0;
-			while (totalBytesRcvd < key.length) {
-				if ((bytesRcvd = reader.read(key, totalBytesRcvd, key.length
-						- totalBytesRcvd)) == -1)
-					throw new SocketException("connection close prematurely.");
-
-				totalBytesRcvd += bytesRcvd;
-			}
-
-			byte[] value = MessageUtilities.checkRequestValue(command, reader);
-
-			ProtocolImpl.queue
-					.enqueue(new Message(client, command, key, value));
-
-		} catch (SocketException e) {
-			throw new InternalKVStoreFailureException();
-		} catch (IOException e) {
-			throw new InternalKVStoreFailureException();
-		}
-
-	}
-
-	private class ExecuteCommand extends Thread {
-		private Socket clientSocket = null;
-		private Message message;
-
-		public void run() {
-			while (true) {
-				try {
-					this.message = ProtocolImpl.queue.dequeue();
-					this.clientSocket = message.getClient();
-
-					System.out.println("new command executed: ");
-
-					OutputStream writer = this.clientSocket.getOutputStream();
-
-					try {
-
-						byte[] results = this.exec(this.message.getCommand(),
-								this.message.getKey(), this.message.getValue());
-
-						if (results != null) {
-							System.out.println("result "
-									+ Arrays.toString(results));
-							writer.write(results);
-							writer.flush();
-						}
-
-					} catch (InexistentKeyException ex) {
-						writer.write(ErrorEnum.INEXISTENT_KEY.getCode());
-						writer.flush();
-					} catch (UnrecognizedCommandException uc) {
-						writer.write(ErrorEnum.UNRECOGNIZED_COMMAND.getCode());
-						writer.flush();
-					} catch (InternalKVStoreFailureException internalException) {
-						writer.write(ErrorEnum.INTERNAL_FAILURE.getCode());
-						writer.flush();
-					} catch (InvalidKeyException invalideKeyException) {
-						writer.write(ErrorEnum.INVALID_KEY.getCode());
-						writer.flush();
-					} catch (OutOfSpaceException e) {
-						writer.write(ErrorEnum.OUT_OF_SPACE.getCode());
-						writer.flush();
-					}
-
-				} catch (IOException ex) {
-					ex.printStackTrace();
+					threadPool.stop();
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
+		});
+
+
+	}
+
+	public void startServer() {
+		try {
+			serverSocket = new ServerSocket(portNumber);
+			System.out.println("Server waiting for client");
+			Socket server;
+
+			while (true) {
+				server = serverSocket.accept();
+				if (!this.isOverloaded()) {
+					ServerRunnable serverRunnable = new ServerRunnable(server,
+							this.cHash, this);
+					try {
+						this.threadPool.execute(serverRunnable);
+					} catch (SystemOverloadException e) {
+						this.systemOverLoad(server.getOutputStream());
+					}
+				} else {
+					this.systemOverLoad(server.getOutputStream());
+					server.close();
+				}
+			}
+
+		} catch (IOException e) {
+
 		}
 
-		private byte[] exec(int command, String key, String value)
-				throws InexistentKeyException, UnrecognizedCommandException,
-				InternalKVStoreFailureException, InvalidKeyException,
-				OutOfSpaceException {
-			if (command == 1)
-				return cHash.put(key, value);
-			else if (command == 2)
-				return cHash.get(key);
-			else if (command == 3)
-				return cHash.remove(key);
-			else
-				throw new UnrecognizedCommandException();
-		}
+	}
 
+	public boolean isOverloaded() {
+		return (this.numConnection++ > maxConnections) || (maxConnections == 0);
+	}
+
+	@Override
+	public void onConnectionCloseEvent() {
+		this.numConnection--;
+	}
+
+	private void systemOverLoad(OutputStream writer) throws IOException {
+		writer.write(ErrorEnum.SYS_OVERLOAD.getCode());
+		writer.flush();
+	}
+
+	@Override
+	public void onAnnouncedFailure() {
+		System.exit(0);		
 	}
 
 }

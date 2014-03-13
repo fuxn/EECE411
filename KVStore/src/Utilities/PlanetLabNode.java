@@ -3,6 +3,7 @@ package Utilities;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import Utilities.Message.MessageUtilities;
 import Exception.InexistentKeyException;
 import Exception.OutOfSpaceException;
 

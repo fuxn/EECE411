@@ -1,4 +1,4 @@
-package Utilities;
+package Utilities.Message;
 
 import java.util.LinkedList;
 
