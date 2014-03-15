@@ -16,17 +16,9 @@ import Exception.InternalKVStoreFailureException;
 
 public class LookupService {
 	private SortedMap<Integer, PlanetLabNode> circle = new TreeMap<Integer, PlanetLabNode>();
-	private int numberOfReplicas;
 
 	public LookupService(int numberOfReplicas, Collection<PlanetLabNode> nodes) {
-		this.numberOfReplicas = numberOfReplicas;
 		for (PlanetLabNode node : nodes) {
-			this.addNode(node);
-		}
-	}
-
-	public void addNode(PlanetLabNode node) {
-		for (int i = 0; i < this.numberOfReplicas; i++) {
 			this.circle.put(node.getHostName().hashCode(), node);
 		}
 	}
@@ -84,8 +76,29 @@ public class LookupService {
 
 		return this.circle.get(hash);
 	}
-	
-	public byte[] remoteRequest(int command, String key, String value,
+
+	public PlanetLabNode getNodeByHostName(String hostName)
+			throws InternalKVStoreFailureException {
+		if (this.circle.isEmpty())
+			throw new InternalKVStoreFailureException();
+
+		return this.circle.get(hostName.hashCode());
+	}
+
+	public PlanetLabNode getNextNodeByHostName(String hostName)
+			throws InternalKVStoreFailureException {
+		if (this.circle.isEmpty())
+			throw new InternalKVStoreFailureException();
+
+		SortedMap<Integer, PlanetLabNode> tailMap = this.circle
+				.tailMap(hostName.hashCode() + 1);
+		int hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
+				.firstKey();
+
+		return this.circle.get(hash);
+	}
+
+	public byte[] remoteRequest(int command, byte[] key, byte[] value,
 			String server) throws InternalKVStoreFailureException {
 		byte[] reply = null;
 		try {
@@ -103,6 +116,7 @@ public class LookupService {
 
 			reply = MessageUtilities.checkReplyValue(command, in);
 		} catch (IOException e) {
+			
 			throw new InternalKVStoreFailureException();
 		}
 		return reply;

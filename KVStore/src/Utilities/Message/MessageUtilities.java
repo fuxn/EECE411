@@ -9,22 +9,20 @@ import java.util.List;
 
 public class MessageUtilities {
 
-	public static byte[] formateRequestMessage(Integer command, String key,
-			String value) {
+	public static byte[] formateRequestMessage(Integer command, byte[] key,
+			byte[] value) {
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(command.byteValue());
 
 		if (key != null) {
-			byte[] keyByte = key.getBytes();
-			for (int i = 0; i < keyByte.length; i++) {
-				message.add(keyByte[i]);
+			for (int i = 0; i < key.length; i++) {
+				message.add(key[i]);
 			}
 		}
 
 		if (value != null) {
-			byte[] valueByte = value.getBytes();
-			for (int i = 0; i < valueByte.length; i++) {
-				message.add(valueByte[i]);
+			for (int i = 0; i < value.length; i++) {
+				message.add(value[i]);
 			}
 		}
 
@@ -88,6 +86,31 @@ public class MessageUtilities {
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
 
+	public static byte[] checkRequestKey(int command, InputStream in) {
+		try {
+			System.out.println("command : " + command);
+			if (MessageUtilities.isCheckRequestKey(command)) {
+				System.out.println("Checking request key.. ");
+				byte[] key = new byte[32];
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < key.length) {
+					if ((bytesRcvd = in.read(key, totalBytesRcvd, key.length
+							- totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+
+					totalBytesRcvd += bytesRcvd;
+				}
+				return key;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	public static byte[] checkRequestValue(int command, InputStream in) {
 		try {
 			System.out.println("command : " + command);
@@ -117,6 +140,29 @@ public class MessageUtilities {
 	}
 
 	public static boolean isCheckRequestValue(int command) {
-		return (command == 1);
+		return (command == 1 || command == 21);
+	}
+
+	public static boolean isCheckRequestKey(int command) {
+		return (command != 4);
+	}
+
+	public static byte[] standarizeMessage(byte[] cmd, int size) {
+		List<Byte> message = new ArrayList<Byte>();
+		if (cmd.length != size) {
+			byte[] temp = new byte[size - cmd.length];
+			for (int i = 0; i < temp.length; i++) {
+				message.add(temp[i]);
+			}
+		}
+
+		for (int i = 0; i < cmd.length; i++) {
+			message.add(cmd[i]);
+		}
+		byte[] standarizedMessage = new byte[message.size()];
+		for (int i = 0; i < message.size(); i++) {
+			standarizedMessage[i] = (Byte) message.get(i);
+		}
+		return standarizedMessage;
 	}
 }

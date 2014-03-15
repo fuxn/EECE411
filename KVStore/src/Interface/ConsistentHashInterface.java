@@ -16,6 +16,13 @@ public interface ConsistentHashInterface {
 
 	public byte[] remove(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException;
-	
+
+	public byte[] handleAnnouncedFailure()
+			throws InternalKVStoreFailureException;
+
+	public byte[] handleNeighbourAnnouncedFailure(String key, String value)
+			throws InexistentKeyException, InternalKVStoreFailureException,
+			InvalidKeyException, OutOfSpaceException;
+
 	public boolean shutDown();
 }

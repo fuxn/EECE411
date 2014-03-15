@@ -4,12 +4,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedMap;
 
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Interface.ConsistentHashInterface;
+import Utilities.Message.MessageUtilities;
 
 public class ConsistentHash implements ConsistentHashInterface {
 
@@ -51,8 +53,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.put(key, value);
 			} else {
-				return this.lookupService.remoteRequest(1, key, value,
-						node.getHostName());
+
+				return this.lookupService.remoteRequest(1, key.getBytes(),
+						value.getBytes(), node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {
@@ -71,8 +74,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.get(key);
 			} else {
-				return this.lookupService.remoteRequest(2, key, null,
-						node.getHostName());
+				return this.lookupService.remoteRequest(2, key.getBytes(),
+						null, node.getHostName());
 			}
 
 		} catch (UnknownHostException e) {
@@ -92,10 +95,57 @@ public class ConsistentHash implements ConsistentHashInterface {
 			if (node.getHostName().equals(server)) {
 				return node.remove(key);
 			} else {
-				return this.lookupService.remoteRequest(3, key, null,
-						node.getHostName());
+				return this.lookupService.remoteRequest(3, key.getBytes(),
+						null, node.getHostName());
 			}
 
+		} catch (UnknownHostException e) {
+			throw new InternalKVStoreFailureException();
+		}
+	}
+
+	public byte[] handleAnnouncedFailure()
+			throws InternalKVStoreFailureException {
+		try {
+			String hostName = InetAddress.getLocalHost().getHostName();
+
+			PlanetLabNode node = this.lookupService.getNodeByHostName(hostName);
+
+			PlanetLabNode nextNode = this.lookupService
+					.getNextNodeByHostName(hostName);
+
+			SortedMap<Integer, String> keys = node.getKeys();
+			for (Integer key : keys.keySet()) {
+				this.lookupService.remoteRequest(
+						21,
+						MessageUtilities.standarizeMessage(
+								new byte[] { key.byteValue() }, 32),
+						keys.get(key).getBytes(), nextNode.getHostName());
+			}
+			node.removeAll();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		return MessageUtilities.formateReplyMessage(
+				ErrorEnum.SUCCESS.getCode(), null);
+	}
+
+	public byte[] handleNeighbourAnnouncedFailure(String key, String value)
+			throws InternalKVStoreFailureException, InexistentKeyException,
+			OutOfSpaceException, InvalidKeyException {
+		if (key.length() != 32)
+			throw new InvalidKeyException("Illegal Key Size.");
+
+		try {
+			String hostName = InetAddress.getLocalHost().getHostName();
+
+			PlanetLabNode node = this.lookupService.getNodeByHostName(hostName);
+
+			System.out.println("handling neighbour announced failure @ "
+					+ hostName);
+			System.out.println("adding " + key + " and " + value);
+
+			return node.put(key, value);
 		} catch (UnknownHostException e) {
 			throw new InternalKVStoreFailureException();
 		}

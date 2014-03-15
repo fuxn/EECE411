@@ -94,21 +94,10 @@ public class ServerRunnable implements Runnable {
 			InputStream reader = client.getInputStream();
 
 			int command = reader.read();
-			byte[] key = new byte[32];
-			int bytesRcvd;
-			int totalBytesRcvd = 0;
-			while (totalBytesRcvd < key.length) {
-				if ((bytesRcvd = reader.read(key, totalBytesRcvd, key.length
-						- totalBytesRcvd)) == -1)
-					throw new SocketException("connection close prematurely.");
-
-				totalBytesRcvd += bytesRcvd;
-			}
-
+			byte[] key = MessageUtilities.checkRequestKey(command, reader);
 			byte[] value = MessageUtilities.checkRequestValue(command, reader);
 
 			return new Message(client, command, key, value);
-
 		} catch (SocketException e) {
 			throw new InternalKVStoreFailureException();
 		} catch (IOException e) {
@@ -121,6 +110,7 @@ public class ServerRunnable implements Runnable {
 			throws InexistentKeyException, UnrecognizedCommandException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {
+		System.out.println("executing command " + command);
 		if (command == 1)
 			return cHash.put(key, value);
 		else if (command == 2)
@@ -129,11 +119,13 @@ public class ServerRunnable implements Runnable {
 			return cHash.remove(key);
 		else if (command == 4)
 			return this.announceFailure();
+		else if (command == 21)
+			return cHash.handleNeighbourAnnouncedFailure(key, value);
 		else
 			throw new UnrecognizedCommandException();
 	}
 
-	private byte[] announceFailure() {
+	private byte[] announceFailure() throws InternalKVStoreFailureException {
 		this.listener.onAnnouncedFailure();
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);

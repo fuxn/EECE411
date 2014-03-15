@@ -59,6 +59,14 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
+	public SortedMap<Integer, String> getKeys() {
+		return this.values;
+	}
+
+	public void removeAll() {
+		this.values.clear();
+	}
+
 	public String getHostName() {
 		return this.hostName;
 	}
