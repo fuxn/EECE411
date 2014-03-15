@@ -12,7 +12,6 @@ import Interface.EventListener;
 import Interface.ConsistentHashInterface;
 import Utilities.ConsistentHash;
 import Utilities.ErrorEnum;
-import Utilities.PlanetLabNode;
 import Utilities.Thread.ThreadPool;
 
 public class ProtocolImpl implements EventListener {
@@ -28,9 +27,7 @@ public class ProtocolImpl implements EventListener {
 
 	private int numConnection = 0;
 
-	static volatile boolean keepRunning = true;
-
-	public ProtocolImpl(Collection<PlanetLabNode> nodes) {
+	public ProtocolImpl(Collection<String> nodes) {
 		this.cHash = new ConsistentHash(1, nodes);
 
 		threadPool = new ThreadPool(maxThreads, maxTasks);

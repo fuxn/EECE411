@@ -15,15 +15,15 @@ import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 
 public class LookupService {
-	private SortedMap<Integer, PlanetLabNode> circle = new TreeMap<Integer, PlanetLabNode>();
+	private SortedMap<Integer, String> circle = new TreeMap<Integer, String>();
 
-	public LookupService(int numberOfReplicas, Collection<PlanetLabNode> nodes) {
-		for (PlanetLabNode node : nodes) {
-			this.circle.put(node.getHostName().hashCode(), node);
+	public LookupService(int numberOfReplicas, Collection<String> nodes) {
+		for (String node : nodes) {
+			this.circle.put(node.hashCode(), node);
 		}
 	}
 
-	public PlanetLabNode getNode(String key) throws InexistentKeyException,
+	public String getNode(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -31,7 +31,7 @@ public class LookupService {
 		int hash = key.hashCode();
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
-			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
+			SortedMap<Integer, String> tailMap = this.circle
 					.tailMap(hash);
 			hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
 					.firstKey();
@@ -40,17 +40,17 @@ public class LookupService {
 		return this.circle.get(hash);
 	}
 
-	public List<PlanetLabNode> getNodes(String fromKey, int numOfReplicas)
+	public List<String> getNodes(String fromKey, int numOfReplicas)
 			throws InexistentKeyException, InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		List<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
+		List<String> nodes = new ArrayList<String>();
 
 		int hash = fromKey.hashCode();
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.circle.containsKey(hash)) {
-			SortedMap<Integer, PlanetLabNode> tailMap = this.circle
+			SortedMap<Integer, String> tailMap = this.circle
 					.tailMap(hash);
 			hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
 					.firstKey();
@@ -65,19 +65,19 @@ public class LookupService {
 		return nodes;
 	}
 
-	private PlanetLabNode getNextNode(int key)
+	private String getNextNode(int key)
 			throws InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		SortedMap<Integer, PlanetLabNode> tailMap = this.circle.tailMap(key);
+		SortedMap<Integer, String> tailMap = this.circle.tailMap(key);
 		int hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
 				.firstKey();
 
 		return this.circle.get(hash);
 	}
 
-	public PlanetLabNode getNodeByHostName(String hostName)
+	public String getNodeByHostName(String hostName)
 			throws InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -85,12 +85,12 @@ public class LookupService {
 		return this.circle.get(hostName.hashCode());
 	}
 
-	public PlanetLabNode getNextNodeByHostName(String hostName)
+	public String getNextNodeByHostName(String hostName)
 			throws InternalKVStoreFailureException {
 		if (this.circle.isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		SortedMap<Integer, PlanetLabNode> tailMap = this.circle
+		SortedMap<Integer,String> tailMap = this.circle
 				.tailMap(hostName.hashCode() + 1);
 		int hash = tailMap.isEmpty() ? this.circle.firstKey() : tailMap
 				.firstKey();

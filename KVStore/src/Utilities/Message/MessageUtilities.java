@@ -86,7 +86,7 @@ public class MessageUtilities {
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
 
-	public static byte[] checkRequestKey(int command, InputStream in) {
+	public static String checkRequestKey(int command, InputStream in) {
 		try {
 			System.out.println("command : " + command);
 			if (MessageUtilities.isCheckRequestKey(command)) {
@@ -102,7 +102,7 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-				return key;
+				return new String(key);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -111,7 +111,7 @@ public class MessageUtilities {
 		return null;
 	}
 
-	public static byte[] checkRequestValue(int command, InputStream in) {
+	public static String checkRequestValue(int command, InputStream in) {
 		try {
 			System.out.println("command : " + command);
 			if (MessageUtilities.isCheckRequestValue(command)) {
@@ -126,7 +126,7 @@ public class MessageUtilities {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
-				return value;
+				return new String(value);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

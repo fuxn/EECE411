@@ -17,10 +17,18 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	private LookupService lookupService;
 	private int numberOfReplicas;
+	private PlanetLabNode local;
 
-	public ConsistentHash(int numberOfReplicas, Collection<PlanetLabNode> nodes) {
+	public ConsistentHash(int numberOfReplicas, Collection<String> nodes) {
 		this.lookupService = new LookupService(numberOfReplicas, nodes);
 		this.numberOfReplicas = numberOfReplicas;
+
+		try {
+			this.local = new PlanetLabNode(InetAddress.getLocalHost()
+					.getHostName());
+		} catch (UnknownHostException e) {
+
+		}
 	}
 
 	public byte[] put(String key, String value) throws InexistentKeyException,
@@ -29,14 +37,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		List<PlanetLabNode> nodes = this.lookupService.getNodes(key,
+		List<String> nodes = this.lookupService.getNodes(key,
 				this.numberOfReplicas);
 
-		PlanetLabNode firstNode = nodes.get(0);
+		String firstNode = nodes.get(0);
 		byte[] reply = this.put(firstNode, key, value);
 		nodes.remove(0);
 
-		for (PlanetLabNode node : nodes) {
+		for (String node : nodes) {
 			this.put(node, key, value);
 		}
 
@@ -44,23 +52,18 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private byte[] put(PlanetLabNode node, String key, String value)
+	private byte[] put(String node, String key, String value)
 			throws InexistentKeyException, OutOfSpaceException,
 			InternalKVStoreFailureException {
 
-		try {
-			String server = InetAddress.getLocalHost().getHostName();
-			if (node.getHostName().equals(server)) {
-				return node.put(key, value);
-			} else {
+		if (node.equals(this.local.getHostName())) {
+			return this.local.put(key, value);
+		} else {
 
-				return this.lookupService.remoteRequest(1, key.getBytes(),
-						value.getBytes(), node.getHostName());
-			}
-
-		} catch (UnknownHostException e) {
-			throw new InternalKVStoreFailureException();
+			return this.lookupService.remoteRequest(1, key.getBytes(),
+					value.getBytes(), node);
 		}
+
 	}
 
 	public byte[] get(String key) throws InexistentKeyException,
@@ -68,14 +71,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		PlanetLabNode node = this.lookupService.getNode(key);
+		String node = this.lookupService.getNode(key);
 		try {
 			String server = InetAddress.getLocalHost().getHostName();
-			if (node.getHostName().equals(server)) {
-				return node.get(key);
+			if (node.equals(server)) {
+				return this.local.get(key);
 			} else {
 				return this.lookupService.remoteRequest(2, key.getBytes(),
-						null, node.getHostName());
+						null, node);
 			}
 
 		} catch (UnknownHostException e) {
@@ -89,43 +92,31 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		PlanetLabNode node = this.lookupService.getNode(key);
-		try {
-			String server = InetAddress.getLocalHost().getHostName();
-			if (node.getHostName().equals(server)) {
-				return node.remove(key);
-			} else {
-				return this.lookupService.remoteRequest(3, key.getBytes(),
-						null, node.getHostName());
-			}
+		String node = this.lookupService.getNode(key);
 
-		} catch (UnknownHostException e) {
-			throw new InternalKVStoreFailureException();
+		if (node.equals(this.local.getHostName())) {
+			return this.local.remove(key);
+		} else {
+			return this.lookupService.remoteRequest(3, key.getBytes(), null,
+					node);
 		}
+
 	}
 
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException {
-		try {
-			String hostName = InetAddress.getLocalHost().getHostName();
 
-			PlanetLabNode node = this.lookupService.getNodeByHostName(hostName);
+		String nextNode = this.lookupService.getNextNodeByHostName(this.local
+				.getHostName());
 
-			PlanetLabNode nextNode = this.lookupService
-					.getNextNodeByHostName(hostName);
-
-			SortedMap<Integer, String> keys = node.getKeys();
-			for (Integer key : keys.keySet()) {
-				this.lookupService.remoteRequest(
-						21,
-						MessageUtilities.standarizeMessage(
-								new byte[] { key.byteValue() }, 32),
-						keys.get(key).getBytes(), nextNode.getHostName());
-			}
-			node.removeAll();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
+		SortedMap<Integer, String> keys = this.local.getKeys();
+		for (Integer key : keys.keySet()) {
+			this.lookupService.remoteRequest(21, MessageUtilities
+					.standarizeMessage(new byte[] { key.byteValue() }, 32),
+					keys.get(key).getBytes(), nextNode);
 		}
+		this.local.removeAll();
+
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
@@ -136,19 +127,12 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		try {
-			String hostName = InetAddress.getLocalHost().getHostName();
+		System.out.println("handling neighbour announced failure @ "
+				+ this.local.getHostName());
+		System.out.println("adding " + key + " and " + value);
 
-			PlanetLabNode node = this.lookupService.getNodeByHostName(hostName);
+		return this.local.put(key, value);
 
-			System.out.println("handling neighbour announced failure @ "
-					+ hostName);
-			System.out.println("adding " + key + " and " + value);
-
-			return node.put(key, value);
-		} catch (UnknownHostException e) {
-			throw new InternalKVStoreFailureException();
-		}
 	}
 
 	@Override

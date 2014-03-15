@@ -39,16 +39,16 @@ public class ServerRunnable implements Runnable {
 
 		try {
 
-			this.message = this.onReceiveMessage(this.server);
-
-			System.out.println("new command executed: ");
-
+			InputStream reader = this.server.getInputStream();
 			OutputStream writer = this.server.getOutputStream();
-
 			try {
 
-				byte[] results = this.exec(this.message.getCommand(),
-						this.message.getKey(), this.message.getValue());
+				int command = reader.read();
+				String key = MessageUtilities.checkRequestKey(command, reader);
+				String value = MessageUtilities.checkRequestValue(command,
+						reader);
+
+				byte[] results = this.exec(command, key, value);
 
 				if (results != null) {
 					System.out.println("result " + Arrays.toString(results));
@@ -77,31 +77,6 @@ public class ServerRunnable implements Runnable {
 
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		} catch (SystemOverloadException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (InternalKVStoreFailureException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-	}
-
-	private Message onReceiveMessage(Socket client)
-			throws SystemOverloadException, InternalKVStoreFailureException {
-
-		try {
-			InputStream reader = client.getInputStream();
-
-			int command = reader.read();
-			byte[] key = MessageUtilities.checkRequestKey(command, reader);
-			byte[] value = MessageUtilities.checkRequestValue(command, reader);
-
-			return new Message(client, command, key, value);
-		} catch (SocketException e) {
-			throw new InternalKVStoreFailureException();
-		} catch (IOException e) {
-			throw new InternalKVStoreFailureException();
 		}
 
 	}

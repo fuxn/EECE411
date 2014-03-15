@@ -11,12 +11,12 @@ public class PlanetLabNode {
 
 	private String hostName;
 	private SortedMap<Integer, String> values = new TreeMap<Integer, String>();
-
-	public PlanetLabNode(String hostName) {
+	
+	public PlanetLabNode(String hostName){
 		this.hostName = hostName;
 	}
 
-	public byte[] put(String key, String value) throws InexistentKeyException,
+	public  synchronized byte[] put(String key, String value) throws InexistentKeyException,
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
@@ -34,7 +34,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] get(String key) throws InexistentKeyException {
+	public  synchronized byte[] get(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
@@ -42,7 +42,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key.hashCode()));
 	}
 
-	public byte[] remove(String key) throws InexistentKeyException {
+	public  synchronized byte[] remove(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
@@ -62,14 +62,15 @@ public class PlanetLabNode {
 	public SortedMap<Integer, String> getKeys() {
 		return this.values;
 	}
+	
+	public String getHostName(){
+		return this.hostName;
+	}
 
 	public void removeAll() {
 		this.values.clear();
 	}
 
-	public String getHostName() {
-		return this.hostName;
-	}
 
 	private boolean isInexistentKey(String key) {
 		return (!this.values.containsKey(key.hashCode()));

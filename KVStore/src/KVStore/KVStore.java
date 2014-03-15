@@ -10,12 +10,12 @@ public class KVStore {
 
 	public static void main(String[] args) throws IOException {
 
-		Collection<PlanetLabNode> nodes = new ArrayList<PlanetLabNode>();
+		Collection<String> nodes = new ArrayList<String>();
 
-		nodes.add(new PlanetLabNode("planetlab2.cs.ubc.ca"));
-		nodes.add(new PlanetLabNode("planetlab1.cs.ubc.ca"));
-		nodes.add(new PlanetLabNode("planetlab2.cs.stevens-tech.edu"));
-		nodes.add(new PlanetLabNode("planetlab-4.eecs.cwru.edu"));
+		nodes.add("planetlab2.cs.ubc.ca");
+		nodes.add("planetlab1.cs.ubc.ca");
+		nodes.add("planetlab2.cs.stevens-tech.edu");
+		nodes.add("planetlab-4.eecs.cwru.edu");
 
 		ProtocolImpl protocol = new ProtocolImpl(nodes);
 		protocol.startServer();
