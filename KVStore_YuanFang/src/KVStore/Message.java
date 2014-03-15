@@ -14,7 +14,8 @@ public class Message {
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(command.byteValue());
 
-		message.addAll(standarizeMessage(key, 32));
+		if (key != null)
+			message.addAll(standarizeMessage(key, 32));
 		if (value != null)
 			message.addAll(standarizeMessage(value, 1024));
 

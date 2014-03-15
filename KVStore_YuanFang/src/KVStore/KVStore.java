@@ -37,6 +37,8 @@ public class KVStore {
 			return 2;
 		else if (cmd.trim().equals("remove"))
 			return 3;
+		else if (cmd.trim().equals("announcedFailure"))
+			return 4;
 		else
 			System.out.println("invalid input command");
 
