@@ -21,7 +21,6 @@ import Utilities.Message.MessageUtilities;
 
 public class ServerRunnable implements Runnable {
 	private Socket server;
-	private Message message;
 	private ConsistentHashInterface cHash;
 	private EventListener listener;
 

@@ -3,6 +3,8 @@ package Utilities.Message;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -110,12 +112,62 @@ public class MessageUtilities {
 		}
 		return null;
 	}
-
-	public static String checkRequestValue(int command, InputStream in) {
+	
+	public static String checkRequestKey(int command, SocketChannel socketChannel,ByteBuffer buffer) {
 		try {
-			System.out.println("command : " + command);
+			if (MessageUtilities.isCheckRequestKey(command)) {
+				
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < buffer.limit()) {
+					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+
+					totalBytesRcvd += bytesRcvd;
+				}
+				
+				buffer.flip();
+				byte[] key = new byte[buffer.limit()];
+				buffer.get(key);
+				
+				return new String(key);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static String checkRequestValue(int command, SocketChannel socketChannel,ByteBuffer buffer) {
+		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
 				System.out.println("Checking request value.. ");
+				int bytesRcvd = 0;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < buffer.limit()) {
+					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+				
+				buffer.flip();
+				byte[] value = new byte[buffer.limit()];
+				buffer.get(value);
+				return new String(value);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static String checkRequestValue(int command, InputStream in) {
+		try {
+			if (MessageUtilities.isCheckRequestValue(command)) {
 				byte[] value = new byte[1024];
 				int bytesRcvd = 0;
 				int totalBytesRcvd = 0;

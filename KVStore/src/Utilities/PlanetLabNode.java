@@ -16,7 +16,7 @@ public class PlanetLabNode {
 		this.hostName = hostName;
 	}
 
-	public  synchronized byte[] put(String key, String value) throws InexistentKeyException,
+	public byte[] put(String key, String value) throws InexistentKeyException,
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
@@ -26,6 +26,7 @@ public class PlanetLabNode {
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
 		}
+		
 		for (Integer index : values.keySet()) {
 			System.out
 					.println("key: " + index + " value: " + values.get(index));
@@ -34,7 +35,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public  synchronized byte[] get(String key) throws InexistentKeyException {
+	public byte[] get(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
@@ -42,7 +43,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key.hashCode()));
 	}
 
-	public  synchronized byte[] remove(String key) throws InexistentKeyException {
+	public byte[] remove(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
