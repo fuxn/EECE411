@@ -88,6 +88,14 @@ public class MessageUtilities {
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
 
+	public static String checkReplyValue(SocketChannel socketChannel,
+			ByteBuffer buffer) {
+		buffer.flip();
+		byte[] value = new byte[buffer.limit()];
+		buffer.get(value);
+		return new String(value);
+	}
+
 	public static String checkRequestKey(int command, InputStream in) {
 		try {
 			System.out.println("command : " + command);
@@ -112,11 +120,12 @@ public class MessageUtilities {
 		}
 		return null;
 	}
-	
-	public static String checkRequestKey(int command, SocketChannel socketChannel,ByteBuffer buffer) {
+
+	public static String checkRequestKey(int command,
+			SocketChannel socketChannel, ByteBuffer buffer) {
 		try {
 			if (MessageUtilities.isCheckRequestKey(command)) {
-				
+
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
 				while (totalBytesRcvd < buffer.limit()) {
@@ -126,11 +135,11 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-				
+
 				buffer.flip();
 				byte[] key = new byte[buffer.limit()];
 				buffer.get(key);
-				
+
 				return new String(key);
 			}
 		} catch (IOException e) {
@@ -140,7 +149,8 @@ public class MessageUtilities {
 		return null;
 	}
 
-	public static String checkRequestValue(int command, SocketChannel socketChannel,ByteBuffer buffer) {
+	public static String checkRequestValue(int command,
+			SocketChannel socketChannel, ByteBuffer buffer) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
 				System.out.println("Checking request value.. ");
@@ -152,7 +162,7 @@ public class MessageUtilities {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
-				
+
 				buffer.flip();
 				byte[] value = new byte[buffer.limit()];
 				buffer.get(value);
@@ -164,7 +174,7 @@ public class MessageUtilities {
 		}
 		return null;
 	}
-	
+
 	public static String checkRequestValue(int command, InputStream in) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
