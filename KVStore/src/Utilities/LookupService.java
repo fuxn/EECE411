@@ -104,7 +104,8 @@ public class LookupService {
 					Integer.valueOf(command), key, value);
 
 			ClientDispatcher dispatcher = new ClientDispatcher();
-			ReadReplyEventHandler readReplyEventhandler = new ReadReplyEventHandler();
+			ReadReplyEventHandler readReplyEventhandler = new ReadReplyEventHandler(
+					Integer.valueOf(command));
 			WriteRequestEventHandler writeRequestEventHandler = new WriteRequestEventHandler(
 					dispatcher.getDemultiplexer(), ByteBuffer.wrap(request));
 			ConnectionEventHandler connectionEventHandler = new ConnectionEventHandler(

@@ -52,22 +52,27 @@ public class ReadEventHandler implements EventHandler {
 
 		int c = command[0];
 
-		String key = MessageUtilities.checkRequestKey(c, this.socketChannel, this.keyBuffer);
-		String value = MessageUtilities.checkRequestValue(c, this.socketChannel, this.valueBuffer);
-			
+		String key = MessageUtilities.checkRequestKey(c, this.socketChannel,
+				this.keyBuffer);
+		String value = MessageUtilities.checkRequestValue(c,
+				this.socketChannel, this.valueBuffer);
+
 		commandBuffer.clear();
 		keyBuffer.clear();
 		valueBuffer.clear();
 
-		/*threadPool
-				.execute(new Processor(this.socketChannel,c, key, value));*/
-		execAndHandOff(this.socketChannel,c,key,value);
+		/*
+		 * threadPool .execute(new Processor(this.socketChannel,c, key, value));
+		 */
+		execAndHandOff(this.socketChannel, c, key, value);
 
 	}
 
-	synchronized void execAndHandOff(SocketChannel socketChannel,int command, String key, String value) {
+	synchronized void execAndHandOff(SocketChannel socketChannel, int command,
+			String key, String value) {
 
-		System.out.println("executing command " + command + " key "+ key+ " value "+ value);
+		System.out.println("executing command " + command + " key " + key
+				+ " value " + value);
 		byte[] replyMessage;
 
 		try {
@@ -78,8 +83,7 @@ public class ReadEventHandler implements EventHandler {
 			else if (command == 3)
 				replyMessage = cHash.remove(key);
 			else if (command == 4)
-				replyMessage = MessageUtilities.formateReplyMessage(
-						ErrorEnum.SUCCESS.getCode(), null);
+				replyMessage = cHash.handleAnnouncedFailure();
 			else if (command == 21)
 				replyMessage = cHash
 						.handleNeighbourAnnouncedFailure(key, value);
@@ -103,7 +107,7 @@ public class ReadEventHandler implements EventHandler {
 		}
 
 		System.out.println(replyMessage[0]);
-		
+
 		try {
 			socketChannel.register(this.selector, SelectionKey.OP_WRITE,
 					ByteBuffer.wrap(replyMessage));
@@ -120,7 +124,8 @@ public class ReadEventHandler implements EventHandler {
 		private String value;
 		private SocketChannel socketChannel;
 
-		public Processor(SocketChannel socketChannel,int command, String key, String value) {
+		public Processor(SocketChannel socketChannel, int command, String key,
+				String value) {
 			this.command = command;
 			this.key = key;
 			this.value = value;
@@ -129,7 +134,8 @@ public class ReadEventHandler implements EventHandler {
 
 		@Override
 		public void run() {
-			execAndHandOff(this.socketChannel,this.command, this.key, this.value);
+			execAndHandOff(this.socketChannel, this.command, this.key,
+					this.value);
 		}
 
 	}

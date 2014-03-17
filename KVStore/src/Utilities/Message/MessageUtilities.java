@@ -89,11 +89,32 @@ public class MessageUtilities {
 	}
 
 	public static String checkReplyValue(SocketChannel socketChannel,
-			ByteBuffer buffer) {
-		buffer.flip();
-		byte[] value = new byte[buffer.limit()];
-		buffer.get(value);
-		return new String(value);
+			int command, ByteBuffer buffer) {
+		if (MessageUtilities.isCheckReplyValue(command)) {
+			long endTimeMillis = System.currentTimeMillis() + 10000;
+			try {
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < buffer.limit()
+						&& System.currentTimeMillis() < endTimeMillis) {
+					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+
+					totalBytesRcvd += bytesRcvd;
+				}
+
+				buffer.flip();
+				byte[] value = new byte[buffer.limit()];
+				buffer.get(value);
+
+				return new String(value);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 
 	public static String checkRequestKey(int command, InputStream in) {

@@ -11,9 +11,14 @@ public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
 	private String value;
 
+	private int command;
+
+	public ReadReplyEventHandler(int command) {
+		this.command = command;
+	}
+
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
-		System.out.println("ReadReplyEventHandler");
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
 		ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
@@ -27,19 +32,13 @@ public class ReadReplyEventHandler implements EventHandler {
 
 		this.errorCode = error[0];
 
-		int length = socketChannel.read(valueBuffer);
-		if (length == -1) {
-			return;
-		}
 		this.value = MessageUtilities.checkReplyValue(socketChannel,
-				valueBuffer);
-		System.out.println(this.value);
+				this.command, valueBuffer);
 
 		errorCodeBuffer.clear();
 		valueBuffer.clear();
 
 		socketChannel.close();
-		handle.cancel();
 	}
 
 	public byte[] getReplyMessage() {
