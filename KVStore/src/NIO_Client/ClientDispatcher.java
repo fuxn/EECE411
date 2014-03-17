@@ -46,7 +46,7 @@ public class ClientDispatcher {
 					if (handle.isReadable()) {
 						System.out.println("reading");
 						EventHandler handler = (EventHandler) this.registeredHandlers
-								.get(Integer.valueOf(1));
+								.get(Integer.valueOf(SelectionKey.OP_READ));
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
@@ -54,7 +54,7 @@ public class ClientDispatcher {
 					if (handle.isWritable()) {
 						System.out.println("writing");
 						EventHandler handler = (EventHandler) this.registeredHandlers
-								.get(Integer.valueOf(4));
+								.get(Integer.valueOf(SelectionKey.OP_WRITE));
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
@@ -62,7 +62,7 @@ public class ClientDispatcher {
 					if (handle.isConnectable()) {
 						System.out.println("connecting");
 						EventHandler handler = (EventHandler) this.registeredHandlers
-								.get(Integer.valueOf(8));
+								.get(Integer.valueOf(SelectionKey.OP_CONNECT));
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
