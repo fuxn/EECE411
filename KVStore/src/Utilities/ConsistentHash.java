@@ -109,10 +109,10 @@ public class ConsistentHash implements ConsistentHashInterface {
 		String nextNode = this.lookupService.getNextNodeByHostName(this.local
 				.getHostName());
 
-		SortedMap<Integer, String> keys = this.local.getKeys();
-		for (Integer key : keys.keySet()) {
+		SortedMap<String, String> keys = this.local.getKeys();
+		for (String key : keys.keySet()) {
 			this.lookupService.remoteRequest(21, MessageUtilities
-					.standarizeMessage(new byte[] { key.byteValue() }, 32),
+					.standarizeMessage( key.getBytes(), 32),
 					keys.get(key).getBytes(), nextNode);
 		}
 		this.local.removeAll();

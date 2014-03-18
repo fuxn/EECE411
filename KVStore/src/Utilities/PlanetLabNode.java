@@ -10,7 +10,7 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private String hostName;
-	private SortedMap<Integer, String> values = new TreeMap<Integer, String>();
+	private SortedMap<String, String> values = new TreeMap<String, String>();
 	
 	public PlanetLabNode(String hostName){
 		this.hostName = hostName;
@@ -22,12 +22,12 @@ public class PlanetLabNode {
 			throw new OutOfSpaceException();
 
 		try {
-			this.values.put(key.hashCode(), value);
+			this.values.put(key, value);
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
 		}
 		
-		for (Integer index : values.keySet()) {
+		for (String index : values.keySet()) {
 			System.out
 					.println("key: " + index + " value: " + values.get(index));
 		}
@@ -50,7 +50,7 @@ public class PlanetLabNode {
 		this.values.remove(new String(key).hashCode());
 
 		if (!this.values.isEmpty()) {
-			for (Integer index : values.keySet()) {
+			for (String index : values.keySet()) {
 				System.out.println("key: " + index + " value: "
 						+ values.get(index));
 			}
@@ -60,7 +60,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public SortedMap<Integer, String> getKeys() {
+	public SortedMap<String, String> getKeys() {
 		return this.values;
 	}
 	
