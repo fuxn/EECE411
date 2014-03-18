@@ -19,9 +19,6 @@ import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import NIO_Client.ClientDispatcher;
-import NIO_Client.ConnectionEventHandler;
-import NIO_Client.ReadReplyEventHandler;
-import NIO_Client.WriteRequestEventHandler;
 import Utilities.Message.MessageUtilities;
 
 public class ConsistentHash implements ConsistentHashInterface {
@@ -150,8 +147,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 						MessageUtilities.requestMessage(command,
 								key.getBytes(), value.getBytes()));
 
-				
-
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -210,10 +205,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			client.connect(new InetSocketAddress(host, 4560));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
 					selector, handle, message);
-			
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
