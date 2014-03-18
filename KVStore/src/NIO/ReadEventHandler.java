@@ -61,14 +61,13 @@ public class ReadEventHandler implements EventHandler {
 		keyBuffer.clear();
 		valueBuffer.clear();
 
-		/*
-		 * threadPool .execute(new Processor(this.socketChannel,c, key, value));
-		 */
-		execAndHandOff(this.socketChannel, c, key, value);
+		threadPool.execute(new Processor(handle, c, key, value));
+
+		// execAndHandOff(this.socketChannel, c, key, value);
 
 	}
 
-	synchronized void execAndHandOff(SocketChannel socketChannel, int command,
+	synchronized void execAndHandOff(SelectionKey handle, int command,
 			String key, String value) {
 
 		System.out.println("executing command " + command + " key " + key
@@ -106,36 +105,29 @@ public class ReadEventHandler implements EventHandler {
 					ErrorEnum.OUT_OF_SPACE.getCode(), null);
 		}
 
-		System.out.println(replyMessage[0]);
+		handle.interestOps(SelectionKey.OP_WRITE);
+		handle.attach(ByteBuffer.wrap(replyMessage));
 
-		try {
-			socketChannel.register(this.selector, SelectionKey.OP_WRITE,
-					ByteBuffer.wrap(replyMessage));
-		} catch (ClosedChannelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("read finish ");
+		this.selector.wakeup();
 	}
 
 	class Processor implements Runnable {
 		private int command;
 		private String key;
 		private String value;
-		private SocketChannel socketChannel;
+		private SelectionKey handle;
 
-		public Processor(SocketChannel socketChannel, int command, String key,
+		public Processor(SelectionKey handle, int command, String key,
 				String value) {
 			this.command = command;
 			this.key = key;
 			this.value = value;
-			this.socketChannel = socketChannel;
+			this.handle = handle;
 		}
 
 		@Override
 		public void run() {
-			execAndHandOff(this.socketChannel, this.command, this.key,
-					this.value);
+			execAndHandOff(this.handle, this.command, this.key, this.value);
 		}
 
 	}
