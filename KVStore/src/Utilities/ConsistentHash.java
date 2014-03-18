@@ -4,8 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
-import java.util.SortedMap;
-
+import java.util.Map;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
@@ -109,7 +108,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		String nextNode = this.lookupService.getNextNodeByHostName(this.local
 				.getHostName());
 
-		SortedMap<String, String> keys = this.local.getKeys();
+		Map<String, String> keys = this.local.getKeys();
 		for (String key : keys.keySet()) {
 			this.lookupService.remoteRequest(21, MessageUtilities
 					.standarizeMessage( key.getBytes(), 32),

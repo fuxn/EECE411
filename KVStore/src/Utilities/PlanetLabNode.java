@@ -1,8 +1,7 @@
 package Utilities;
 
-import java.util.SortedMap;
-import java.util.TreeMap;
-
+import java.util.HashMap;
+import java.util.Map;
 import Utilities.Message.MessageUtilities;
 import Exception.InexistentKeyException;
 import Exception.OutOfSpaceException;
@@ -10,7 +9,7 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private String hostName;
-	private SortedMap<String, String> values = new TreeMap<String, String>();
+	private Map<String, String> values = new HashMap<String, String>();
 	
 	public PlanetLabNode(String hostName){
 		this.hostName = hostName;
@@ -29,7 +28,7 @@ public class PlanetLabNode {
 		
 		for (String index : values.keySet()) {
 			System.out
-					.println("key: " + index + " value: " + values.get(index));
+					.println("key: " + index + " value: " + this.values.get(index));
 		}
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
@@ -40,14 +39,14 @@ public class PlanetLabNode {
 			throw new InexistentKeyException();
 
 		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), this.values.get(key.hashCode()));
+				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
 	}
 
 	public byte[] remove(String key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
-		this.values.remove(new String(key).hashCode());
+		this.values.remove(key);
 
 		if (!this.values.isEmpty()) {
 			for (String index : values.keySet()) {
@@ -60,7 +59,7 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public SortedMap<String, String> getKeys() {
+	public Map<String, String> getKeys() {
 		return this.values;
 	}
 	
@@ -74,7 +73,7 @@ public class PlanetLabNode {
 
 
 	private boolean isInexistentKey(String key) {
-		return (!this.values.containsKey(key.hashCode()));
+		return (!this.values.containsKey(key));
 	}
 
 }
