@@ -97,7 +97,7 @@ public class LookupService {
 		return this.circle.get(hash);
 	}
 
-	public byte[] remoteRequest(int command, byte[] key, byte[] value,
+	/*public byte[] remoteRequest(int command, byte[] key, byte[] value,
 			String serverHostName) throws InternalKVStoreFailureException {
 		try {
 			byte[] request = MessageUtilities.formateRequestMessage(
@@ -119,7 +119,7 @@ public class LookupService {
 		} catch (Exception e) {
 		}
 		throw new InternalKVStoreFailureException();
-	}
+	}*/
 
 	/*
 	 * public byte[] remoteRequest(int command, byte[] key, byte[] value, String

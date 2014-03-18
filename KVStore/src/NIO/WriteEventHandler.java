@@ -11,7 +11,9 @@ public class WriteEventHandler implements EventHandler {
 		System.out.println("handel write ");
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		ByteBuffer inputBuffer = (ByteBuffer) handle.attachment();
-		socketChannel.write(inputBuffer);
+		while (inputBuffer.hasRemaining()) {
+			socketChannel.write(inputBuffer);
+		}
 		socketChannel.close(); // Close connection
 	}
 

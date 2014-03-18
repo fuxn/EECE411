@@ -1,15 +1,27 @@
 package Utilities;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
+import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
+import NIO_Client.ClientDispatcher;
+import NIO_Client.ConnectionEventHandler;
+import NIO_Client.ReadReplyEventHandler;
+import NIO_Client.WriteRequestEventHandler;
 import Utilities.Message.MessageUtilities;
 
 public class ConsistentHash implements ConsistentHashInterface {
@@ -25,8 +37,12 @@ public class ConsistentHash implements ConsistentHashInterface {
 		try {
 			this.local = new PlanetLabNode(InetAddress.getLocalHost()
 					.getHostName());
+
 		} catch (UnknownHostException e) {
 
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -55,13 +71,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			throws InexistentKeyException, OutOfSpaceException,
 			InternalKVStoreFailureException {
 
-		if (node.equals(this.local.getHostName())) {
-			return this.local.put(key, value);
-		} else {
-
-			return this.lookupService.remoteRequest(1, key.getBytes(),
-					value.getBytes(), node);
-		}
+		return this.local.put(key, value);
 
 	}
 
@@ -70,19 +80,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		String node = this.lookupService.getNode(key);
-		try {
-			String server = InetAddress.getLocalHost().getHostName();
-			if (node.equals(server)) {
-				return this.local.get(key);
-			} else {
-				return this.lookupService.remoteRequest(2, key.getBytes(),
-						null, node);
-			}
-
-		} catch (UnknownHostException e) {
-			throw new InternalKVStoreFailureException();
-		}
+		return this.local.get(key);
 
 	}
 
@@ -91,14 +89,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		String node = this.lookupService.getNode(key);
-
-		if (node.equals(this.local.getHostName())) {
-			return this.local.remove(key);
-		} else {
-			return this.lookupService.remoteRequest(3, key.getBytes(), null,
-					node);
-		}
+		return this.local.remove(key);
 
 	}
 
@@ -110,9 +101,15 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 		Map<String, String> keys = this.local.getKeys();
 		for (String key : keys.keySet()) {
-			this.lookupService.remoteRequest(21, MessageUtilities
-					.standarizeMessage( key.getBytes(), 32),
-					keys.get(key).getBytes(), nextNode);
+			try {
+				this.connectRemoteServer(nextNode, null, null, MessageUtilities
+						.requestMessage(21, MessageUtilities.standarizeMessage(
+								key.getBytes(), 32), keys.get(key).getBytes()));
+			} catch (Exception e) {
+				return MessageUtilities.formateReplyMessage(
+						ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+			}
+
 		}
 		this.local.removeAll();
 
@@ -138,4 +135,87 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public boolean shutDown() {
 		return false;
 	}
+
+	public void exec(Selector selector, SelectionKey handle, int command,
+			String key, String value) {
+
+		try {
+			String node = this.lookupService.getNode(key);
+
+			if (!node.equals(this.local.getHostName())) {
+
+				System.out.println("Remote Requesting");
+
+				this.connectRemoteServer(node, selector, handle,
+						MessageUtilities.requestMessage(command,
+								key.getBytes(), value.getBytes()));
+
+				
+
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		byte[] replyMessage = null;
+		try {
+			if (command == 1)
+				replyMessage = this.local.put(key, value);
+			else if (command == 2)
+				replyMessage = this.local.get(key);
+			else if (command == 3)
+				replyMessage = this.local.remove(key);
+			else if (command == 4)
+				replyMessage = this.handleAnnouncedFailure();
+			else if (command == 21)
+				replyMessage = this.handleNeighbourAnnouncedFailure(key, value);
+			else
+				throw new UnrecognizedCommandException();
+
+		} catch (InexistentKeyException ex) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INEXISTENT_KEY.getCode(), null);
+		} catch (UnrecognizedCommandException uc) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null);
+		} catch (InternalKVStoreFailureException internalException) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+		} catch (InvalidKeyException invalideKeyException) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INVALID_KEY.getCode(), null);
+		} catch (OutOfSpaceException e) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.OUT_OF_SPACE.getCode(), null);
+		} catch (Exception e) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+		}
+
+		handle.interestOps(SelectionKey.OP_WRITE);
+		handle.attach(ByteBuffer.wrap(replyMessage));
+
+		selector.wakeup();
+
+	}
+
+	private void connectRemoteServer(String host, Selector selector,
+			SelectionKey handle, ByteBuffer message) throws Exception {
+		SocketChannel client;
+		try {
+			client = SocketChannel.open();
+
+			client.configureBlocking(false);
+			client.connect(new InetSocketAddress(host, 4560));
+			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
+					selector, handle, message);
+			
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 }

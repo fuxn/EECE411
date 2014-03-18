@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Dispatcher {
+public class Dispatcher implements Runnable{
 
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
 	private Selector demultiplexer;
@@ -45,7 +45,6 @@ public class Dispatcher {
 					SelectionKey handle = handleIterator.next();
 
 					if (handle.isAcceptable()) {
-						System.out.println("accepting");
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_ACCEPT);
 						handler.handleEvent(handle);
@@ -55,7 +54,6 @@ public class Dispatcher {
 					}
 
 					if (handle.isReadable()) {
-						System.out.println("reading");
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_READ);
 						handler.handleEvent(handle);
@@ -63,7 +61,6 @@ public class Dispatcher {
 					}
 
 					if (handle.isWritable()) {
-						System.out.println("writing");
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_WRITE);
 						handler.handleEvent(handle);

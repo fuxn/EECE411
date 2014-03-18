@@ -1,7 +1,8 @@
 package Utilities;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import Utilities.Message.MessageUtilities;
 import Exception.InexistentKeyException;
 import Exception.OutOfSpaceException;
@@ -9,7 +10,7 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private String hostName;
-	private Map<String, String> values = new HashMap<String, String>();
+	private ConcurrentHashMap<String, String> values = new ConcurrentHashMap<String, String>();
 	
 	public PlanetLabNode(String hostName){
 		this.hostName = hostName;

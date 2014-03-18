@@ -17,9 +17,9 @@ public class KVStore {
 		nodes.add("planetlab2.cs.ubc.ca");
 		nodes.add("planetlab1.cs.ubc.ca");
 		// nodes.add("planetlab2.cs.stevens-tech.edu");
-		nodes.add("planetlab-4.eecs.cwru.edu");
+		//nodes.add("planetlab-4.eecs.cwru.edu");
 
-		// nodes.add(localHostName);
+		 nodes.add(localHostName);
 		System.out.println(localHostName);
 
 		/*
@@ -29,6 +29,7 @@ public class KVStore {
 
 		try {
 			new ReactorInitiator().initiateReactiveServer(localHostName, nodes);
+			new ReactorInitiator().initiateReactiveClient();
 		} catch (Exception e) { // TODO Auto-generated catch block
 			e.printStackTrace();
 		}

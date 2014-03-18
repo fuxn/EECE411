@@ -67,50 +67,6 @@ public class ReadEventHandler implements EventHandler {
 
 	}
 
-	synchronized void execAndHandOff(SelectionKey handle, int command,
-			String key, String value) {
-
-		System.out.println("executing command " + command + " key " + key
-				+ " value " + value);
-		byte[] replyMessage;
-
-		try {
-			if (command == 1)
-				replyMessage = cHash.put(key, value);
-			else if (command == 2)
-				replyMessage = cHash.get(key);
-			else if (command == 3)
-				replyMessage = cHash.remove(key);
-			else if (command == 4)
-				replyMessage = cHash.handleAnnouncedFailure();
-			else if (command == 21)
-				replyMessage = cHash
-						.handleNeighbourAnnouncedFailure(key, value);
-			else
-				throw new UnrecognizedCommandException();
-		} catch (InexistentKeyException ex) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INEXISTENT_KEY.getCode(), null);
-		} catch (UnrecognizedCommandException uc) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null);
-		} catch (InternalKVStoreFailureException internalException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
-		} catch (InvalidKeyException invalideKeyException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INVALID_KEY.getCode(), null);
-		} catch (OutOfSpaceException e) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.OUT_OF_SPACE.getCode(), null);
-		}
-
-		handle.interestOps(SelectionKey.OP_WRITE);
-		handle.attach(ByteBuffer.wrap(replyMessage));
-
-		this.selector.wakeup();
-	}
-
 	class Processor implements Runnable {
 		private int command;
 		private String key;
@@ -127,7 +83,7 @@ public class ReadEventHandler implements EventHandler {
 
 		@Override
 		public void run() {
-			execAndHandOff(this.handle, this.command, this.key, this.value);
+			cHash.exec(selector,this.handle, this.command, this.key, this.value);
 		}
 
 	}

@@ -34,6 +34,30 @@ public class MessageUtilities {
 		}
 		return request;
 	}
+	
+	public static ByteBuffer requestMessage(Integer command, byte[] key,
+			byte[] value) {
+		List<Byte> message = new ArrayList<Byte>();
+		message.add(command.byteValue());
+
+		if (key != null) {
+			for (int i = 0; i < key.length; i++) {
+				message.add(key[i]);
+			}
+		}
+
+		if (value != null) {
+			for (int i = 0; i < value.length; i++) {
+				message.add(value[i]);
+			}
+		}
+
+		byte[] request = new byte[message.size()];
+		for (int i = 0; i < message.size(); i++) {
+			request[i] = (Byte) message.get(i);
+		}
+		return ByteBuffer.wrap(request);
+	}
 
 	public static byte[] formateReplyMessage(Integer errorCode, String value) {
 

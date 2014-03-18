@@ -35,8 +35,9 @@ public class ReactorInitiator {
 
 		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
 				new WriteEventHandler());
-
-		dispatcher.run(); // Run the dispatcher loop
+		
+		Thread d = new Thread(dispatcher);
+		d.start(); // Run the dispatcher loop
 
 	}
 
@@ -64,6 +65,23 @@ public class ReactorInitiator {
 				writeRequestEventHandler);
 
 		dispatcher.run();
+	}
+	
+	public void initiateReactiveClient() throws Exception {
+
+		ClientDispatcher clientDispatcher = new ClientDispatcher();
+		clientDispatcher.registerEventHandler(
+				SelectionKey.OP_CONNECT,
+				new ConnectionEventHandler(clientDispatcher
+						.getDemultiplexer()));
+		clientDispatcher.registerEventHandler(
+				SelectionKey.OP_WRITE,
+				new WriteRequestEventHandler(clientDispatcher
+						.getDemultiplexer()));
+		clientDispatcher.registerEventHandler(SelectionKey.OP_READ,
+				new ReadReplyEventHandler());
+		Thread d = new Thread(clientDispatcher);
+		d.start(); 
 	}
 
 }

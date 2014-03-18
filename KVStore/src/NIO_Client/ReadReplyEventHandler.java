@@ -6,22 +6,24 @@ import java.nio.channels.SocketChannel;
 
 import NIO.EventHandler;
 import Utilities.Message.MessageUtilities;
+import Utilities.Message.RemoteMessage;
 
 public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
 	private String value;
 
-	private int command;
+	private ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
+	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
 
-	public ReadReplyEventHandler(int command) {
-		this.command = command;
+	public ReadReplyEventHandler() {
+
 	}
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
+		
+		System.out.println("Remote Read");
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
-		ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
-		ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
 
 		int errorCodelength = socketChannel.read(errorCodeBuffer);
 		System.out.println("error code length " + errorCodelength);
@@ -32,13 +34,25 @@ public class ReadReplyEventHandler implements EventHandler {
 
 		this.errorCode = error[0];
 
-		this.value = MessageUtilities.checkReplyValue(socketChannel,
-				this.command, valueBuffer);
+		RemoteMessage message = (RemoteMessage) handle.attachment();
+
+		int c = message.getMessage().array()[0];
+
+		this.value = MessageUtilities.checkReplyValue(socketChannel, c,
+				valueBuffer);
 
 		errorCodeBuffer.clear();
 		valueBuffer.clear();
 
-		socketChannel.close();
+		SelectionKey serverHandle = message.getServerHandle();
+		serverHandle.interestOps(SelectionKey.OP_WRITE);
+		serverHandle.attach(ByteBuffer.wrap(MessageUtilities
+				.formateReplyMessage(Integer.valueOf(this.errorCode),
+						this.value)));
+
+		message.getServerSelector().wakeup();
+
+		//socketChannel.close();
 	}
 
 	public byte[] getReplyMessage() {
