@@ -28,7 +28,7 @@ public class ProtocolImpl implements EventListener {
 	private int numConnection = 0;
 
 	public ProtocolImpl(Collection<String> nodes) {
-		this.cHash = new ConsistentHash(1, nodes);
+		this.cHash = new ConsistentHash(1, new Chord(nodes));
 
 		threadPool = new ThreadPool(maxThreads, maxTasks);
 		Runtime.getRuntime().addShutdownHook(new Thread() {

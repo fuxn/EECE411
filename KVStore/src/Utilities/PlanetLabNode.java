@@ -1,5 +1,6 @@
 package Utilities;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,8 +12,8 @@ public class PlanetLabNode {
 
 	private String hostName;
 	private ConcurrentHashMap<String, String> values = new ConcurrentHashMap<String, String>();
-	
-	public PlanetLabNode(String hostName){
+
+	public PlanetLabNode(String hostName) {
 		this.hostName = hostName;
 	}
 
@@ -26,10 +27,10 @@ public class PlanetLabNode {
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
 		}
-		
+
 		for (String index : values.keySet()) {
-			System.out
-					.println("key: " + index + " value: " + this.values.get(index));
+			System.out.println("key: " + index + " value: "
+					+ this.values.get(index));
 		}
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
@@ -60,18 +61,26 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
+	public Map<String, String> getKeys(String toKey) {
+		Map<String, String> keys = new HashMap<String, String>();
+		for (String key : this.values.keySet()) {
+			if (key.hashCode() <= toKey.hashCode())
+				keys.put(key, this.values.get(key));
+		}
+		return keys;
+	}
+
 	public Map<String, String> getKeys() {
 		return this.values;
 	}
-	
-	public String getHostName(){
+
+	public String getHostName() {
 		return this.hostName;
 	}
 
 	public void removeAll() {
 		this.values.clear();
 	}
-
 
 	private boolean isInexistentKey(String key) {
 		return (!this.values.containsKey(key));

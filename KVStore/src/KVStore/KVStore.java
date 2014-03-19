@@ -14,12 +14,12 @@ public class KVStore {
 		String localHostName = InetAddress.getLocalHost().getHostName();
 		Collection<String> nodes = new ArrayList<String>();
 
-		//nodes.add("planetlab2.cs.ubc.ca");
-		//nodes.add("planetlab1.cs.ubc.ca");
+		// nodes.add("planetlab2.cs.ubc.ca");
+		// nodes.add("planetlab1.cs.ubc.ca");
 		nodes.add("pl-node-1.csl.sri.com");
-		//nodes.add("planetlab-4.eecs.cwru.edu");
+		// nodes.add("planetlab-4.eecs.cwru.edu");
 
-		 nodes.add(localHostName);
+		nodes.add(localHostName);
 		System.out.println(localHostName);
 
 		/*
@@ -28,7 +28,8 @@ public class KVStore {
 		 */
 
 		try {
-			new ReactorInitiator().initiateReactiveServer(localHostName, nodes);
+			new ReactorInitiator().initiateReactiveServer(localHostName,
+					new Chord(nodes));
 			new ReactorInitiator().initiateReactiveClient();
 		} catch (Exception e) { // TODO Auto-generated catch block
 			e.printStackTrace();

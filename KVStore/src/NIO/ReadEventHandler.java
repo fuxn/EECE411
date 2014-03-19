@@ -13,6 +13,7 @@ import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
+import KVStore.Chord;
 import Utilities.ConsistentHash;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
@@ -33,9 +34,9 @@ public class ReadEventHandler implements EventHandler {
 
 	private ConsistentHashInterface cHash;
 
-	public ReadEventHandler(Selector demultiplexer, Collection<String> nodes) {
+	public ReadEventHandler(Selector demultiplexer, Chord chord) {
 		this.selector = demultiplexer;
-		this.cHash = new ConsistentHash(1, nodes);
+		this.cHash = new ConsistentHash(1, chord);
 		threadPool = new ThreadPool(maxThreads, maxTasks);
 	}
 

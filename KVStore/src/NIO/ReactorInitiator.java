@@ -6,6 +6,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Collection;
 
+import KVStore.Chord;
 import NIO_Client.ClientDispatcher;
 import NIO_Client.ConnectionEventHandler;
 import NIO_Client.ReadReplyEventHandler;
@@ -16,7 +17,7 @@ public class ReactorInitiator {
 	private static final int NIO_SERVER_PORT = 4560;
 
 	public void initiateReactiveServer(String localHostName,
-			Collection<String> nodes) throws Exception {
+			Chord chord) throws Exception {
 		System.out.println("Starting NIO server at port : " + NIO_SERVER_PORT);
 
 		ServerSocketChannel server = ServerSocketChannel.open();
@@ -31,7 +32,7 @@ public class ReactorInitiator {
 				new AcceptEventHandler(Dispatcher.getDemultiplexer()));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_READ,
-				new ReadEventHandler(Dispatcher.getDemultiplexer(), nodes));
+				new ReadEventHandler(Dispatcher.getDemultiplexer(), chord));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
 				new WriteEventHandler());
