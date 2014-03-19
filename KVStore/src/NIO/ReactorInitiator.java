@@ -28,10 +28,10 @@ public class ReactorInitiator {
 		dispatcher.registerChannel(SelectionKey.OP_ACCEPT, server);
 
 		dispatcher.registerEventHandler(SelectionKey.OP_ACCEPT,
-				new AcceptEventHandler(dispatcher.getDemultiplexer()));
+				new AcceptEventHandler(Dispatcher.getDemultiplexer()));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_READ,
-				new ReadEventHandler(dispatcher.getDemultiplexer(), nodes));
+				new ReadEventHandler(Dispatcher.getDemultiplexer(), nodes));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
 				new WriteEventHandler());
@@ -72,14 +72,15 @@ public class ReactorInitiator {
 		ClientDispatcher clientDispatcher = new ClientDispatcher();
 		clientDispatcher.registerEventHandler(
 				SelectionKey.OP_CONNECT,
-				new ConnectionEventHandler(clientDispatcher
+				new ConnectionEventHandler(ClientDispatcher
 						.getDemultiplexer()));
 		clientDispatcher.registerEventHandler(
 				SelectionKey.OP_WRITE,
-				new WriteRequestEventHandler(clientDispatcher
+				new WriteRequestEventHandler(ClientDispatcher
 						.getDemultiplexer()));
 		clientDispatcher.registerEventHandler(SelectionKey.OP_READ,
 				new ReadReplyEventHandler());
+		
 		Thread d = new Thread(clientDispatcher);
 		d.start(); 
 	}

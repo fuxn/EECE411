@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
+import NIO.Dispatcher;
 import NIO.EventHandler;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.RemoteMessage;
@@ -21,12 +22,14 @@ public class ReadReplyEventHandler implements EventHandler {
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
-		
-		System.out.println("Remote Read");
+
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 
-		int errorCodelength = socketChannel.read(errorCodeBuffer);
-		System.out.println("error code length " + errorCodelength);
+		int byteReceived = 0;
+		while (byteReceived != 1) {
+			byteReceived = socketChannel.read(errorCodeBuffer);
+		}
+		System.out.println("error code length " + byteReceived);
 		errorCodeBuffer.flip();
 
 		byte[] error = new byte[errorCodeBuffer.limit()];
@@ -50,9 +53,9 @@ public class ReadReplyEventHandler implements EventHandler {
 				.formateReplyMessage(Integer.valueOf(this.errorCode),
 						this.value)));
 
-		message.getServerSelector().wakeup();
+		Dispatcher.getDemultiplexer().wakeup();
 
-		//socketChannel.close();
+		socketChannel.close();
 	}
 
 	public byte[] getReplyMessage() {

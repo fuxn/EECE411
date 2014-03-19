@@ -34,21 +34,23 @@ public class MessageUtilities {
 		}
 		return request;
 	}
-	
-	public static ByteBuffer requestMessage(Integer command, byte[] key,
-			byte[] value) {
+
+	public static ByteBuffer requestMessage(Integer command, String key,
+			String value) {
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(command.byteValue());
 
 		if (key != null) {
-			for (int i = 0; i < key.length; i++) {
-				message.add(key[i]);
+			byte[] keyBuffer = key.getBytes();
+			for (int i = 0; i < keyBuffer.length; i++) {
+				message.add(keyBuffer[i]);
 			}
 		}
 
 		if (value != null) {
-			for (int i = 0; i < value.length; i++) {
-				message.add(value[i]);
+			byte[] valueBuffer = value.getBytes();
+			for (int i = 0; i < valueBuffer.length; i++) {
+				message.add(valueBuffer[i]);
 			}
 		}
 
@@ -271,5 +273,33 @@ public class MessageUtilities {
 			standarizedMessage[i] = (Byte) message.get(i);
 		}
 		return standarizedMessage;
+	}
+	
+	public static ByteBuffer handleFailureMessage(Integer command, String key,
+			String value){
+		List<Byte> message = new ArrayList<Byte>();
+		message.add(command.byteValue());
+
+		if (key != null) {
+			byte[] keyBuffer = key.getBytes();
+			keyBuffer = MessageUtilities.standarizeMessage(keyBuffer, 32);
+			for (int i = 0; i < keyBuffer.length; i++) {
+				message.add(keyBuffer[i]);
+			}
+		}
+
+		if (value != null) {
+			byte[] valueBuffer = value.getBytes();
+			for (int i = 0; i < valueBuffer.length; i++) {
+				message.add(valueBuffer[i]);
+			}
+		}
+
+		byte[] request = new byte[message.size()];
+		for (int i = 0; i < message.size(); i++) {
+			request[i] = (Byte) message.get(i);
+		}
+		return ByteBuffer.wrap(request);
+		
 	}
 }

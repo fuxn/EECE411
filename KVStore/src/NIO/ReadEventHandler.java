@@ -43,8 +43,12 @@ public class ReadEventHandler implements EventHandler {
 	public void handleEvent(SelectionKey handle) throws Exception {
 		this.socketChannel = (SocketChannel) handle.channel();
 
+		System.out.println("Server channel reading ");
 		// Read data from client
-		this.socketChannel.read(commandBuffer);
+		int byteReceived = 0;
+		while (byteReceived != 1) {
+			byteReceived = this.socketChannel.read(commandBuffer);
+		}
 		commandBuffer.flip();
 
 		byte[] command = new byte[commandBuffer.limit()];
@@ -61,7 +65,9 @@ public class ReadEventHandler implements EventHandler {
 		keyBuffer.clear();
 		valueBuffer.clear();
 
-		threadPool.execute(new Processor(handle, c, key, value));
+		// threadPool.execute(new Processor(handle, c, key, value));
+
+		cHash.exec(selector, handle, c, key, value);
 
 		// execAndHandOff(this.socketChannel, c, key, value);
 
@@ -83,7 +89,10 @@ public class ReadEventHandler implements EventHandler {
 
 		@Override
 		public void run() {
-			cHash.exec(selector,this.handle, this.command, this.key, this.value);
+			/*
+			 * cHash.exec(selector, this.handle, this.command, this.key,
+			 * this.value);
+			 */
 		}
 
 	}

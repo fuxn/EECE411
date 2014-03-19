@@ -17,7 +17,6 @@ public class WriteRequestEventHandler implements EventHandler {
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
-		System.out.println("handel write Remote Request");
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		RemoteMessage message = (RemoteMessage) handle.attachment();
 		ByteBuffer m = message.getMessage();
@@ -25,6 +24,6 @@ public class WriteRequestEventHandler implements EventHandler {
 			socketChannel.write(m);
 		}
 
-		socketChannel.register(this.selector, SelectionKey.OP_READ);
+		socketChannel.register(this.selector, SelectionKey.OP_READ,message);
 	}
 }

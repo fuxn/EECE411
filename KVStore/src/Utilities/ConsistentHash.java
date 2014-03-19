@@ -99,9 +99,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 		Map<String, String> keys = this.local.getKeys();
 		for (String key : keys.keySet()) {
 			try {
-				this.connectRemoteServer(nextNode, null, null, MessageUtilities
-						.requestMessage(21, MessageUtilities.standarizeMessage(
-								key.getBytes(), 32), keys.get(key).getBytes()));
+				this.connectRemoteServer(
+						nextNode,
+						null,
+						MessageUtilities.handleFailureMessage(21, key,
+								keys.get(key)));
 			} catch (Exception e) {
 				return MessageUtilities.formateReplyMessage(
 						ErrorEnum.INTERNAL_FAILURE.getCode(), null);
@@ -140,12 +142,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 			String node = this.lookupService.getNode(key);
 
 			if (!node.equals(this.local.getHostName())) {
-
-				System.out.println("Remote Requesting");
-
-				this.connectRemoteServer(node, selector, handle,
-						MessageUtilities.requestMessage(command,
-								key.getBytes(), value.getBytes()));
+				this.connectRemoteServer(node,  handle,
+						MessageUtilities.requestMessage(command, key, value));
+				return;
 
 			}
 		} catch (Exception e) {
@@ -195,16 +194,16 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private void connectRemoteServer(String host, Selector selector,
-			SelectionKey handle, ByteBuffer message) throws Exception {
+	private void connectRemoteServer(String host, SelectionKey handle,
+			ByteBuffer message) throws Exception {
+		
 		SocketChannel client;
 		try {
 			client = SocketChannel.open();
-
 			client.configureBlocking(false);
 			client.connect(new InetSocketAddress(host, 4560));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
-					selector, handle, message);
+					handle, message);
 
 		} catch (IOException e) {
 			e.printStackTrace();

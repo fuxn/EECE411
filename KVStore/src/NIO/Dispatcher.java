@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Dispatcher implements Runnable{
 
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
-	private Selector demultiplexer;
+	private static Selector demultiplexer;
 
 	public Dispatcher() throws Exception {
 		demultiplexer = Selector.open();
@@ -28,7 +28,7 @@ public class Dispatcher implements Runnable{
 		channel.register(demultiplexer, eventType);
 	}
 
-	public Selector getDemultiplexer() {
+	public static Selector getDemultiplexer() {
 		return demultiplexer;
 	}
 
@@ -38,7 +38,6 @@ public class Dispatcher implements Runnable{
 				demultiplexer.select();
 
 				Set<SelectionKey> readyHandles = demultiplexer.selectedKeys();
-				System.out.println("ready handles size: "+readyHandles.size());
 				Iterator<SelectionKey> handleIterator = readyHandles.iterator();
 
 				while (handleIterator.hasNext()) {

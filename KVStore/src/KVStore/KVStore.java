@@ -14,9 +14,9 @@ public class KVStore {
 		String localHostName = InetAddress.getLocalHost().getHostName();
 		Collection<String> nodes = new ArrayList<String>();
 
-		nodes.add("planetlab2.cs.ubc.ca");
-		nodes.add("planetlab1.cs.ubc.ca");
-		// nodes.add("planetlab2.cs.stevens-tech.edu");
+		//nodes.add("planetlab2.cs.ubc.ca");
+		//nodes.add("planetlab1.cs.ubc.ca");
+		nodes.add("pl-node-1.csl.sri.com");
 		//nodes.add("planetlab-4.eecs.cwru.edu");
 
 		 nodes.add(localHostName);
