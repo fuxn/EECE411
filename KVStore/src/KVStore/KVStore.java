@@ -66,6 +66,13 @@ public class KVStore {
 			e.printStackTrace();
 		}
 
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				System.out.println("Server Closing");
+			}
+		});
+
 		// server wait for incoming requests;
 	}
 }

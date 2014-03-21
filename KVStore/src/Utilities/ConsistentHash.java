@@ -93,7 +93,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
+	public byte[] handleAnnouncedFailure()
+			throws InternalKVStoreFailureException {
 		Map<String, String> keys = this.local.getKeys();
 
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
@@ -114,13 +115,15 @@ public class ConsistentHash implements ConsistentHashInterface {
 				// .getCode(), MessageUtilities.standarizeMessage(
 				// key.getBytes(), 32), keys.get(key).getBytes()));
 			} catch (Exception e) {
-
+				throw new InternalKVStoreFailureException();
 			}
 		}
 		this.local.removeAll();
 
 		this.announceDataSent(nextNode, this.local.getHostName());
 		this.announceLeaving(this.local.getHostName());
+		return MessageUtilities.formateReplyMessage(
+				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
 	public byte[] announceDataSent(String remoteHost, String localHost)
@@ -301,13 +304,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			} else if (command == CommandEnum.GET.getCode()) {
 				String node = this.topologyService.getNode(key);
 				if (!node.equals(this.local.getHostName())) {
-					/*
-					 * replyMessage = this.remoteRequest(command,
-					 * key.getBytes(), null, node);
-					 */
-					System.out.println("chash exec remote get ;"
-							+ this.remoteRequest(command, key.getBytes(), null,
-									node));
+					replyMessage = this.remoteRequest(command, key.getBytes(),
+							null, node);
 				} else
 					replyMessage = this.local.get(key);
 			} else if (command == CommandEnum.DELETE.getCode()) {
@@ -318,12 +316,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 				} else
 					replyMessage = this.local.remove(key);
 			} else if (command == 4) {
-				this.handleAnnouncedFailure();
-				// handle.interestOps(SelectionKey.OP_WRITE);
-				// handle.attach(ByteBuffer.wrap(replyMessage));
+				replyMessage = this.handleAnnouncedFailure();
+				handle.interestOps(SelectionKey.OP_WRITE);
+				handle.attach(ByteBuffer.wrap(replyMessage));
 
-				// selector.wakeup();
-				handle.cancel();
+				selector.wakeup();
 				System.exit(0);
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {

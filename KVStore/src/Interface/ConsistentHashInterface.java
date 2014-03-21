@@ -20,7 +20,7 @@ public interface ConsistentHashInterface {
 	public byte[] remove(String key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException;
 
-	public void handleAnnouncedFailure() throws InternalKVStoreFailureException;
+	public byte[] handleAnnouncedFailure() throws InternalKVStoreFailureException;
 
 	public void handleNeighbourAnnouncedFailure(String key, String value)
 			throws InexistentKeyException, InternalKVStoreFailureException,
