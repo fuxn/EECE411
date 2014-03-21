@@ -23,6 +23,7 @@ import Interface.ConsistentHashInterface;
 import KVStore.Chord;
 import NIO_Client.ClientDispatcher;
 import Utilities.Message.MessageUtilities;
+import Utilities.Message.Requests;
 
 public class ConsistentHash implements ConsistentHashInterface {
 
@@ -95,6 +96,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException {
+		System.out.println("handleing failure/..");
 		Map<String, String> keys = this.local.getKeys();
 
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
@@ -121,7 +123,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		this.local.removeAll();
 
 		this.announceDataSent(nextNode, this.local.getHostName());
-		this.announceLeaving(this.local.getHostName());
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
@@ -142,7 +143,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void announceLeaving(String hostName)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash announce leaving :" + hostName);
-		List<String> randomNodes = this.topologyService.getRandomNodes(3);
+		List<String> randomNodes = this.topologyService.getRandomNodes(
+				hostName, 3);
 
 		System.out.println(randomNodes);
 
@@ -169,7 +171,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public byte[] announceJoining(String hostName)
 			throws InternalKVStoreFailureException {
-		List<String> randomNodes = this.topologyService.getRandomNodes(3);
+		List<String> randomNodes = this.topologyService.getRandomNodes(
+				hostName, 3);
 		for (String node : randomNodes) {
 			try {
 				if (node.equals(this.local.getHostName()))
@@ -284,44 +287,19 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	@Override
-	public boolean shutDown() {
-		return false;
-	}
-
-	public void exec(Selector selector, SelectionKey handle, int command,
-			String key, String value) {
+	public void execInternal(Selector selector, SelectionKey handle,
+			int command, String key, String value) {
 		byte[] replyMessage = null;
 
 		try {
-			if (command == CommandEnum.PUT.getCode()) {
-				String node = this.topologyService.getNode(key);
-				if (!node.equals(this.local.getHostName())) {
-					replyMessage = this.remoteRequest(command, key.getBytes(),
-							value.getBytes(), node);
-				} else
-					replyMessage = this.local.put(key, value);
-			} else if (command == CommandEnum.GET.getCode()) {
-				String node = this.topologyService.getNode(key);
-				if (!node.equals(this.local.getHostName())) {
-					replyMessage = this.remoteRequest(command, key.getBytes(),
-							null, node);
-				} else
-					replyMessage = this.local.get(key);
-			} else if (command == CommandEnum.DELETE.getCode()) {
-				String node = this.topologyService.getNode(key);
-				if (!node.equals(this.local.getHostName())) {
-					replyMessage = this.remoteRequest(command, key.getBytes(),
-							null, node);
-				} else
-					replyMessage = this.local.remove(key);
-			} else if (command == 4) {
+			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
 				replyMessage = this.handleAnnouncedFailure();
-				handle.interestOps(SelectionKey.OP_WRITE);
-				handle.attach(ByteBuffer.wrap(replyMessage));
 
+				handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
+						ByteBuffer.wrap(replyMessage)));
+				handle.interestOps(SelectionKey.OP_WRITE);
 				selector.wakeup();
-				System.exit(0);
+
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {
 				this.handleNeighbourAnnouncedFailure(key, value);
@@ -360,9 +338,51 @@ public class ConsistentHash implements ConsistentHashInterface {
 					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
 		}
 
-		handle.interestOps(SelectionKey.OP_WRITE);
-		handle.attach(ByteBuffer.wrap(replyMessage));
+	}
 
+	public void execHashOperation(Selector selector, SelectionKey handle,
+			int command, String key, String value) {
+		byte[] replyMessage = null;
+
+		try {
+			String node = this.topologyService.getNode(key);
+			if (!node.equals(this.local.getHostName())) {
+				replyMessage = this.remoteRequest(command, key.getBytes(),
+						value.getBytes(), node);
+			} else {
+				if (command == CommandEnum.PUT.getCode()) {
+					replyMessage = this.local.put(key, value);
+				} else if (command == CommandEnum.GET.getCode()) {
+					replyMessage = this.local.get(key);
+				} else if (command == CommandEnum.DELETE.getCode()) {
+					replyMessage = this.local.remove(key);
+				} else
+					throw new UnrecognizedCommandException();
+			}
+
+		} catch (InexistentKeyException ex) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INEXISTENT_KEY.getCode(), null);
+		} catch (InternalKVStoreFailureException internalException) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+		} catch (UnrecognizedCommandException uc) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null);
+		} catch (InvalidKeyException invalideKeyException) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INVALID_KEY.getCode(), null);
+		} catch (OutOfSpaceException e) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.OUT_OF_SPACE.getCode(), null);
+		} catch (Exception e) {
+			replyMessage = MessageUtilities.formateReplyMessage(
+					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+		}
+
+		handle.attach(new Requests(CommandEnum.PUT, ByteBuffer
+				.wrap(replyMessage)));
+		handle.interestOps(SelectionKey.OP_WRITE);
 		selector.wakeup();
 
 	}

@@ -142,7 +142,7 @@ public class MessageUtilities {
 				e.printStackTrace();
 			}
 		}
-		return null;
+		return new String();
 	}
 
 	public static String checkRequestKey(int command, InputStream in) {
@@ -195,7 +195,7 @@ public class MessageUtilities {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return new String();
 	}
 
 	public static String checkRequestValue(int command,
@@ -221,7 +221,7 @@ public class MessageUtilities {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return new String();
 	}
 
 	public static String checkRequestValue(int command, InputStream in) {
@@ -243,7 +243,7 @@ public class MessageUtilities {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return new String();
 	}
 
 	public static boolean isCheckReplyValue(int command) {

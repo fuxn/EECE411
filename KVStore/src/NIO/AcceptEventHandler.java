@@ -17,6 +17,7 @@ public class AcceptEventHandler implements EventHandler {
 		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) handle
 				.channel();
 		SocketChannel socketChannel = serverSocketChannel.accept();
+		
 		if (socketChannel != null) {
 			socketChannel.configureBlocking(false);
 			socketChannel.register(selector, SelectionKey.OP_READ);

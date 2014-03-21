@@ -10,14 +10,12 @@ import java.util.Collection;
 
 import NIO.AcceptEventHandler;
 import NIO.Dispatcher;
-import NIO.ReactorInitiator;
 import NIO.ReadEventHandler;
 import NIO.WriteEventHandler;
 import NIO_Client.ClientDispatcher;
 import NIO_Client.ConnectionEventHandler;
 import NIO_Client.ReadReplyEventHandler;
 import NIO_Client.WriteRequestEventHandler;
-import Utilities.PlanetLabNode;
 
 public class KVStore {
 
@@ -74,11 +72,11 @@ public class KVStore {
 		String localHostName = InetAddress.getLocalHost().getHostName();
 		Collection<String> nodes = new ArrayList<String>();
 
-		nodes.add("planetlab2.cs.ubc.ca");
-		nodes.add("planetlab1.cs.ubc.ca");
+		// nodes.add("planetlab2.cs.ubc.ca");
+		// nodes.add("planetlab1.cs.ubc.ca");
 		// nodes.add("pl-node-1.csl.sri.com");
-		nodes.add("planetlab-4.eecs.cwru.edu");
-		nodes.add("planetlab-2.cs.auckland.ac.nz");
+		// nodes.add("planetlab-4.eecs.cwru.edu");
+		// nodes.add("planetlab-2.cs.auckland.ac.nz");
 
 		// nodes.add("planetlab-2.sysu.edu.cn");
 		// nodes.add("planetlab1.acis.ufl.edu");
@@ -86,11 +84,11 @@ public class KVStore {
 		// nodes.add("planetlab4.wail.wisc.edu");
 		// nodes.add("pl2.eecs.utk.edu");
 		//
-		// nodes.add("ricepl-5.cs.rice.edu");
-		// nodes.add("75-130-96-12.static.oxfr.ma.charter.com");
-		// nodes.add("planet-lab4.uba.ar");
-		// nodes.add("planetlab2.acis.ufl.edu");
-		// nodes.add("planetlab1.cs.uml.edu");
+		nodes.add("ricepl-5.cs.rice.edu");
+		nodes.add("75-130-96-12.static.oxfr.ma.charter.com");
+		nodes.add("planet-lab4.uba.ar");
+		nodes.add("planetlab2.acis.ufl.edu");
+		nodes.add("planetlab1.cs.uml.edu");
 		//
 		// nodes.add("planetlab2.buaa.edu.cn");
 		// nodes.add("planetlab2.georgetown.edu");
@@ -131,15 +129,16 @@ public class KVStore {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				try {
-					Dispatcher.stop();
-					ClientDispatcher.stop();
-					KVStore.serverThread.join();
-					KVStore.clientThread.join();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				Dispatcher.stop();
+				ClientDispatcher.stop();
+				/*
+				 * try { //KVStore.serverThread.join(); } catch
+				 * (InterruptedException e) { // TODO Auto-generated catch block
+				 * e.printStackTrace(); } try { //KVStore.clientThread.join(); }
+				 * catch (InterruptedException e) { // TODO Auto-generated catch
+				 * block e.printStackTrace(); }
+				 */
+
 			}
 		});
 

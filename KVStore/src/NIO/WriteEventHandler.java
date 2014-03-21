@@ -4,16 +4,23 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
+import Utilities.CommandEnum;
+import Utilities.Message.Requests;
+
 public class WriteEventHandler implements EventHandler {
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
-		ByteBuffer inputBuffer = (ByteBuffer) handle.attachment();
-		while (inputBuffer.hasRemaining()) {
-			socketChannel.write(inputBuffer);
+		Requests requests = (Requests) handle.attachment();
+		ByteBuffer buffer = requests.getReply();
+		while (buffer.hasRemaining()) {
+			socketChannel.write(buffer);
 		}
 		socketChannel.close(); // Close connection
+
+		if (CommandEnum.HANDLE_ANNOUNCED_FAILURE.equals(requests.getCommand()))
+			System.exit(0);
 	}
 
 }

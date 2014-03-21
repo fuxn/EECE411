@@ -8,9 +8,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import Utilities.CommandEnum;
+import Utilities.Message.Requests;
+
 public class Dispatcher implements Runnable {
 
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
+	private Map<CommandEnum, EventHandler> commandHandlers = new ConcurrentHashMap<CommandEnum, EventHandler>();
+
 	private static Selector demultiplexer;
 	private static boolean stop = false;
 
@@ -20,6 +25,11 @@ public class Dispatcher implements Runnable {
 
 	public void registerEventHandler(int eventType, EventHandler eventHandler) {
 		registeredHandlers.put(eventType, eventHandler);
+	}
+
+	public void registerEventHandler(CommandEnum command,
+			EventHandler eventHandler) {
+		commandHandlers.put(command, eventHandler);
 	}
 
 	// Used to register ServerSocketChannel with the
@@ -61,8 +71,10 @@ public class Dispatcher implements Runnable {
 					}
 
 					if (handle.isValid() && handle.isWritable()) {
+
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_WRITE);
+
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
@@ -72,8 +84,8 @@ public class Dispatcher implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void stop(){
+
+	public static void stop() {
 		stop = true;
 	}
 

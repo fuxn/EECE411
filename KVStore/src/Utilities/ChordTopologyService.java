@@ -89,7 +89,7 @@ public class ChordTopologyService {
 		return this.chord.getChord().get(hash);
 	}
 
-	public List<String> getRandomNodes(int numberOfNodes)
+	public List<String> getRandomNodes(String hostName, int numberOfNodes)
 			throws InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -98,9 +98,12 @@ public class ChordTopologyService {
 
 		for (int i = 0; i < numberOfNodes; i++) {
 			int index = (int) (Math.random() * this.chord.getChord().size());
-			System.out.println(index);
-			if (!list.contains(this.chord.getNodeByIndex(index)))
-				list.add(this.chord.getNodeByIndex(index));
+			String randomHost = this.chord.getNodeByIndex(index);
+			if ((!list.contains(randomHost.trim()))
+					&& (!randomHost.trim().equals(hostName.trim()))
+					&& (!randomHost.trim().equals(
+							this.getNextNodeByHostName(hostName.trim()))))
+				list.add(randomHost);
 		}
 		return list;
 	}

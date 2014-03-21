@@ -2,20 +2,18 @@ package KVStore;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class Chord {
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
-	private List<String> indexs = new ArrayList<String>();
+	private ArrayList<String> indexs = new ArrayList<String>();
 
 	public Chord(Collection<String> nodes) {
-		System.out.println("chord initiated ");
 		for (String node : nodes) {
 			this.chord.put(node.hashCode(), node);
-			this.indexs.add(node);
+			this.indexs.add(node.trim());
 		}
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
@@ -39,7 +37,7 @@ public class Chord {
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
 		}
-
+		this.indexs.add(hostName);
 	}
 
 	public void leave(String hostName) {
@@ -49,6 +47,6 @@ public class Chord {
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
 		}
-		System.out.println("left : " + hostName);
+		this.indexs.remove(hostName.trim());
 	}
 }

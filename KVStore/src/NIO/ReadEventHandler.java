@@ -68,10 +68,18 @@ public class ReadEventHandler implements EventHandler {
 
 		// threadPool.execute(new Processor(handle, c, key, value));
 
-		cHash.exec(selector, handle, c, key, value);
+		this.process(handle, c, key, value);
 
 		// execAndHandOff(this.socketChannel, c, key, value);
 
+	}
+
+	private void process(SelectionKey handle, int command, String key,
+			String value) {
+		if (command == 1 || command == 2 || command == 3)
+			cHash.execHashOperation(selector, handle, command, key, value);
+		else
+			cHash.execInternal(selector, handle, command, key, value);
 	}
 
 	class Processor implements Runnable {

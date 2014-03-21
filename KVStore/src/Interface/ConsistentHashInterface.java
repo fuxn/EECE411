@@ -26,8 +26,9 @@ public interface ConsistentHashInterface {
 			throws InexistentKeyException, InternalKVStoreFailureException,
 			InvalidKeyException, OutOfSpaceException;
 
-	public void exec(Selector selector, SelectionKey handle, int command,
+	public void execInternal(Selector selector, SelectionKey handle, int command,
 			String key, String value);
+	
+	public void execHashOperation(Selector selector, SelectionKey handle,int command, String key, String value);
 
-	public boolean shutDown();
 }
