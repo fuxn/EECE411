@@ -21,6 +21,7 @@ import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import KVStore.Chord;
+import NIO.Dispatcher;
 import NIO_Client.ClientDispatcher;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.Requests;
@@ -287,18 +288,32 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public void execInternal(Selector selector, SelectionKey handle,
+	public void execInternal(Selector selector, final SelectionKey handle,
 			int command, String key, String value) {
 		byte[] replyMessage = null;
 
 		try {
 			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
-				replyMessage = this.handleAnnouncedFailure();
 
-				handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
-						ByteBuffer.wrap(replyMessage)));
-				handle.interestOps(SelectionKey.OP_WRITE);
-				selector.wakeup();
+				(new Thread(new Runnable() {
+					@Override
+					public void run() {
+						byte[] replyMessage;
+						try {
+							replyMessage = handleAnnouncedFailure();
+							handle.attach(new Requests(
+									CommandEnum.ANNOUNCE_FAILURE, ByteBuffer
+											.wrap(replyMessage)));
+							handle.interestOps(SelectionKey.OP_WRITE);
+
+							Dispatcher.getDemultiplexer().wakeup();
+						} catch (InternalKVStoreFailureException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					}
+				})).start();
 
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {
