@@ -12,6 +12,7 @@ public class Dispatcher implements Runnable {
 
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
 	private static Selector demultiplexer;
+	private static boolean stop = false;
 
 	public Dispatcher() throws Exception {
 		demultiplexer = Selector.open();
@@ -34,7 +35,7 @@ public class Dispatcher implements Runnable {
 
 	public void run() {
 		try {
-			while (true) { // Loop indefinitely
+			while (!stop) { // Loop indefinitely
 				demultiplexer.select();
 
 				Set<SelectionKey> readyHandles = demultiplexer.selectedKeys();
@@ -70,6 +71,10 @@ public class Dispatcher implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void stop(){
+		stop = true;
 	}
 
 }

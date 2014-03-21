@@ -16,6 +16,8 @@ import Utilities.Message.RemoteMessage;
 public class ClientDispatcher implements Runnable {
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
 	private static Selector demultiplexer;
+	private static boolean stop = false;
+
 	final static ReentrantLock selectorLock = new ReentrantLock();
 
 	public ClientDispatcher() throws Exception {
@@ -51,7 +53,7 @@ public class ClientDispatcher implements Runnable {
 
 	public void run() {
 		try {
-			while (true) { // Loop indefinitely
+			while (stop) { // Loop indefinitely
 
 				selectorLock.lock();
 				selectorLock.unlock();
@@ -91,6 +93,10 @@ public class ClientDispatcher implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void stop(){
+		stop = true;
 	}
 
 }
