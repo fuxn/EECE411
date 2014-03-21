@@ -82,7 +82,7 @@ public class KVStore {
 		nodes.add("planetlab1.acis.ufl.edu");
 		nodes.add("pl2.eecs.utk.edu");
 		nodes.add("ricepl-5.cs.rice.edu");
-		nodes.add("75-130-96-12.static.oxfr.ma.charter.com");
+		nodes.add("planetlab2.s3.kth.se");
 
 		nodes.add("planet-lab4.uba.ar");
 		nodes.add("planetlab2.acis.ufl.edu");
