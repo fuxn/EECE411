@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import Utilities.CommandEnum;
+
 public class MessageUtilities {
 
 	public static byte[] formateRequestMessage(Integer command, byte[] key,
@@ -248,6 +250,12 @@ public class MessageUtilities {
 		return (command == 2);
 	}
 
+	public static boolean isCheckReply(int command) {
+		return (command == CommandEnum.PUT.getCode()
+				|| command == CommandEnum.GET.getCode() || command == CommandEnum.DELETE
+					.getCode());
+	}
+
 	public static boolean isCheckRequestValue(int command) {
 		return (command == 1 || command == 21);
 	}
@@ -274,9 +282,9 @@ public class MessageUtilities {
 		}
 		return standarizedMessage;
 	}
-	
+
 	public static ByteBuffer handleFailureMessage(Integer command, String key,
-			String value){
+			String value) {
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(command.byteValue());
 
@@ -300,6 +308,6 @@ public class MessageUtilities {
 			request[i] = (Byte) message.get(i);
 		}
 		return ByteBuffer.wrap(request);
-		
+
 	}
 }

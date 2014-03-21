@@ -65,21 +65,21 @@ public class ClientDispatcher implements Runnable {
 				while (handleIterator.hasNext()) {
 					SelectionKey handle = handleIterator.next();
 
-					if (handle.isConnectable()) {
+					if (handle.isValid() && handle.isConnectable()) {
 						EventHandler handler = (EventHandler) this.registeredHandlers
 								.get(SelectionKey.OP_CONNECT);
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
-					
-					if (handle.isWritable()) {						
+
+					if (handle.isValid() && handle.isWritable()) {
 						EventHandler handler = (EventHandler) this.registeredHandlers
 								.get(SelectionKey.OP_WRITE);
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}
 
-					if (handle.isReadable()) {						
+					if (handle.isValid() && handle.isReadable()) {
 						EventHandler handler = (EventHandler) this.registeredHandlers
 								.get(SelectionKey.OP_READ);
 						handler.handleEvent(handle);

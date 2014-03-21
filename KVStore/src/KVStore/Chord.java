@@ -23,7 +23,7 @@ public class Chord {
 	}
 
 	public String getNodeByIndex(int index) {
-		if (this.indexs.size() <= index)
+		if (this.indexs.size() > index)
 			return this.indexs.get(index);
 
 		else

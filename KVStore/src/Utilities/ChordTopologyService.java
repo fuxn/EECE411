@@ -98,6 +98,7 @@ public class ChordTopologyService {
 
 		for (int i = 0; i < numberOfNodes; i++) {
 			int index = (int) (Math.random() * this.chord.getChord().size());
+			System.out.println(index);
 			if (!list.contains(this.chord.getNodeByIndex(index)))
 				list.add(this.chord.getNodeByIndex(index));
 		}

@@ -93,8 +93,8 @@ public class ServerRunnable implements Runnable {
 			return cHash.remove(key);
 		else if (command == 4)
 			return this.announceFailure();
-		else if (command == 21)
-			return cHash.handleNeighbourAnnouncedFailure(key, value);
+		// else if (command == 21)
+		// return cHash.handleNeighbourAnnouncedFailure(key, value);
 		else
 			throw new UnrecognizedCommandException();
 	}

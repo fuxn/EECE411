@@ -93,8 +93,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public byte[] handleAnnouncedFailure()
-			throws InternalKVStoreFailureException {
+	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
 		Map<String, String> keys = this.local.getKeys();
 
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
@@ -115,14 +114,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 				// .getCode(), MessageUtilities.standarizeMessage(
 				// key.getBytes(), 32), keys.get(key).getBytes()));
 			} catch (Exception e) {
-				return MessageUtilities.formateReplyMessage(
-						ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+
 			}
 		}
 		this.local.removeAll();
 
 		this.announceDataSent(nextNode, this.local.getHostName());
-		return this.announceLeaving(this.local.getHostName());
+		this.announceLeaving(this.local.getHostName());
 	}
 
 	public byte[] announceDataSent(String remoteHost, String localHost)
@@ -138,7 +136,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public byte[] announceLeaving(String hostName)
+	public void announceLeaving(String hostName)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash announce leaving :" + hostName);
 		List<String> randomNodes = this.topologyService.getRandomNodes(3);
@@ -161,13 +159,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 			} catch (Exception e) {
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
-				else
-					return MessageUtilities.formateReplyMessage(
-							ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+
 			}
 		}
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
 	public byte[] announceJoining(String hostName)
@@ -198,7 +192,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] handleNeighbourAnnouncedFailure(String key, String value)
+	public void handleNeighbourAnnouncedFailure(String key, String value)
 			throws InternalKVStoreFailureException, InexistentKeyException,
 			OutOfSpaceException, InvalidKeyException {
 		if (key.length() != 32)
@@ -208,13 +202,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 				+ this.local.getHostName());
 		System.out.println("adding " + key + " and " + value);
 
-		return this.local.put(key, value);
+		this.local.put(key, value);
 	}
 
-	public byte[] handleNeighbourDataSent(String hostName)
+	public void handleNeighbourDataSent(String hostName)
 			throws InternalKVStoreFailureException {
 
-		return this.handleAnnouncedLeaving(hostName);
+		this.handleAnnouncedLeaving(hostName);
 	}
 
 	public byte[] handleNeighbourAnnouncedJoining(String hostName)
@@ -250,7 +244,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] handleAnnouncedLeaving(String hostName)
+	public void handleAnnouncedLeaving(String hostName)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash handleAnnouncedLeaving " + hostName);
 
@@ -260,12 +254,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			System.out.println("removing node from local chord : " + hostName);
 			this.announceLeaving(hostName);
 			System.out.println("broadcast leaving : " + hostName);
-
-			return MessageUtilities.formateReplyMessage(
-					ErrorEnum.SUCCESS.getCode(), null);
-		} else
-			return MessageUtilities.formateReplyMessage(
-					ErrorEnum.SUCCESS.getCode(), null);
+		}
 	}
 
 	public byte[] handleAnnouncedJoining(String hostName)
@@ -312,8 +301,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 			} else if (command == CommandEnum.GET.getCode()) {
 				String node = this.topologyService.getNode(key);
 				if (!node.equals(this.local.getHostName())) {
-					replyMessage = this.remoteRequest(command, key.getBytes(),
-							null, node);
+					/*
+					 * replyMessage = this.remoteRequest(command,
+					 * key.getBytes(), null, node);
+					 */
+					System.out.println("chash exec remote get ;"
+							+ this.remoteRequest(command, key.getBytes(), null,
+									node));
 				} else
 					replyMessage = this.local.get(key);
 			} else if (command == CommandEnum.DELETE.getCode()) {
@@ -324,22 +318,29 @@ public class ConsistentHash implements ConsistentHashInterface {
 				} else
 					replyMessage = this.local.remove(key);
 			} else if (command == 4) {
-				replyMessage = this.handleAnnouncedFailure();
-				handle.interestOps(SelectionKey.OP_WRITE);
-				handle.attach(ByteBuffer.wrap(replyMessage));
+				this.handleAnnouncedFailure();
+				// handle.interestOps(SelectionKey.OP_WRITE);
+				// handle.attach(ByteBuffer.wrap(replyMessage));
 
-				selector.wakeup();
+				// selector.wakeup();
+				handle.cancel();
 				System.exit(0);
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
-					.getCode())
-				replyMessage = this.handleNeighbourAnnouncedFailure(key, value);
-			else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode())
-				replyMessage = this.handleAnnouncedLeaving(key);
-			else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
+					.getCode()) {
+				this.handleNeighbourAnnouncedFailure(key, value);
+				handle.cancel();
+				return;
+			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
+				this.handleAnnouncedLeaving(key);
+				handle.cancel();
+				return;
+			} else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
 				replyMessage = this.handleAnnouncedJoining(key);
-			else if (command == CommandEnum.DATA_SENT.getCode())
-				replyMessage = this.handleNeighbourDataSent(key);
-			else
+			else if (command == CommandEnum.DATA_SENT.getCode()) {
+				this.handleNeighbourDataSent(key);
+				handle.cancel();
+				return;
+			} else
 				throw new UnrecognizedCommandException();
 
 		} catch (InexistentKeyException ex) {
@@ -402,15 +403,15 @@ public class ConsistentHash implements ConsistentHashInterface {
 					value);
 			out.write(v);
 			out.flush();
-
-			reply = MessageUtilities.checkReplyValue(command, in);
+			if (MessageUtilities.isCheckReply(command))
+				reply = MessageUtilities.checkReplyValue(command, in);
+			else
+				reply = MessageUtilities.formateReplyMessage(
+						ErrorEnum.SUCCESS.getCode(), null);
 		} catch (IOException e) {
-			System.out
-					.println("remote node failed, send remote request to next host ..");
-			this.handleAnnouncedLeaving(server);
-			this.remoteRequest(command, key, value,
-					this.topologyService.getNextNodeByHostName(server));
+			throw new InternalKVStoreFailureException();
 		}
+		System.out.println("chash reply ; " + reply);
 		return reply;
 	}
 }
