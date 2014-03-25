@@ -11,10 +11,12 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private String hostName;
+	private String ipAddress;
 	private ConcurrentHashMap<String, String> values = new ConcurrentHashMap<String, String>();
 
-	public PlanetLabNode(String hostName) {
+	public PlanetLabNode(String ipAddress, String hostName) {
 		this.hostName = hostName;
+		this.ipAddress = ipAddress;
 	}
 
 	public byte[] put(String key, String value) throws InexistentKeyException,
@@ -76,6 +78,10 @@ public class PlanetLabNode {
 
 	public String getHostName() {
 		return this.hostName;
+	}
+
+	public String getIpAddress() {
+		return this.ipAddress;
 	}
 
 	public void removeAll() {

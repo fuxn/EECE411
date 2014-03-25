@@ -38,8 +38,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 		try {
 			String localHost = InetAddress.getLocalHost().getHostName();
-			this.local = new PlanetLabNode(localHost);
-			// this.announceJoining(localHost);
+			String ipAddress = InetAddress.getLocalHost().getHostAddress();
+			this.local = new PlanetLabNode(ipAddress, localHost);
 		} catch (UnknownHostException e) {
 
 		} catch (Exception e) {
@@ -104,43 +104,40 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 		for (String key : keys.keySet()) {
 			try {
-				this.topologyService
-						.handleNodeLeaving(this.local.getHostName());
-
+				this.topologyService.handleNodeLeaving(this.local
+						.getIpAddress());
 				this.remoteRequest(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						MessageUtilities.standarizeMessage(key.getBytes(), 32),
 						keys.get(key).getBytes(), nextNode);
-				// this.connectRemoteServer(nextNode, null, null,
-				// MessageUtilities
-				// .requestMessage(CommandEnum.HANDLE_ANNOUNCED_FAILURE
-				// .getCode(), MessageUtilities.standarizeMessage(
-				// key.getBytes(), 32), keys.get(key).getBytes()));
 			} catch (Exception e) {
 				throw new InternalKVStoreFailureException();
 			}
 		}
 		this.local.removeAll();
 
-		this.announceDataSent(nextNode, this.local.getHostName());
+		this.announceDataSent(nextNode, this.local.getIpAddress(),
+				this.local.getHostName());
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] announceDataSent(String remoteHost, String localHost)
-			throws InternalKVStoreFailureException {
+	public byte[] announceDataSent(String remoteHost, String ipAddress,
+			String localHost) throws InternalKVStoreFailureException {
 		try {
 			return this
 					.remoteRequest(
 							CommandEnum.DATA_SENT.getCode(),
 							MessageUtilities.standarizeMessage(
-									localHost.getBytes(), 32), null, remoteHost);
+									ipAddress.getBytes(), 32),
+							MessageUtilities.standarizeMessage(
+									localHost.getBytes(), 1024), remoteHost);
 		} catch (InvalidKeyException e) {
 			throw new InternalKVStoreFailureException();
 		}
 	}
 
-	public void announceLeaving(String hostName)
+	public void announceLeaving(String ipAddress, String hostName)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash announce leaving :" + hostName);
 		List<String> randomNodes = this.topologyService.getRandomNodes(
@@ -153,23 +150,18 @@ public class ConsistentHash implements ConsistentHashInterface {
 				if (node.equals(this.local.getHostName()))
 					continue;
 				this.remoteRequest(CommandEnum.ANNOUNCE_LEAVING.getCode(),
-						MessageUtilities.standarizeMessage(hostName.getBytes(),
-								32), null, node);
-
-				// this.connectRemoteServer(node, null, null, MessageUtilities
-				// .requestMessage(
-				// CommandEnum.ANNOUNCE_LEAVING.getCode(),
-				// MessageUtilities.standarizeMessage(
-				// hostName.getBytes(), 32), null));
+						MessageUtilities.standarizeMessage(
+								ipAddress.getBytes(), 32), MessageUtilities
+								.standarizeMessage(hostName.getBytes(), 1024),
+						node);
 			} catch (Exception e) {
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
-
 			}
 		}
 	}
 
-	public byte[] announceJoining(String hostName)
+	public byte[] announceJoining(String ipAddress, String hostName)
 			throws InternalKVStoreFailureException {
 		List<String> randomNodes = this.topologyService.getRandomNodes(
 				hostName, 3);
@@ -179,13 +171,10 @@ public class ConsistentHash implements ConsistentHashInterface {
 					continue;
 				System.out.println("announce joining to host:" + node);
 				this.remoteRequest(CommandEnum.ANNOUNCE_JOINING.getCode(),
-						MessageUtilities.standarizeMessage(hostName.getBytes(),
-								32), null, node);
-				// this.connectRemoteServer(node, null, null, MessageUtilities
-				// .requestMessage(
-				// CommandEnum.ANNOUNCE_JOINING.getCode(),
-				// MessageUtilities.standarizeMessage(
-				// hostName.getBytes(), 32), null));
+						MessageUtilities.standarizeMessage(
+								ipAddress.getBytes(), 32), MessageUtilities
+								.standarizeMessage(hostName.getBytes(), 1024),
+						node);
 			} catch (Exception e) {
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
@@ -211,22 +200,22 @@ public class ConsistentHash implements ConsistentHashInterface {
 		this.local.put(key, value);
 	}
 
-	public void handleNeighbourDataSent(String hostName)
+	public void handleNeighbourDataSent(String ipAddress, String hostName)
 			throws InternalKVStoreFailureException {
 
-		this.handleAnnouncedLeaving(hostName);
+		this.handleAnnouncedLeaving(ipAddress, hostName);
 	}
 
-	public byte[] handleNeighbourAnnouncedJoining(String hostName)
-			throws InternalKVStoreFailureException, InexistentKeyException,
-			OutOfSpaceException, InvalidKeyException {
+	public byte[] handleNeighbourAnnouncedJoining(String ipAddress,
+			String hostName) throws InternalKVStoreFailureException,
+			InexistentKeyException, OutOfSpaceException, InvalidKeyException {
 		if (hostName.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		System.out.println("handling neighbour announced joining @ "
 				+ this.local.getHostName());
 
-		this.handleAnnouncedJoining(hostName);
+		this.handleAnnouncedJoining(ipAddress, hostName);
 		Map<String, String> keys = this.local.getKeys(hostName);
 		try {
 			for (String key : keys.keySet()) {
@@ -234,12 +223,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 				this.remoteRequest(CommandEnum.PUT.getCode(), key.getBytes(),
 						keys.get(key).getBytes(), hostName);
-				// this.connectRemoteServer(hostName, null, null,
-				// MessageUtilities
-				// .requestMessage(CommandEnum.PUT.getCode(),
-				// MessageUtilities.standarizeMessage(
-				// key.getBytes(), 32), keys.get(key)
-				// .getBytes()));
 			}
 		} catch (Exception e) {
 			return MessageUtilities.formateReplyMessage(
@@ -250,33 +233,33 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public void handleAnnouncedLeaving(String hostName)
+	public void handleAnnouncedLeaving(String ipAddress, String hostName)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash handleAnnouncedLeaving " + hostName);
 
 		if (this.topologyService.isNodeExist(hostName)) {
 
-			this.topologyService.handleNodeLeaving(hostName);
+			this.topologyService.handleNodeLeaving(ipAddress);
 			System.out.println("removing node from local chord : " + hostName);
-			this.announceLeaving(hostName);
+			this.announceLeaving(ipAddress, hostName);
 			System.out.println("broadcast leaving : " + hostName);
 		}
 	}
 
-	public byte[] handleAnnouncedJoining(String hostName)
+	public byte[] handleAnnouncedJoining(String ipAddress, String hostName)
 			throws InternalKVStoreFailureException, InexistentKeyException,
 			OutOfSpaceException, InvalidKeyException {
-		if (hostName.length() != 32)
+		if (ipAddress.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		if (!this.topologyService.isNodeExist(hostName)) {
+		if (!this.topologyService.isNodeExist(ipAddress)) {
 			System.out.println("announcing joing " + hostName);
-			this.announceJoining(hostName);
-			this.topologyService.handleNodeJoining(hostName);
+			this.announceJoining(ipAddress, hostName);
+			this.topologyService.handleNodeJoining(ipAddress, hostName);
 
 			if (this.topologyService.isSuccessor(this.local.getHostName(),
 					hostName))
-				this.handleNeighbourAnnouncedJoining(hostName);
+				this.handleNeighbourAnnouncedJoining(ipAddress, hostName);
 
 			return MessageUtilities.formateReplyMessage(
 					ErrorEnum.SUCCESS.getCode(), null);
@@ -320,13 +303,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
-				this.handleAnnouncedLeaving(key);
+				this.handleAnnouncedLeaving(key, value);
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
-				replyMessage = this.handleAnnouncedJoining(key);
+				replyMessage = this.handleAnnouncedJoining(key, value);
 			else if (command == CommandEnum.DATA_SENT.getCode()) {
-				this.handleNeighbourDataSent(key);
+				this.handleNeighbourDataSent(key, value);
 				handle.cancel();
 				return;
 			} else
