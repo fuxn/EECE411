@@ -36,12 +36,12 @@ public class ClientDispatcher implements Runnable {
 	public static void registerChannel(int eventType,
 			SelectableChannel channel, SelectionKey serverHandle,
 			ByteBuffer message) throws Exception {
-		System.out.println("register ");
 		selectorLock.lock();
 		try {
 			demultiplexer.wakeup();
 			channel.register(demultiplexer, SelectionKey.OP_CONNECT,
 					new RemoteMessage(serverHandle, message));
+
 		} finally {
 			selectorLock.unlock();
 		}
@@ -53,12 +53,12 @@ public class ClientDispatcher implements Runnable {
 
 	public void run() {
 		try {
-			while (stop) { // Loop indefinitely
+			while (!stop) { // Loop indefinitely
 
 				selectorLock.lock();
 				selectorLock.unlock();
 
-				demultiplexer.select(1000);
+				demultiplexer.select();
 
 				Set<SelectionKey> readyHandles = demultiplexer.selectedKeys();
 

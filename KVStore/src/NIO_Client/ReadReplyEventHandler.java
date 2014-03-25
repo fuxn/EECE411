@@ -6,8 +6,10 @@ import java.nio.channels.SocketChannel;
 
 import NIO.Dispatcher;
 import NIO.EventHandler;
+import Utilities.CommandEnum;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.RemoteMessage;
+import Utilities.Message.Requests;
 
 public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
@@ -49,9 +51,9 @@ public class ReadReplyEventHandler implements EventHandler {
 
 		SelectionKey serverHandle = message.getServerHandle();
 		serverHandle.interestOps(SelectionKey.OP_WRITE);
-		serverHandle.attach(ByteBuffer.wrap(MessageUtilities
-				.formateReplyMessage(Integer.valueOf(this.errorCode),
-						this.value)));
+		serverHandle.attach(new Requests(CommandEnum.PUT, ByteBuffer
+				.wrap(MessageUtilities.formateReplyMessage(
+						Integer.valueOf(this.errorCode), this.value))));
 
 		Dispatcher.getDemultiplexer().wakeup();
 
