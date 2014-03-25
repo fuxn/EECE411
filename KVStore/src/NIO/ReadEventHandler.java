@@ -11,6 +11,7 @@ import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
+import Exception.SystemOverloadException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import KVStore.Chord;
@@ -68,29 +69,37 @@ public class ReadEventHandler implements EventHandler {
 
 		// threadPool.execute(new Processor(handle, c, key, value));
 
+		try{
 		this.process(handle, c, key, value);
+		}catch(SystemOverloadException e){
+			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
+					ErrorEnum.OUT_OF_SPACE.getCode(), null)));
+			handle.interestOps(SelectionKey.OP_WRITE);
+			selector.wakeup();
+			
+		}
 
 		// execAndHandOff(this.socketChannel, c, key, value);
 
 	}
 
 	private void process(final SelectionKey handle, final int command,
-			final String key, final String value) {
+			final String key, final String value) throws SystemOverloadException {
 		if (command == 1 || command == 2 || command == 3) {
-			(new Thread(new Runnable() {
+			threadPool.execute((new Runnable() {
 				@Override
 				public void run() {
 					cHash.execHashOperation(selector, handle, command, key,
 							value);
 				}
-			})).start();
+			}));
 		} else {
-			(new Thread(new Runnable() {
+			threadPool.execute(new Thread(new Runnable() {
 				@Override
 				public void run() {
 					cHash.execInternal(selector, handle, command, key, value);
 				}
-			})).start();
+			}));
 		}
 	}
 
