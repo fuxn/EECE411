@@ -74,12 +74,24 @@ public class ReadEventHandler implements EventHandler {
 
 	}
 
-	private void process(SelectionKey handle, int command, String key,
-			String value) {
-		if (command == 1 || command == 2 || command == 3)
-			cHash.execHashOperation(selector, handle, command, key, value);
-		else
-			cHash.execInternal(selector, handle, command, key, value);
+	private void process(final SelectionKey handle, final int command,
+			final String key, final String value) {
+		if (command == 1 || command == 2 || command == 3) {
+			(new Thread(new Runnable() {
+				@Override
+				public void run() {
+					cHash.execHashOperation(selector, handle, command, key,
+							value);
+				}
+			})).start();
+		} else {
+			(new Thread(new Runnable() {
+				@Override
+				public void run() {
+					cHash.execInternal(selector, handle, command, key, value);
+				}
+			})).start();
+		}
 	}
 
 	class Processor implements Runnable {

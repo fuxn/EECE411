@@ -277,25 +277,17 @@ public class ConsistentHash implements ConsistentHashInterface {
 		try {
 			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
 
-				(new Thread(new Runnable() {
-					@Override
-					public void run() {
-						byte[] replyMessage;
-						try {
-							replyMessage = handleAnnouncedFailure();
-							handle.attach(new Requests(
-									CommandEnum.ANNOUNCE_FAILURE, ByteBuffer
-											.wrap(replyMessage)));
-							handle.interestOps(SelectionKey.OP_WRITE);
+				try {
+					replyMessage = handleAnnouncedFailure();
+					handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
+							ByteBuffer.wrap(replyMessage)));
+					handle.interestOps(SelectionKey.OP_WRITE);
 
-							Dispatcher.getDemultiplexer().wakeup();
-						} catch (InternalKVStoreFailureException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-
-					}
-				})).start();
+					Dispatcher.getDemultiplexer().wakeup();
+				} catch (InternalKVStoreFailureException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {
@@ -334,6 +326,12 @@ public class ConsistentHash implements ConsistentHashInterface {
 			replyMessage = MessageUtilities.formateReplyMessage(
 					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
 		}
+		
+		handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
+				ByteBuffer.wrap(replyMessage)));
+		handle.interestOps(SelectionKey.OP_WRITE);
+
+		Dispatcher.getDemultiplexer().wakeup();
 
 	}
 
