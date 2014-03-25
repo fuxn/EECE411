@@ -14,26 +14,18 @@ public class MessageUtilities {
 
 	public static byte[] formateRequestMessage(Integer command, byte[] key,
 			byte[] value) {
-		List<Byte> message = new ArrayList<Byte>();
-		message.add(command.byteValue());
-
-		if (key != null) {
-			for (int i = 0; i < key.length; i++) {
-				message.add(key[i]);
-			}
-		}
-
-		if (value != null) {
-			for (int i = 0; i < value.length; i++) {
-				message.add(value[i]);
-			}
-		}
-
-		byte[] request = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			request[i] = (Byte) message.get(i);
-		}
-		return request;
+		int messageLength = 1 + (key != null ? key.length : 0)
+				+ (value != null ? value.length : 0);
+		byte[] message = new byte[messageLength];
+		message[0] = command.byteValue();
+		if (key != null)
+			System.arraycopy(key, 0, message, 1, key.length);
+		else
+			key = new byte[0];
+		
+		if (value != null)
+			System.arraycopy(value, 0, message, key.length + 1, value.length);
+		return message;
 	}
 
 	public static ByteBuffer requestMessage(Integer command, String key,
@@ -249,12 +241,16 @@ public class MessageUtilities {
 	}
 
 	public static boolean isCheckRequestValue(int command) {
-		return (command != CommandEnum.DELETE.getCode() && command != CommandEnum.GET
-				.getCode());
+		return (command != CommandEnum.DELETE.getCode()
+				&& command != CommandEnum.GET.getCode() && command != CommandEnum.ANNOUNCE_FAILURE
+					.getCode());
 	}
 
 	public static boolean isCheckRequestKey(int command) {
-		return (command != 4);
+		return (command != CommandEnum.ANNOUNCE_FAILURE.getCode()
+				&& command != CommandEnum.ANNOUNCE_JOINING.getCode()
+				&& command != CommandEnum.ANNOUNCE_LEAVING.getCode() && command != CommandEnum.DATA_SENT
+					.getCode());
 	}
 
 	public static byte[] standarizeMessage(byte[] cmd, int size) {

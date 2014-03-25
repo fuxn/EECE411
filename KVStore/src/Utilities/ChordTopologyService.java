@@ -108,16 +108,16 @@ public class ChordTopologyService {
 		return list;
 	}
 
-	public boolean isNodeExist(String ipAddress) {
-		return this.chord.getParticipatingNode().containsKey(ipAddress);
+	public boolean isNodeExist(String hostName) {
+		return this.chord.getChord().containsKey(hostName.hashCode());
 	}
 
-	public void handleNodeLeaving(String ipAddress) {
-		this.chord.leave(ipAddress);
+	public void handleNodeLeaving(String hostName) {
+		this.chord.leave(hostName);
 	}
 
-	public void handleNodeJoining(String ipAddress, String hostName) {
-		this.chord.join(ipAddress, hostName);
+	public void handleNodeJoining(String hostName) {
+		this.chord.join(hostName);
 	}
 
 	public boolean isSuccessor(String localHost, String remoteHost) {
