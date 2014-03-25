@@ -96,7 +96,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException {
-		System.out.println("handleing failure/..");
 		Map<String, String> keys = this.local.getKeys();
 
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
@@ -193,10 +192,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (key.length() != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
-		System.out.println("handling neighbour announced failure @ "
-				+ this.local.getHostName());
-		System.out.println("adding " + key + " and " + value);
-
 		this.local.put(key, value);
 	}
 
@@ -219,8 +214,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		Map<String, String> keys = this.local.getKeys(hostName);
 		try {
 			for (String key : keys.keySet()) {
-				System.out.println("sending " + key);
-
 				this.remoteRequest(CommandEnum.PUT.getCode(), key.getBytes(),
 						keys.get(key).getBytes(), hostName);
 			}
@@ -240,7 +233,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		if (this.topologyService.isNodeExist(hostName)) {
 
 			this.topologyService.handleNodeLeaving(ipAddress);
-			System.out.println("removing node from local chord : " + hostName);
 			this.announceLeaving(ipAddress, hostName);
 			System.out.println("broadcast leaving : " + hostName);
 		}

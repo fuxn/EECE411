@@ -6,7 +6,6 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import Utilities.CommandEnum;
@@ -87,11 +86,8 @@ public class MessageUtilities {
 		while (System.currentTimeMillis() < endTimeMillis) {
 			try {
 				errorCode = in.read();
-				System.out.println("command : " + command);
-				System.out.println("error code : " + errorCode);
 				if (errorCode == 0
 						&& MessageUtilities.isCheckReplyValue(command)) {
-					System.out.println("Checking reply value.. ");
 					byte[] reply = new byte[1024];
 					int bytesRcvd;
 					int totalBytesRcvd = 0;
@@ -103,7 +99,6 @@ public class MessageUtilities {
 									"connection close prematurely.");
 						totalBytesRcvd += bytesRcvd;
 					}
-					System.out.println("reply : " + Arrays.toString(reply));
 					return MessageUtilities.formateReplyMessage(errorCode,
 							new String(reply));
 				} else
@@ -147,9 +142,7 @@ public class MessageUtilities {
 
 	public static String checkRequestKey(int command, InputStream in) {
 		try {
-			System.out.println("command : " + command);
 			if (MessageUtilities.isCheckRequestKey(command)) {
-				System.out.println("Checking request key.. ");
 				byte[] key = new byte[32];
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
@@ -202,7 +195,6 @@ public class MessageUtilities {
 			SocketChannel socketChannel, ByteBuffer buffer) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
-				System.out.println("Checking request value.. ");
 				int bytesRcvd = 0;
 				int totalBytesRcvd = 0;
 				while (totalBytesRcvd < buffer.limit()) {
