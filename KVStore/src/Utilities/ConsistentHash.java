@@ -104,7 +104,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			try {
 				this.topologyService
 						.handleNodeLeaving(this.local.getHostName());
-				
+
 				this.remoteRequest(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						key.getBytes(), keys.get(key).getBytes(), nextNode);
@@ -127,6 +127,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 					MessageUtilities.standarizeMessage(localHost.getBytes(),
 							1024), remoteHost);
 		} catch (InvalidKeyException e) {
+			e.printStackTrace();
 			throw new InternalKVStoreFailureException();
 		}
 	}
@@ -220,7 +221,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		System.out.println("cHash handleAnnouncedLeaving " + hostName);
 
 		if (this.topologyService.isNodeExist(hostName)) {
-
 			this.topologyService.handleNodeLeaving(hostName);
 			this.announceLeaving(hostName);
 			System.out.println("broadcast leaving : " + hostName);
@@ -278,6 +278,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
 				replyMessage = this.handleAnnouncedJoining(value);
+
 			else if (command == CommandEnum.DATA_SENT.getCode()) {
 				this.handleNeighbourDataSent(value);
 				handle.cancel();

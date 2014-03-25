@@ -13,7 +13,7 @@ public class Chord {
 	public Chord(Collection<String> nodes) {
 		for (String node : nodes) {
 			this.chord.put(node.hashCode(), node);
-			this.indexs.add(node);
+			this.indexs.add(node.trim());
 		}
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
@@ -34,12 +34,25 @@ public class Chord {
 
 	public void join(String hostName) {
 		this.chord.put(hostName.hashCode(), hostName);
+		this.indexs.add(hostName.trim());
+
+		for (Integer key : this.chord.keySet()) {
+			System.out.println("chord contains : " + this.chord.get(key));
+		}
 	}
 
 	public void leave(String hostName) {
 		if (this.chord.containsKey(hostName.hashCode()))
 			this.chord.remove(hostName.hashCode());
 
-		this.indexs.remove(hostName);
+		this.indexs.remove(hostName.trim());
+
+		for (Integer key : this.chord.keySet()) {
+			System.out.println("chord contains : " + this.chord.get(key));
+		}
+
+		for (String host : this.indexs) {
+			System.out.println(host);
+		}
 	}
 }

@@ -19,8 +19,8 @@ public class WriteEventHandler implements EventHandler {
 		}
 		socketChannel.close(); // Close connection
 
-		if (CommandEnum.HANDLE_ANNOUNCED_FAILURE.equals(requests.getCommand()))
-			System.exit(0);
+		if (CommandEnum.ANNOUNCE_FAILURE.equals(requests.getCommand()));
+		//	System.exit(0);
 	}
 
 }

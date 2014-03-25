@@ -2,7 +2,9 @@ package Utilities;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.SortedMap;
+
 import KVStore.Chord;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
@@ -94,11 +96,14 @@ public class ChordTopologyService {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
+		Random random = new Random();
+		
+
 		List<String> list = new ArrayList<String>();
 
 		for (int i = 0; i < numberOfNodes; i++) {
-			int index = (int) (Math.random() * this.chord.getChord().size());
-			String randomHost = this.chord.getNodeByIndex(index);
+			int randomNumber = random.nextInt(this.chord.getChord().size());
+			String randomHost = this.chord.getNodeByIndex(randomNumber);
 			if ((!list.contains(randomHost.trim()))
 					&& (!randomHost.trim().equals(hostName.trim()))
 					&& (!randomHost.trim().equals(

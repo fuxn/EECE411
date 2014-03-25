@@ -74,31 +74,25 @@ public class MessageUtilities {
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
 		int errorCode = -2;
-		long endTimeMillis = System.currentTimeMillis() + 10000;
-		while (System.currentTimeMillis() < endTimeMillis) {
-			try {
-				errorCode = in.read();
-				if (errorCode == 0
-						&& MessageUtilities.isCheckReplyValue(command)) {
-					byte[] reply = new byte[1024];
-					int bytesRcvd;
-					int totalBytesRcvd = 0;
-					while ((totalBytesRcvd < reply.length)
-							&& (System.currentTimeMillis() < endTimeMillis)) {
-						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
-								reply.length - totalBytesRcvd)) == -1)
-							throw new SocketException(
-									"connection close prematurely.");
-						totalBytesRcvd += bytesRcvd;
-					}
-					return MessageUtilities.formateReplyMessage(errorCode,
-							new String(reply));
-				} else
-					break;
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		try {
+			errorCode = in.read();
+			if (errorCode == 0 && MessageUtilities.isCheckReplyValue(command)) {
+				byte[] reply = new byte[1024];
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while ((totalBytesRcvd < reply.length)) {
+					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+							reply.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+				return MessageUtilities.formateReplyMessage(errorCode,
+						new String(reply));
 			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
@@ -106,12 +100,10 @@ public class MessageUtilities {
 	public static String checkReplyValue(SocketChannel socketChannel,
 			int command, ByteBuffer buffer) {
 		if (MessageUtilities.isCheckReplyValue(command)) {
-			long endTimeMillis = System.currentTimeMillis() + 10000;
 			try {
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
-				while (totalBytesRcvd < buffer.limit()
-						&& System.currentTimeMillis() < endTimeMillis) {
+				while (totalBytesRcvd < buffer.limit()) {
 					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
 						throw new SocketException(
 								"connection close prematurely.");
