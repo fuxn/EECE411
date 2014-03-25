@@ -321,9 +321,12 @@ public class ConsistentHash implements ConsistentHashInterface {
 		try {
 			String node = this.topologyService.getNode(key);
 			if (!node.equals(this.local.getHostName())) {
-				replyMessage = this.remoteRequest(command, key.getBytes(),
-						value.getBytes(), node);
-			} else {
+				/*
+				 * replyMessage = this.remoteRequest(command, key.getBytes(),
+				 * value.getBytes(), node);
+				 */
+				this.connectRemoteServer(node, selector, handle, MessageUtilities.requestMessage(command, key, value));
+				} else {
 				if (command == CommandEnum.PUT.getCode()) {
 					replyMessage = this.local.put(key, value);
 				} else if (command == CommandEnum.GET.getCode()) {

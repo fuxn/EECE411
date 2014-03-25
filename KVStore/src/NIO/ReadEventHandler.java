@@ -1,18 +1,11 @@
 package NIO;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Collection;
 
-import Exception.InexistentKeyException;
-import Exception.InternalKVStoreFailureException;
-import Exception.InvalidKeyException;
-import Exception.OutOfSpaceException;
 import Exception.SystemOverloadException;
-import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
 import KVStore.Chord;
 import Utilities.ConsistentHash;
