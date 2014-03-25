@@ -257,7 +257,8 @@ public class MessageUtilities {
 	}
 
 	public static boolean isCheckRequestValue(int command) {
-		return (command == 1 || command == 21);
+		return (command != CommandEnum.DELETE.getCode() && command != CommandEnum.GET
+				.getCode());
 	}
 
 	public static boolean isCheckRequestKey(int command) {

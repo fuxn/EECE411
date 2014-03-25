@@ -326,9 +326,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 			replyMessage = MessageUtilities.formateReplyMessage(
 					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
 		}
-		
-		handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
-				ByteBuffer.wrap(replyMessage)));
+
+		handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE, ByteBuffer
+				.wrap(replyMessage)));
 		handle.interestOps(SelectionKey.OP_WRITE);
 
 		Dispatcher.getDemultiplexer().wakeup();
@@ -405,8 +405,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		try {
 			System.out.println("trying remote request to host " + server);
 			Socket socket = new Socket(server, 4560);
-			System.out.println("Connecting to : " + socket.getInetAddress());
-			System.out.println("connecting to server..");
 
 			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();
@@ -423,7 +421,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		} catch (IOException e) {
 			throw new InternalKVStoreFailureException();
 		}
-		System.out.println("chash reply ; " + reply);
 		return reply;
 	}
 }
