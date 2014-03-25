@@ -78,7 +78,7 @@ public class KVStore {
 		nodes.add("planetlab-4.eecs.cwru.edu");
 		nodes.add("planetlab-2.cs.auckland.ac.nz");
 
-		nodes.add("planetlab-2.sysu.edu.cn");
+		/*nodes.add("planetlab-2.sysu.edu.cn");
 		nodes.add("planetlab1.acis.ufl.edu");
 		nodes.add("pl2.eecs.utk.edu");
 		nodes.add("ricepl-5.cs.rice.edu");
@@ -131,7 +131,7 @@ public class KVStore {
 		nodes.add("planetlab-12.e5.ijs.si");
 		nodes.add("planetlab4.cs.st-andrews.ac.uk");
 		nodes.add("planetlab-4.imperial.ac.uk");
-
+*/
 		// nodes.add(localHostName);
 		System.out.println(localHostName);
 
