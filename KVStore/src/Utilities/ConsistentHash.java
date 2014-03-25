@@ -92,7 +92,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		return this.local.remove(key);
-
 	}
 
 	public byte[] handleAnnouncedFailure()
