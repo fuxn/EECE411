@@ -22,7 +22,7 @@ public class MessageUtilities {
 			System.arraycopy(key, 0, message, 1, key.length);
 		else
 			key = new byte[0];
-		
+
 		if (value != null)
 			System.arraycopy(value, 0, message, key.length + 1, value.length);
 		return message;
@@ -231,26 +231,19 @@ public class MessageUtilities {
 	}
 
 	public static boolean isCheckReplyValue(int command) {
-		return (command == 2);
+		return CommandEnum.commandsWithReplyValue.contains(command);
 	}
 
 	public static boolean isCheckReply(int command) {
-		return (command == CommandEnum.PUT.getCode()
-				|| command == CommandEnum.GET.getCode() || command == CommandEnum.DELETE
-					.getCode());
+		return CommandEnum.commandsWithReply.contains(command);
 	}
 
 	public static boolean isCheckRequestValue(int command) {
-		return (command != CommandEnum.DELETE.getCode()
-				&& command != CommandEnum.GET.getCode() && command != CommandEnum.ANNOUNCE_FAILURE
-					.getCode());
+		return CommandEnum.commandsWithRequestValue.contains(command);
 	}
 
 	public static boolean isCheckRequestKey(int command) {
-		return (command != CommandEnum.ANNOUNCE_FAILURE.getCode()
-				&& command != CommandEnum.ANNOUNCE_JOINING.getCode()
-				&& command != CommandEnum.ANNOUNCE_LEAVING.getCode() && command != CommandEnum.DATA_SENT
-					.getCode());
+		return CommandEnum.commandsWithRequestKey.contains(command);
 	}
 
 	public static byte[] standarizeMessage(byte[] cmd, int size) {
