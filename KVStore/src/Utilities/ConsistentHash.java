@@ -121,14 +121,15 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public void announceLeaving(Integer hostNamehashCode)
+	public void announceLeaving(String sender, Integer hostNamehashCode)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash announce leaving :" + hostNamehashCode);
 		List<String> randomNodes = this.topologyService.getRandomNodes(3);
 
 		for (String node : randomNodes) {
 			try {
-				if (node.equals(this.local.getHostName()))
+				if (node.equals(this.local.getHostName())
+						|| node.equals(sender))
 					continue;
 				this.remoteRequest(CommandEnum.ANNOUNCE_LEAVING.getCode(),
 						MessageUtilities.intToByteArray(hostNamehashCode, 32),
@@ -149,18 +150,18 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void handleNeighbourDataSent(String hostName)
 			throws InternalKVStoreFailureException {
 
-		this.handleAnnouncedLeaving(MessageUtilities.intToByteArray(
-				hostName.hashCode(), 32));
+		this.handleAnnouncedLeaving(hostName,
+				MessageUtilities.intToByteArray(hostName.hashCode(), 32));
 	}
 
-	public void handleAnnouncedLeaving(byte[] hostNameHashCode)
+	public void handleAnnouncedLeaving(String sender, byte[] hostNameHashCode)
 			throws InternalKVStoreFailureException {
 		System.out.println("cHash handleAnnouncedLeaving " + hostNameHashCode);
 
 		int hash = MessageUtilities.byteArrayToInt(hostNameHashCode);
 		if (this.topologyService.isNodeExist(hash)) {
 			this.topologyService.handleNodeLeaving(hash);
-			this.announceLeaving(hash);
+			this.announceLeaving(sender, hash);
 			System.out.println("broadcast leaving : " + hostNameHashCode);
 		}
 	}
@@ -189,7 +190,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
-				this.handleAnnouncedLeaving(key);
+				this.handleAnnouncedLeaving(socketChannel.socket()
+						.getInetAddress().getHostName(), key);
 				handle.cancel();
 				return;
 			} // else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
