@@ -10,20 +10,20 @@ import Exception.OutOfSpaceException;
 
 public interface ConsistentHashInterface {
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
+	public byte[] put(int key, byte[] value) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException;
 
-	public byte[] get(byte[] key) throws InexistentKeyException,
+	public byte[] get(int key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException;
 
-	public byte[] remove(byte[] key) throws InexistentKeyException,
+	public byte[] remove(int key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException;
 
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException;
 
-	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
+	public void handleNeighbourAnnouncedFailure(int key, byte[] value)
 			throws InexistentKeyException, InternalKVStoreFailureException,
 			InvalidKeyException, OutOfSpaceException;
 

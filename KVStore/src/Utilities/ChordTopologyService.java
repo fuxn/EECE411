@@ -18,12 +18,12 @@ public class ChordTopologyService {
 		this.chord = chord;
 	}
 
-	public String getNode(byte[] key) throws InexistentKeyException,
+	public String getNode(int key) throws InexistentKeyException,
 			InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		int hash = Arrays.hashCode(key);
+		int hash = key;
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
@@ -35,14 +35,14 @@ public class ChordTopologyService {
 		return this.chord.getChord().get(hash);
 	}
 
-	public List<String> getNodes(byte[] fromKey, int numOfReplicas)
+	public List<String> getNodes(int fromKey, int numOfReplicas)
 			throws InexistentKeyException, InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
 		List<String> nodes = new ArrayList<String>();
 
-		int hash = Arrays.hashCode(fromKey);
+		int hash = fromKey;
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
@@ -106,8 +106,8 @@ public class ChordTopologyService {
 			String randomHost = this.chord.getNodeByIndex(randomNumber);
 			if ((!list.contains(randomHost.trim()))
 					&& (!randomHost.trim().equals(hostName.trim()))
-					&& (!randomHost.trim()
-							.equals(this.getNextNodeByHostName(hostName.trim()))))
+					&& (!randomHost.trim().equals(
+							this.getNextNodeByHostName(hostName.trim()))))
 				list.add(randomHost);
 		}
 		return list;

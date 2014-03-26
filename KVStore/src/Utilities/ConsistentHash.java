@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -47,12 +48,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
+	public byte[] put(int key, byte[] value) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {
-		if (key.length != 32)
-			throw new InvalidKeyException("Illegal Key Size.");
-
 		List<String> nodes = this.topologyService.getNodes(key,
 				this.numberOfReplicas);
 
@@ -68,26 +66,22 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private byte[] put(String node, byte[] key, byte[] value)
+	private byte[] put(String node, int key, byte[] value)
 			throws InexistentKeyException, OutOfSpaceException,
 			InternalKVStoreFailureException {
 
 		return this.local.put(key, value);
 	}
 
-	public byte[] get(byte[] key) throws InexistentKeyException,
+	public byte[] get(int key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length != 32)
-			throw new InvalidKeyException("Illegal Key Size.");
-
-		return this.local.get(key);
+		byte[] reply = this.local.get(key);
+		//System.out.println("get reply length" + reply.length);
+		return reply;
 	}
 
-	public byte[] remove(byte[] key) throws InexistentKeyException,
+	public byte[] remove(int key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length != 32)
-			throw new InvalidKeyException("Illegal Key Size.");
-
 		return this.local.remove(key);
 	}
 
@@ -176,12 +170,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
+	public void handleNeighbourAnnouncedFailure(int key, byte[] value)
 			throws InternalKVStoreFailureException, InexistentKeyException,
 			OutOfSpaceException, InvalidKeyException {
-		if (key.length != 32)
-			throw new InvalidKeyException("Illegal Key Size.");
-
 		this.local.put(key, value);
 	}
 
@@ -201,7 +192,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 				+ this.local.getHostName());
 
 		this.handleAnnouncedJoining(hostName);
-		Map<Integer, byte[]> keys = this.local.getKeys(hostName.getBytes());
+		Map<Integer, byte[]> keys = this.local.getKeys(Arrays.hashCode(hostName
+				.getBytes()));
 		try {
 			for (Integer key : keys.keySet()) {
 				this.remoteRequest(
@@ -254,7 +246,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void execInternal(Selector selector, final SelectionKey handle,
 			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
-
+		int keyHash = Arrays.hashCode(key);
 		try {
 			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
 
@@ -272,7 +264,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {
-				this.handleNeighbourAnnouncedFailure(key, value);
+				this.handleNeighbourAnnouncedFailure(keyHash, value);
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
@@ -320,9 +312,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void execHashOperation(Selector selector, SelectionKey handle,
 			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
-
+		int keyHash = Arrays.hashCode(key);
 		try {
-			String node = this.topologyService.getNode(key);
+			String node = this.topologyService.getNode(keyHash);
 			if (!node.equals(this.local.getHostName())) {
 				/*
 				 * replyMessage = this.remoteRequest(command, key.getBytes(),
@@ -332,11 +324,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 						MessageUtilities.requestMessage(command, key, value));
 			} else {
 				if (command == CommandEnum.PUT.getCode()) {
-					replyMessage = this.local.put(key, value);
+					replyMessage = this.local.put(keyHash, value);
 				} else if (command == CommandEnum.GET.getCode()) {
-					replyMessage = this.local.get(key);
+					replyMessage = this.local.get(keyHash);
 				} else if (command == CommandEnum.DELETE.getCode()) {
-					replyMessage = this.local.remove(key);
+					replyMessage = this.local.remove(keyHash);
 				} else
 					throw new UnrecognizedCommandException();
 			}

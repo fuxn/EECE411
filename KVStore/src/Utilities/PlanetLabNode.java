@@ -1,6 +1,5 @@
 package Utilities;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,13 +17,13 @@ public class PlanetLabNode {
 		this.hostName = hostName;
 	}
 
-	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
+	public byte[] put(int key, byte[] value) throws InexistentKeyException,
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
 
 		try {
-			this.values.put(Arrays.hashCode(key), value);
+			this.values.put(key, value);
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
 		}
@@ -39,20 +38,20 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] get(byte[] key) throws InexistentKeyException {
+	public byte[] get(int key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
+		//System.out.println("get :" + this.values.get(key));
 		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(),
-				this.values.get(Arrays.hashCode(key)));
+				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
 	}
 
-	public byte[] remove(byte[] key) throws InexistentKeyException {
+	public byte[] remove(int key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
-		this.values.remove(Arrays.hashCode(key));
+		this.values.remove(key);
 
 		if (!this.values.isEmpty()) {
 			for (Integer index : values.keySet()) {
@@ -64,10 +63,10 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public Map<Integer, byte[]> getKeys(byte[] toKey) {
+	public Map<Integer, byte[]> getKeys(int toKey) {
 		Map<Integer, byte[]> keys = new HashMap<Integer, byte[]>();
 		for (Integer key : this.values.keySet()) {
-			if (key <= Arrays.hashCode(toKey))
+			if (key <= toKey)
 				keys.put(key, this.values.get(key));
 		}
 		return keys;
@@ -85,8 +84,8 @@ public class PlanetLabNode {
 		this.values.clear();
 	}
 
-	private boolean isInexistentKey(byte[] key) {
-		return (!this.values.containsKey(Arrays.hashCode(key)));
+	private boolean isInexistentKey(int key) {
+		return (!this.values.containsKey(key));
 	}
 
 }

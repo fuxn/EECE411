@@ -165,7 +165,8 @@ public class MessageUtilities {
 		}
 	}
 
-	public static void checkRequestValue(int command, InputStream in, byte[] value) {
+	public static void checkRequestValue(int command, InputStream in,
+			byte[] value) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
 				value = new byte[1024];

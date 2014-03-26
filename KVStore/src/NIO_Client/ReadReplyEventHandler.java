@@ -55,8 +55,8 @@ public class ReadReplyEventHandler implements EventHandler {
 		SelectionKey serverHandle = message.getServerHandle();
 		serverHandle.interestOps(SelectionKey.OP_WRITE);
 		serverHandle.attach(new Requests(CommandEnum.PUT, ByteBuffer
-				.wrap(MessageUtilities.formateReplyMessage(
-						Integer.valueOf(this.errorCode), this.value))));
+				.wrap(MessageUtilities.formateReplyMessage(this.errorCode,
+						this.value))));
 
 		Dispatcher.getDemultiplexer().wakeup();
 

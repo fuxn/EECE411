@@ -87,12 +87,13 @@ public class ServerRunnable implements Runnable {
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {
 		System.out.println("executing command " + command);
+		int keyHash = Arrays.hashCode(key);
 		if (command == 1)
-			return cHash.put(key, value);
+			return cHash.put(keyHash, value);
 		else if (command == 2)
-			return cHash.get(key);
+			return cHash.get(keyHash);
 		else if (command == 3)
-			return cHash.remove(key);
+			return cHash.remove(keyHash);
 		else if (command == 4)
 			return this.announceFailure();
 		// else if (command == 21)
