@@ -1,6 +1,7 @@
 package Utilities;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedMap;
@@ -17,12 +18,12 @@ public class ChordTopologyService {
 		this.chord = chord;
 	}
 
-	public String getNode(String key) throws InexistentKeyException,
+	public String getNode(byte[] key) throws InexistentKeyException,
 			InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
-		int hash = key.hashCode();
+		int hash = Arrays.hashCode(key);
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
@@ -34,14 +35,14 @@ public class ChordTopologyService {
 		return this.chord.getChord().get(hash);
 	}
 
-	public List<String> getNodes(String fromKey, int numOfReplicas)
+	public List<String> getNodes(byte[] fromKey, int numOfReplicas)
 			throws InexistentKeyException, InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
 		List<String> nodes = new ArrayList<String>();
 
-		int hash = fromKey.hashCode();
+		int hash = Arrays.hashCode(fromKey);
 		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
@@ -97,7 +98,6 @@ public class ChordTopologyService {
 			throw new InternalKVStoreFailureException();
 
 		Random random = new Random();
-		
 
 		List<String> list = new ArrayList<String>();
 
@@ -106,8 +106,8 @@ public class ChordTopologyService {
 			String randomHost = this.chord.getNodeByIndex(randomNumber);
 			if ((!list.contains(randomHost.trim()))
 					&& (!randomHost.trim().equals(hostName.trim()))
-					&& (!randomHost.trim().equals(
-							this.getNextNodeByHostName(hostName.trim()))))
+					&& (!randomHost.trim()
+							.equals(this.getNextNodeByHostName(hostName.trim()))))
 				list.add(randomHost);
 		}
 		return list;

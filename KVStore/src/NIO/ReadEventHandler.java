@@ -51,9 +51,9 @@ public class ReadEventHandler implements EventHandler {
 
 		int c = command[0];
 
-		String key = MessageUtilities.checkRequestKey(c, this.socketChannel,
+		byte[] key = MessageUtilities.checkRequestKey(c, this.socketChannel,
 				this.keyBuffer);
-		String value = MessageUtilities.checkRequestValue(c,
+		byte[] value = MessageUtilities.checkRequestValue(c,
 				this.socketChannel, this.valueBuffer);
 
 		commandBuffer.clear();
@@ -77,7 +77,7 @@ public class ReadEventHandler implements EventHandler {
 	}
 
 	public void process(final SelectionKey handle, final int command,
-			final String key, final String value) {
+			final byte[] key, final byte[] value) {
 		if (command == 1 || command == 2 || command == 3) {
 			cHash.execHashOperation(selector, handle, command, key, value);
 		} else {
@@ -88,12 +88,12 @@ public class ReadEventHandler implements EventHandler {
 
 	class Processor implements Runnable {
 		private int command;
-		private String key;
-		private String value;
+		private byte[] key;
+		private byte[] value;
 		private SelectionKey handle;
 
-		public Processor(SelectionKey handle, int command, String key,
-				String value) {
+		public Processor(SelectionKey handle, int command, byte[] key,
+				byte[] value) {
 			this.command = command;
 			this.key = key;
 			this.value = value;

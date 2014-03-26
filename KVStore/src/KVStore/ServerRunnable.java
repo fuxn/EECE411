@@ -43,8 +43,8 @@ public class ServerRunnable implements Runnable {
 			try {
 
 				int command = reader.read();
-				String key = MessageUtilities.checkRequestKey(command, reader);
-				String value = MessageUtilities.checkRequestValue(command,
+				byte[] key = MessageUtilities.checkRequestKey(command, reader);
+				byte[] value = MessageUtilities.checkRequestValue(command,
 						reader);
 
 				byte[] results = this.exec(command, key, value);
@@ -80,7 +80,7 @@ public class ServerRunnable implements Runnable {
 
 	}
 
-	private byte[] exec(int command, String key, String value)
+	private byte[] exec(int command, byte[] key, byte[] value)
 			throws InexistentKeyException, UnrecognizedCommandException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {

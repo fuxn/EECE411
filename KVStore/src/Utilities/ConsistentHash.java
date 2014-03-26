@@ -47,10 +47,10 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public byte[] put(String key, String value) throws InexistentKeyException,
+	public byte[] put(byte[] key, byte[] value) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {
-		if (key.length() != 32)
+		if (key.length != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		List<String> nodes = this.topologyService.getNodes(key,
@@ -68,26 +68,24 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private byte[] put(String node, String key, String value)
+	private byte[] put(String node, byte[] key, byte[] value)
 			throws InexistentKeyException, OutOfSpaceException,
 			InternalKVStoreFailureException {
 
 		return this.local.put(key, value);
-
 	}
 
-	public byte[] get(String key) throws InexistentKeyException,
+	public byte[] get(byte[] key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length() != 32)
+		if (key.length != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		return this.local.get(key);
-
 	}
 
-	public byte[] remove(String key) throws InexistentKeyException,
+	public byte[] remove(byte[] key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		if (key.length() != 32)
+		if (key.length != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		return this.local.remove(key);
@@ -96,18 +94,20 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException {
 
-		Map<String, String> keys = this.local.getKeys();
+		Map<Integer, byte[]> keys = this.local.getKeys();
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
 				.getHostName());
 
-		for (String key : keys.keySet()) {
+		for (Integer key : keys.keySet()) {
 			try {
 				this.topologyService
 						.handleNodeLeaving(this.local.getHostName());
 
 				this.remoteRequest(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
-						key.getBytes(), keys.get(key).getBytes(), nextNode);
+						MessageUtilities.standarizeMessage(
+								new byte[] { key.byteValue() }, 32),
+						keys.get(key), new String(nextNode));
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new InternalKVStoreFailureException();
@@ -176,10 +176,10 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public void handleNeighbourAnnouncedFailure(String key, String value)
+	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
 			throws InternalKVStoreFailureException, InexistentKeyException,
 			OutOfSpaceException, InvalidKeyException {
-		if (key.length() != 32)
+		if (key.length != 32)
 			throw new InvalidKeyException("Illegal Key Size.");
 
 		this.local.put(key, value);
@@ -201,11 +201,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 				+ this.local.getHostName());
 
 		this.handleAnnouncedJoining(hostName);
-		Map<String, String> keys = this.local.getKeys(hostName);
+		Map<Integer, byte[]> keys = this.local.getKeys(hostName.getBytes());
 		try {
-			for (String key : keys.keySet()) {
-				this.remoteRequest(CommandEnum.PUT.getCode(), key.getBytes(),
-						keys.get(key).getBytes(), hostName);
+			for (Integer key : keys.keySet()) {
+				this.remoteRequest(
+						CommandEnum.PUT.getCode(),
+						MessageUtilities.standarizeMessage(
+								new byte[] { key.byteValue() }, 32),
+						keys.get(key), new String(hostName));
 			}
 		} catch (Exception e) {
 			return MessageUtilities.formateReplyMessage(
@@ -249,7 +252,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public void execInternal(Selector selector, final SelectionKey handle,
-			int command, String key, String value) {
+			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
 
 		try {
@@ -273,14 +276,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
-				this.handleAnnouncedLeaving(value);
+				this.handleAnnouncedLeaving(new String(value));
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
-				replyMessage = this.handleAnnouncedJoining(value);
+				replyMessage = this.handleAnnouncedJoining(new String(value));
 
 			else if (command == CommandEnum.DATA_SENT.getCode()) {
-				this.handleNeighbourDataSent(value);
+				this.handleNeighbourDataSent(new String(value));
 				handle.cancel();
 				return;
 			} else
@@ -315,7 +318,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 	}
 
 	public void execHashOperation(Selector selector, SelectionKey handle,
-			int command, String key, String value) {
+			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
 
 		try {
@@ -325,8 +328,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 				 * replyMessage = this.remoteRequest(command, key.getBytes(),
 				 * value.getBytes(), node);
 				 */
-				this.connectRemoteServer(node, selector, handle, MessageUtilities.requestMessage(command, key, value));
-				} else {
+				this.connectRemoteServer(new String(node), selector, handle,
+						MessageUtilities.requestMessage(command, key, value));
+			} else {
 				if (command == CommandEnum.PUT.getCode()) {
 					replyMessage = this.local.put(key, value);
 				} else if (command == CommandEnum.GET.getCode()) {
@@ -366,6 +370,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	private void connectRemoteServer(String host, Selector selector,
 			SelectionKey handle, ByteBuffer message) throws Exception {
+		System.out.println("connect remote server : " + host);
 		SocketChannel client;
 		try {
 			client = SocketChannel.open();

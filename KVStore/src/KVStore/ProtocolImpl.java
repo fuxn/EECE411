@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
+import java.util.List;
 
 import Exception.InternalKVStoreFailureException;
 import Exception.SystemOverloadException;
@@ -27,7 +28,7 @@ public class ProtocolImpl implements EventListener {
 
 	private int numConnection = 0;
 
-	public ProtocolImpl(Collection<String> nodes) {
+	public ProtocolImpl(List<String> nodes) {
 		this.cHash = new ConsistentHash(1, new Chord(nodes));
 
 		threadPool = new ThreadPool(maxThreads, maxTasks);

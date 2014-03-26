@@ -1,7 +1,7 @@
 package KVStore;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -10,14 +10,32 @@ public class Chord {
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
 	private ArrayList<String> indexs = new ArrayList<String>();
 
-	public Chord(Collection<String> nodes) {
+	public Chord(List<String> nodes) {
 		for (String node : nodes) {
 			this.chord.put(node.hashCode(), node);
-			this.indexs.add(node.trim());
+			this.indexs.add(node);
 		}
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
 		}
+	}
+
+	public void partition(List<String> nodes) {
+		Integer hashSpace = (int) Math.pow(2, 32);
+		Integer nodePartitionSpace = hashSpace / nodes.size();
+
+		int minHash = -(int) Math.pow(2, 31);
+		int maxHash = (int) Math.pow(2, 31) - 1;
+
+		for (String node : nodes) {
+			minHash = minHash * nodes.indexOf(node) + 1;
+			for (int i = minHash; i < minHash + nodePartitionSpace; i++) {
+				this.chord.put(i, node);
+			}
+		}
+
+		System.out.println("chord hashspace : " + maxHash + " contains: "
+				+ this.chord.get(maxHash));
 	}
 
 	public String getNodeByIndex(int index) {
@@ -34,7 +52,7 @@ public class Chord {
 
 	public void join(String hostName) {
 		this.chord.put(hostName.hashCode(), hostName);
-		this.indexs.add(hostName.trim());
+		this.indexs.add(hostName);
 
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
@@ -45,7 +63,7 @@ public class Chord {
 		if (this.chord.containsKey(hostName.hashCode()))
 			this.chord.remove(hostName.hashCode());
 
-		this.indexs.remove(hostName.trim());
+		this.indexs.remove(hostName);
 
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));

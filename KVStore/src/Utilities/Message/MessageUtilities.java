@@ -28,48 +28,32 @@ public class MessageUtilities {
 		return message;
 	}
 
-	public static ByteBuffer requestMessage(Integer command, String key,
-			String value) {
-		List<Byte> message = new ArrayList<Byte>();
-		message.add(command.byteValue());
+	public static ByteBuffer requestMessage(Integer command, byte[] key,
+			byte[] value) {
+		int messageLength = 1 + (key != null ? key.length : 0)
+				+ (value != null ? value.length : 0);
 
-		if (key != null) {
-			byte[] keyBuffer = key.getBytes();
-			for (int i = 0; i < keyBuffer.length; i++) {
-				message.add(keyBuffer[i]);
-			}
-		}
+		byte[] message = new byte[messageLength];
+		message[0] = command.byteValue();
+		if (key != null)
+			System.arraycopy(key, 0, message, 1, key.length);
+		else
+			key = new byte[0];
 
-		if (value != null) {
-			byte[] valueBuffer = value.getBytes();
-			for (int i = 0; i < valueBuffer.length; i++) {
-				message.add(valueBuffer[i]);
-			}
-		}
-
-		byte[] request = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			request[i] = (Byte) message.get(i);
-		}
-		return ByteBuffer.wrap(request);
+		if (value != null)
+			System.arraycopy(value, 0, message, key.length + 1, value.length);
+		return ByteBuffer.wrap(message);
 	}
 
-	public static byte[] formateReplyMessage(Integer errorCode, String value) {
+	public static byte[] formateReplyMessage(Integer errorCode, byte[] value) {
+		int messageLength = 1 + (value != null ? value.length : 0);
+		byte[] message = new byte[messageLength];
+		message[0] = errorCode.byteValue();
 
-		List<Byte> message = new ArrayList<Byte>();
-		message.add(errorCode.byteValue());
-		if (value != null) {
-			byte[] valueByte = value.getBytes();
-			for (int i = 0; i < valueByte.length; i++) {
-				message.add(valueByte[i]);
-			}
-		}
+		if (value != null)
+			System.arraycopy(value, 0, message, 1, value.length);
 
-		byte[] reply = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			reply[i] = message.get(i);
-		}
-		return reply;
+		return message;
 	}
 
 	public static byte[] checkReplyValue(int command, InputStream in) {
@@ -87,8 +71,7 @@ public class MessageUtilities {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
-				return MessageUtilities.formateReplyMessage(errorCode,
-						new String(reply));
+				return MessageUtilities.formateReplyMessage(errorCode, reply);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -97,7 +80,7 @@ public class MessageUtilities {
 		return MessageUtilities.formateReplyMessage(errorCode, null);
 	}
 
-	public static String checkReplyValue(SocketChannel socketChannel,
+	public static byte[] checkReplyValue(SocketChannel socketChannel,
 			int command, ByteBuffer buffer) {
 		if (MessageUtilities.isCheckReplyValue(command)) {
 			try {
@@ -115,16 +98,16 @@ public class MessageUtilities {
 				byte[] value = new byte[buffer.limit()];
 				buffer.get(value);
 
-				return new String(value);
+				return value;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		return new String();
+		return null;
 	}
 
-	public static String checkRequestKey(int command, InputStream in) {
+	public static byte[] checkRequestKey(int command, InputStream in) {
 		try {
 			if (MessageUtilities.isCheckRequestKey(command)) {
 				byte[] key = new byte[32];
@@ -138,7 +121,7 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-				return new String(key);
+				return key;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -147,7 +130,7 @@ public class MessageUtilities {
 		return null;
 	}
 
-	public static String checkRequestKey(int command,
+	public static byte[] checkRequestKey(int command,
 			SocketChannel socketChannel, ByteBuffer buffer) {
 		try {
 			if (MessageUtilities.isCheckRequestKey(command)) {
@@ -166,16 +149,16 @@ public class MessageUtilities {
 				byte[] key = new byte[buffer.limit()];
 				buffer.get(key);
 
-				return new String(key);
+				return key;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new String();
+		return null;
 	}
 
-	public static String checkRequestValue(int command,
+	public static byte[] checkRequestValue(int command,
 			SocketChannel socketChannel, ByteBuffer buffer) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
@@ -191,16 +174,16 @@ public class MessageUtilities {
 				buffer.flip();
 				byte[] value = new byte[buffer.limit()];
 				buffer.get(value);
-				return new String(value);
+				return value;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new String();
+		return null;
 	}
 
-	public static String checkRequestValue(int command, InputStream in) {
+	public static byte[] checkRequestValue(int command, InputStream in) {
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
 				byte[] value = new byte[1024];
@@ -213,13 +196,13 @@ public class MessageUtilities {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
-				return new String(value);
+				return value;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new String();
+		return null;
 	}
 
 	public static boolean isCheckReplyValue(int command) {
@@ -239,22 +222,12 @@ public class MessageUtilities {
 	}
 
 	public static byte[] standarizeMessage(byte[] cmd, int size) {
-		List<Byte> message = new ArrayList<Byte>();
 		if (cmd.length != size) {
-			byte[] temp = new byte[size - cmd.length];
-			for (int i = 0; i < temp.length; i++) {
-				message.add(temp[i]);
-			}
-		}
-
-		for (int i = 0; i < cmd.length; i++) {
-			message.add(cmd[i]);
-		}
-		byte[] standarizedMessage = new byte[message.size()];
-		for (int i = 0; i < message.size(); i++) {
-			standarizedMessage[i] = (Byte) message.get(i);
-		}
-		return standarizedMessage;
+			byte[] message = new byte[size];
+			System.arraycopy(cmd, 0, message, size - cmd.length + 1, cmd.length);
+			return message;
+		} else
+			return cmd;
 	}
 
 	public static ByteBuffer handleFailureMessage(Integer command, String key,

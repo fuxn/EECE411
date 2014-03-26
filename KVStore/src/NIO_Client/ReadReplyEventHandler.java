@@ -13,7 +13,7 @@ import Utilities.Message.Requests;
 
 public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
-	private String value;
+	private byte[] value;
 
 	private ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
 	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
