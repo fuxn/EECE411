@@ -81,7 +81,7 @@ public class MessageUtilities {
 	}
 
 	public static void checkReplyValue(SocketChannel socketChannel,
-			int command, ByteBuffer buffer, byte[] value) {
+			int command, ByteBuffer buffer) {
 		if (MessageUtilities.isCheckReplyValue(command)) {
 			try {
 				int bytesRcvd;
@@ -93,10 +93,6 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-
-				buffer.flip();
-				value = new byte[buffer.limit()];
-				buffer.get(value);
 
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
