@@ -2,6 +2,7 @@ package Interface;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
@@ -23,12 +24,12 @@ public interface ConsistentHashInterface {
 	public byte[] handleAnnouncedFailure()
 			throws InternalKVStoreFailureException;
 
-	public void handleNeighbourAnnouncedFailure(Integer key, byte[] value)
+	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
 			throws InexistentKeyException, InternalKVStoreFailureException,
 			InvalidKeyException, OutOfSpaceException;
 
 	public void execInternal(Selector selector, SelectionKey handle,
-			int command, byte[] key, byte[] value);
+			SocketChannel socketChannel, int command, byte[] key, byte[] value);
 
 	public void execHashOperation(Selector selector, SelectionKey handle,
 			int command, byte[] key, byte[] value);

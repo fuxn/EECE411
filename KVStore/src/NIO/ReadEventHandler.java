@@ -50,6 +50,7 @@ public class ReadEventHandler implements EventHandler {
 		commandBuffer.get(command);
 
 		int c = command[0];
+		System.out.println("command : " + c);
 
 		MessageUtilities.checkRequestKey(c, this.socketChannel, this.keyBuffer);
 
@@ -71,7 +72,8 @@ public class ReadEventHandler implements EventHandler {
 		// threadPool.execute(new Processor(handle, c, key, value));
 
 		try {
-			threadPool.execute(new Processor(handle, c, key, value));
+			threadPool.execute(new Processor(handle, this.socketChannel, c,
+					key, value));
 		} catch (SystemOverloadException e) {
 			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
 					ErrorEnum.OUT_OF_SPACE.getCode(), null)));
@@ -84,12 +86,14 @@ public class ReadEventHandler implements EventHandler {
 
 	}
 
-	public void process(final SelectionKey handle, final int command,
+	public void process(final SelectionKey handle,
+			final SocketChannel socketChannel, final int command,
 			final byte[] key, final byte[] value) {
 		if (command == 1 || command == 2 || command == 3) {
 			cHash.execHashOperation(selector, handle, command, key, value);
 		} else {
-			cHash.execInternal(selector, handle, command, key, value);
+			cHash.execInternal(selector, handle, socketChannel, command, key,
+					value);
 
 		}
 	}
@@ -99,18 +103,20 @@ public class ReadEventHandler implements EventHandler {
 		private byte[] key;
 		private byte[] value;
 		private SelectionKey handle;
+		private SocketChannel socketChannel;
 
-		public Processor(SelectionKey handle, int command, byte[] key,
-				byte[] value) {
+		public Processor(SelectionKey handle, SocketChannel socketChannel,
+				int command, byte[] key, byte[] value) {
 			this.command = command;
 			this.key = key;
 			this.value = value;
 			this.handle = handle;
+			this.socketChannel = socketChannel;
 		}
 
 		@Override
 		public void run() {
-			process(handle, command, key, value);
+			process(handle, socketChannel, command, key, value);
 		}
 
 	}

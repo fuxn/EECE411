@@ -23,15 +23,15 @@ public enum CommandEnum {
 		commandsWithRequestKey.add(GET.getCode());
 		commandsWithRequestKey.add(DELETE.getCode());
 		commandsWithRequestKey.add(HANDLE_ANNOUNCED_FAILURE.getCode());
+		commandsWithRequestKey.add(ANNOUNCE_JOINING.getCode());
+		commandsWithRequestKey.add(ANNOUNCE_LEAVING.getCode());
 	}
 
 	public final static List<Integer> commandsWithRequestValue = new ArrayList<Integer>();
 	static {
 		commandsWithRequestValue.add(PUT.getCode());
 		commandsWithRequestValue.add(HANDLE_ANNOUNCED_FAILURE.getCode());
-		commandsWithRequestValue.add(ANNOUNCE_LEAVING.getCode());
-		commandsWithRequestValue.add(ANNOUNCE_JOINING.getCode());
-		commandsWithRequestValue.add(DATA_SENT.getCode());
+		
 	}
 
 	public final static List<Integer> commandsWithReply = new ArrayList<Integer>();

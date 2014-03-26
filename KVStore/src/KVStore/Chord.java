@@ -8,12 +8,12 @@ import java.util.TreeMap;
 public class Chord {
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
-	private ArrayList<String> indexs = new ArrayList<String>();
+	private List<String> indexs = new ArrayList<String>();
 
 	public Chord(List<String> nodes) {
+		this.indexs = nodes;
 		for (String node : nodes) {
 			this.chord.put(node.hashCode(), node);
-			this.indexs.add(node);
 		}
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
@@ -52,18 +52,18 @@ public class Chord {
 
 	public void join(String hostName) {
 		this.chord.put(hostName.hashCode(), hostName);
-		this.indexs.add(hostName);
+		this.indexs.add(hostName.trim());
 
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));
 		}
 	}
 
-	public void leave(String hostName) {
-		if (this.chord.containsKey(hostName.hashCode()))
-			this.chord.remove(hostName.hashCode());
-
-		this.indexs.remove(hostName);
+	public void leave(Integer hostNameHashCode) {
+		if (this.chord.containsKey(hostNameHashCode)) {
+			this.indexs.remove(this.chord.get(hostNameHashCode).trim());
+			this.chord.remove(hostNameHashCode);
+		}
 
 		for (Integer key : this.chord.keySet()) {
 			System.out.println("chord contains : " + this.chord.get(key));

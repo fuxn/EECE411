@@ -60,7 +60,8 @@ public class ChordTopologyService {
 		return nodes;
 	}
 
-	private String getNextNode(Integer key) throws InternalKVStoreFailureException {
+	private String getNextNode(Integer key)
+			throws InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
@@ -92,7 +93,7 @@ public class ChordTopologyService {
 		return this.chord.getChord().get(hash);
 	}
 
-	public List<String> getRandomNodes(String hostName, int numberOfNodes)
+	public List<String> getRandomNodes(int numberOfNodes)
 			throws InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -104,21 +105,19 @@ public class ChordTopologyService {
 		for (int i = 0; i < numberOfNodes; i++) {
 			int randomNumber = random.nextInt(this.chord.getChord().size());
 			String randomHost = this.chord.getNodeByIndex(randomNumber);
-			if ((!list.contains(randomHost.trim()))
-					&& (!randomHost.trim().equals(hostName.trim()))
-					&& (!randomHost.trim().equals(
-							this.getNextNodeByHostName(hostName.trim()))))
+			if (!list.contains(randomHost.trim()))
 				list.add(randomHost);
 		}
+		System.out.println("random list : " + list);
 		return list;
 	}
 
-	public boolean isNodeExist(String hostName) {
-		return this.chord.getChord().containsKey(hostName.hashCode());
+	public boolean isNodeExist(Integer hostNameHashCode) {
+		return this.chord.getChord().containsKey(hostNameHashCode);
 	}
 
-	public void handleNodeLeaving(String hostName) {
-		this.chord.leave(hostName);
+	public void handleNodeLeaving(Integer hostNamehashCode) {
+		this.chord.leave(hostNamehashCode);
 	}
 
 	public void handleNodeJoining(String hostName) {

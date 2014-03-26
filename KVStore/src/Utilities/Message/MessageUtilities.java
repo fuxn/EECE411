@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
@@ -209,6 +210,19 @@ public class MessageUtilities {
 			return message;
 		} else
 			return cmd;
+	}
+
+	public static byte[] intToByteArray(Integer key, int size) {
+		final ByteBuffer byteBuffer = ByteBuffer.allocate(size);
+		byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+		byteBuffer.putInt(key);
+		return byteBuffer.array();
+	}
+
+	public static int byteArrayToInt(byte[] key) {
+		final ByteBuffer bb = ByteBuffer.wrap(key);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		return bb.getInt();
 	}
 
 	public static ByteBuffer handleFailureMessage(Integer command, String key,
