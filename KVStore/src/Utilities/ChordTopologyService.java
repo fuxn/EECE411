@@ -1,7 +1,6 @@
 package Utilities;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedMap;
@@ -120,10 +119,7 @@ public class ChordTopologyService {
 		this.chord.leave(hostNamehashCode);
 	}
 
-	public void handleNodeJoining(String hostName) {
-		this.chord.join(hostName);
-	}
-
+	
 	public boolean isSuccessor(String localHost, String remoteHost) {
 		String successor = null;
 		try {
@@ -135,6 +131,11 @@ public class ChordTopologyService {
 
 		return localHost.equals(successor);
 	}
+	
+/*	public void handleNodeJoining(String hostName) {
+		this.chord.join(hostName);
+	}
+*/
 	/*
 	 * public byte[] remoteRequest(int command, byte[] key, byte[] value, String
 	 * serverHostName) throws InternalKVStoreFailureException { try { byte[]

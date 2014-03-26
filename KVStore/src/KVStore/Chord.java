@@ -20,7 +20,31 @@ public class Chord {
 		}
 	}
 
-	public void partition(List<String> nodes) {
+	public String getNodeByIndex(int index) {
+		if (this.indexs.size() > index)
+			return this.indexs.get(index);
+
+		else
+			return this.indexs.get(0);
+	}
+
+	public SortedMap<Integer, String> getChord() {
+		return this.chord;
+	}
+
+	public void leave(Integer hostNameHashCode) {
+		if (this.chord.containsKey(hostNameHashCode)) {
+			this.indexs.remove(this.chord.get(hostNameHashCode).trim());
+			this.chord.remove(hostNameHashCode);
+		}
+	}
+	
+	/*public void join(String hostName) {
+	this.chord.put(hostName.hashCode(), hostName);
+	this.indexs.add(hostName.trim());
+}*/
+	
+	/*public void partition(List<String> nodes) {
 		Integer hashSpace = (int) Math.pow(2, 32);
 		Integer nodePartitionSpace = hashSpace / nodes.size();
 
@@ -36,41 +60,5 @@ public class Chord {
 
 		System.out.println("chord hashspace : " + maxHash + " contains: "
 				+ this.chord.get(maxHash));
-	}
-
-	public String getNodeByIndex(int index) {
-		if (this.indexs.size() > index)
-			return this.indexs.get(index);
-
-		else
-			return this.indexs.get(0);
-	}
-
-	public SortedMap<Integer, String> getChord() {
-		return this.chord;
-	}
-
-	public void join(String hostName) {
-		this.chord.put(hostName.hashCode(), hostName);
-		this.indexs.add(hostName.trim());
-
-		for (Integer key : this.chord.keySet()) {
-			System.out.println("chord contains : " + this.chord.get(key));
-		}
-	}
-
-	public void leave(Integer hostNameHashCode) {
-		if (this.chord.containsKey(hostNameHashCode)) {
-			this.indexs.remove(this.chord.get(hostNameHashCode).trim());
-			this.chord.remove(hostNameHashCode);
-		}
-
-		for (Integer key : this.chord.keySet()) {
-			System.out.println("chord contains : " + this.chord.get(key));
-		}
-
-		for (String host : this.indexs) {
-			System.out.println(host);
-		}
-	}
+	}*/
 }

@@ -8,8 +8,6 @@ import java.nio.channels.SocketChannel;
 import Exception.InternalKVStoreFailureException;
 import Exception.SystemOverloadException;
 import Interface.ConsistentHashInterface;
-import KVStore.Chord;
-import KVStore.ConsistentHash;
 import Utilities.CommandEnum;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
@@ -20,10 +18,6 @@ public class ReadEventHandler implements EventHandler {
 
 	private Selector selector;
 	private SocketChannel socketChannel;
-
-	private ByteBuffer commandBuffer = ByteBuffer.allocate(1);
-	private ByteBuffer keyBuffer = ByteBuffer.allocate(32);
-	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
 
 	private static int maxThreads = 5;
 	private static int maxTasks = 40000;
@@ -44,33 +38,27 @@ public class ReadEventHandler implements EventHandler {
 
 		System.out.println("Server channel reading ");
 		// Read data from client
-		int byteReceived = 0;
-		while (byteReceived != 1) {
-			byteReceived = this.socketChannel.read(commandBuffer);
+		ByteBuffer buffer = ByteBuffer.allocate(1);
+		this.socketChannel.read(buffer);
+		buffer.flip();
+		int c = buffer.array()[0];
+		byte[] key = null;
+		byte[] value = null;
+
+		if (MessageUtilities.isCheckRequestKey(c)) {
+			buffer = ByteBuffer.allocate(32);
+			this.socketChannel.read(buffer);
+			buffer.flip();
+			key = buffer.array();
 		}
-		commandBuffer.flip();
 
-		byte[] command = new byte[commandBuffer.limit()];
-		commandBuffer.get(command);
-
-		int c = command[0];
-
-		MessageUtilities.checkRequestKey(c, this.socketChannel, this.keyBuffer);
-
-		this.keyBuffer.flip();
-		byte[] key = new byte[this.keyBuffer.limit()];
-		this.keyBuffer.get(key);
-
-		MessageUtilities.checkRequestValue(c, this.socketChannel,
-				this.valueBuffer);
-
-		this.valueBuffer.flip();
-		byte[] value = new byte[this.valueBuffer.limit()];
-		this.valueBuffer.get(value);
-
-		commandBuffer.clear();
-		keyBuffer.clear();
-		valueBuffer.clear();
+		if (MessageUtilities.isCheckRequestValue(c)) {
+			buffer = ByteBuffer.allocate(1024);
+			this.socketChannel.read(buffer);
+			buffer.flip();
+			value = buffer.array();
+		}
+		buffer.clear();
 
 		// threadPool.execute(new Processor(handle, c, key, value));
 
@@ -106,7 +94,8 @@ public class ReadEventHandler implements EventHandler {
 			} catch (InternalKVStoreFailureException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				handle.attach(new Requests(CommandEnum.PUT,
+				handle.attach(new Requests(
+						CommandEnum.PUT,
 						ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
 								ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null))));
 				handle.interestOps(SelectionKey.OP_WRITE);
@@ -114,8 +103,8 @@ public class ReadEventHandler implements EventHandler {
 				Dispatcher.getDemultiplexer().wakeup();
 			}
 
-		} else{
-			
+		} else {
+
 		}
 	}
 

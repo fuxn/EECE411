@@ -15,42 +15,28 @@ public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
 	private byte[] value;
 
-	private ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
-	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
-
 	public ReadReplyEventHandler() {
 
 	}
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
-
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
-
-		int byteReceived = 0;
-		while (byteReceived != 1) {
-			byteReceived = socketChannel.read(errorCodeBuffer);
-		}
-		System.out.println("error code length " + byteReceived);
-		errorCodeBuffer.flip();
-
-		byte[] error = new byte[errorCodeBuffer.limit()];
-		errorCodeBuffer.get(error);
-
-		this.errorCode = error[0];
-
 		RemoteMessage message = (RemoteMessage) handle.attachment();
-
 		int c = message.getMessage().array()[0];
 
-		MessageUtilities.checkReplyValue(socketChannel, c, this.valueBuffer);
+		ByteBuffer buffer = ByteBuffer.allocate(1);
+		socketChannel.read(buffer);
+		buffer.flip();
+		this.errorCode = buffer.array()[0];
 
-		this.valueBuffer.flip();
-		this.value = new byte[this.valueBuffer.limit()];
-		this.valueBuffer.get(value);
-
-		errorCodeBuffer.clear();
-		valueBuffer.clear();
+		if (MessageUtilities.isCheckReplyValue(c)) {
+			buffer = ByteBuffer.allocate(1024);
+			socketChannel.read(buffer);
+			buffer.flip();
+			this.value = buffer.array();
+		}
+		buffer.clear();
 
 		SelectionKey serverHandle = message.getServerHandle();
 		serverHandle.interestOps(SelectionKey.OP_WRITE);
