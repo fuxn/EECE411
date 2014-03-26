@@ -17,7 +17,7 @@ public class PlanetLabNode {
 		this.hostName = hostName;
 	}
 
-	public byte[] put(int key, byte[] value) throws InexistentKeyException,
+	public byte[] put(Integer key, byte[] value) throws InexistentKeyException,
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
@@ -38,16 +38,16 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] get(int key) throws InexistentKeyException {
+	public byte[] get(Integer key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
-		//System.out.println("get :" + this.values.get(key));
+		// System.out.println("get :" + this.values.get(key));
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
 	}
 
-	public byte[] remove(int key) throws InexistentKeyException {
+	public byte[] remove(Integer key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
@@ -84,7 +84,7 @@ public class PlanetLabNode {
 		this.values.clear();
 	}
 
-	private boolean isInexistentKey(int key) {
+	private boolean isInexistentKey(Integer key) {
 		return (!this.values.containsKey(key));
 	}
 

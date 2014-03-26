@@ -48,7 +48,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public byte[] put(int key, byte[] value) throws InexistentKeyException,
+	public byte[] put(Integer key, byte[] value) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException,
 			OutOfSpaceException {
 		List<String> nodes = this.topologyService.getNodes(key,
@@ -66,21 +66,19 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private byte[] put(String node, int key, byte[] value)
+	private byte[] put(String node, Integer key, byte[] value)
 			throws InexistentKeyException, OutOfSpaceException,
 			InternalKVStoreFailureException {
 
 		return this.local.put(key, value);
 	}
 
-	public byte[] get(int key) throws InexistentKeyException,
+	public byte[] get(Integer key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
-		byte[] reply = this.local.get(key);
-		//System.out.println("get reply length" + reply.length);
-		return reply;
+		return this.local.get(key);
 	}
 
-	public byte[] remove(int key) throws InexistentKeyException,
+	public byte[] remove(Integer key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException {
 		return this.local.remove(key);
 	}
@@ -97,11 +95,14 @@ public class ConsistentHash implements ConsistentHashInterface {
 				this.topologyService
 						.handleNodeLeaving(this.local.getHostName());
 
+				byte[] keyByte = MessageUtilities.standarizeMessage(
+						new byte[] { key.byteValue() }, 32);
+				System.out.println(Arrays.toString(keyByte));
 				this.remoteRequest(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						MessageUtilities.standarizeMessage(
 								new byte[] { key.byteValue() }, 32),
-						keys.get(key), new String(nextNode));
+						keys.get(key), nextNode);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new InternalKVStoreFailureException();
@@ -170,7 +171,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public void handleNeighbourAnnouncedFailure(int key, byte[] value)
+	public void handleNeighbourAnnouncedFailure(Integer key, byte[] value)
 			throws InternalKVStoreFailureException, InexistentKeyException,
 			OutOfSpaceException, InvalidKeyException {
 		this.local.put(key, value);
@@ -246,7 +247,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void execInternal(Selector selector, final SelectionKey handle,
 			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
-		int keyHash = Arrays.hashCode(key);
 		try {
 			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
 
@@ -264,7 +264,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
 					.getCode()) {
-				this.handleNeighbourAnnouncedFailure(keyHash, value);
+				System.out.println(Arrays.toString(key));
+				this.handleNeighbourAnnouncedFailure(ByteBuffer.wrap(key)
+						.getInt(), value);
 				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
@@ -312,7 +314,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 	public void execHashOperation(Selector selector, SelectionKey handle,
 			int command, byte[] key, byte[] value) {
 		byte[] replyMessage = null;
-		int keyHash = Arrays.hashCode(key);
+		Integer keyHash = Arrays.hashCode(key);
 		try {
 			String node = this.topologyService.getNode(keyHash);
 			if (!node.equals(this.local.getHostName())) {

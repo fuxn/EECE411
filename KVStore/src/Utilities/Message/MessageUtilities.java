@@ -205,7 +205,7 @@ public class MessageUtilities {
 	public static byte[] standarizeMessage(byte[] cmd, int size) {
 		if (cmd.length != size) {
 			byte[] message = new byte[size];
-			System.arraycopy(cmd, 0, message, size - cmd.length + 1, cmd.length);
+			System.arraycopy(cmd, 0, message, size - cmd.length, cmd.length);
 			return message;
 		} else
 			return cmd;
