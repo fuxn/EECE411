@@ -1,5 +1,6 @@
 package Interface;
 
+import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -21,15 +22,15 @@ public interface ConsistentHashInterface {
 	public byte[] remove(Integer key) throws InexistentKeyException,
 			InternalKVStoreFailureException, InvalidKeyException;
 
-	public byte[] handleAnnouncedFailure()
+	public void handleAnnouncedFailure()
 			throws InternalKVStoreFailureException;
 
 	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
 			throws InexistentKeyException, InternalKVStoreFailureException,
 			InvalidKeyException, OutOfSpaceException;
 
-	public void execInternal(Selector selector, SelectionKey handle,
-			SocketChannel socketChannel, int command, byte[] key, byte[] value);
+	public void execInternal(Socket socket, int command, byte[] key,
+			byte[] value);
 
 	public void execHashOperation(Selector selector, SelectionKey handle,
 			int command, byte[] key, byte[] value);

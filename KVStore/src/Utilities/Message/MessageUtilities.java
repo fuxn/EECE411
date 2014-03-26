@@ -102,10 +102,11 @@ public class MessageUtilities {
 		}
 	}
 
-	public static void checkRequestKey(int command, InputStream in, byte[] key) {
+	public static byte[] checkRequestKey(int command, InputStream in) {
+		byte[] key = new byte[32];
 		try {
 			if (MessageUtilities.isCheckRequestKey(command)) {
-				key = new byte[32];
+
 				int bytesRcvd;
 				int totalBytesRcvd = 0;
 				while (totalBytesRcvd < key.length) {
@@ -116,12 +117,13 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-
+				return key;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return key;
 
 	}
 
@@ -166,11 +168,10 @@ public class MessageUtilities {
 		}
 	}
 
-	public static void checkRequestValue(int command, InputStream in,
-			byte[] value) {
+	public static byte[] checkRequestValue(int command, InputStream in) {
+		byte[] value = new byte[1024];
 		try {
 			if (MessageUtilities.isCheckRequestValue(command)) {
-				value = new byte[1024];
 				int bytesRcvd = 0;
 				int totalBytesRcvd = 0;
 				while (totalBytesRcvd < value.length) {
@@ -180,11 +181,13 @@ public class MessageUtilities {
 								"connection close prematurely.");
 					totalBytesRcvd += bytesRcvd;
 				}
+				return value;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return value;
 	}
 
 	public static boolean isCheckReplyValue(int command) {

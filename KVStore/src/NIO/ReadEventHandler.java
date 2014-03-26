@@ -5,12 +5,15 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import Exception.InternalKVStoreFailureException;
 import Exception.SystemOverloadException;
 import Interface.ConsistentHashInterface;
 import KVStore.Chord;
-import Utilities.ConsistentHash;
+import KVStore.ConsistentHash;
+import Utilities.CommandEnum;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
+import Utilities.Message.Requests;
 import Utilities.Thread.ThreadPool;
 
 public class ReadEventHandler implements EventHandler {
@@ -28,9 +31,10 @@ public class ReadEventHandler implements EventHandler {
 
 	private ConsistentHashInterface cHash;
 
-	public ReadEventHandler(Selector demultiplexer, Chord chord) {
+	public ReadEventHandler(Selector demultiplexer,
+			ConsistentHashInterface cHash) {
 		this.selector = demultiplexer;
-		this.cHash = new ConsistentHash(1, chord);
+		this.cHash = cHash;
 		threadPool = new ThreadPool(maxThreads, maxTasks);
 	}
 
@@ -50,7 +54,6 @@ public class ReadEventHandler implements EventHandler {
 		commandBuffer.get(command);
 
 		int c = command[0];
-		System.out.println("command : " + c);
 
 		MessageUtilities.checkRequestKey(c, this.socketChannel, this.keyBuffer);
 
@@ -91,10 +94,28 @@ public class ReadEventHandler implements EventHandler {
 			final byte[] key, final byte[] value) {
 		if (command == 1 || command == 2 || command == 3) {
 			cHash.execHashOperation(selector, handle, command, key, value);
-		} else {
-			cHash.execInternal(selector, handle, socketChannel, command, key,
-					value);
+		} else if (command == 4) {
+			try {
+				cHash.handleAnnouncedFailure();
+				handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
+						ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
+								ErrorEnum.SUCCESS.getCode(), null))));
+				handle.interestOps(SelectionKey.OP_WRITE);
 
+				Dispatcher.getDemultiplexer().wakeup();
+			} catch (InternalKVStoreFailureException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				handle.attach(new Requests(CommandEnum.PUT,
+						ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
+								ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null))));
+				handle.interestOps(SelectionKey.OP_WRITE);
+
+				Dispatcher.getDemultiplexer().wakeup();
+			}
+
+		} else{
+			
 		}
 	}
 

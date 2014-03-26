@@ -43,11 +43,8 @@ public class ServerRunnable implements Runnable {
 			try {
 
 				int command = reader.read();
-				byte[] key = null;
-				byte[] value = null;
-				MessageUtilities.checkRequestKey(command, reader, key);
-				MessageUtilities.checkRequestValue(command,
-						reader,value);
+				byte[] key = MessageUtilities.checkRequestKey(command, reader);
+				byte[] value =MessageUtilities.checkRequestValue(command, reader);
 
 				byte[] results = this.exec(command, key, value);
 

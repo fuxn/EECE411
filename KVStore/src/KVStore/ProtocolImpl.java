@@ -11,7 +11,6 @@ import Exception.InternalKVStoreFailureException;
 import Exception.SystemOverloadException;
 import Interface.EventListener;
 import Interface.ConsistentHashInterface;
-import Utilities.ConsistentHash;
 import Utilities.ErrorEnum;
 import Utilities.Thread.ThreadPool;
 

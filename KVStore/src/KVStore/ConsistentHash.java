@@ -1,4 +1,4 @@
-package Utilities;
+package KVStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,10 +21,13 @@ import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import Interface.ConsistentHashInterface;
-import KVStore.Chord;
 import NIO.Dispatcher;
 import NIO_Client.ClientDispatcher;
-import NIO_Gossip.GossipDispatcher;
+import Utilities.ChordTopologyService;
+import Utilities.CommandEnum;
+import Utilities.ConnectionService;
+import Utilities.ErrorEnum;
+import Utilities.PlanetLabNode;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.Requests;
 
@@ -84,7 +87,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		return this.local.remove(key);
 	}
 
-	public byte[] handleAnnouncedFailure()
+	public void handleAnnouncedFailure()
 			throws InternalKVStoreFailureException {
 
 		Map<Integer, byte[]> keys = this.local.getKeys();
@@ -95,7 +98,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			try {
 				this.topologyService.handleNodeLeaving(this.local.getHostName()
 						.hashCode());
-				this.remoteRequest(
+				ConnectionService.connectToGossip(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						MessageUtilities.intToByteArray(key, 32),
 						keys.get(key), nextNode);
@@ -107,15 +110,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 		this.local.removeAll();
 
 		this.announceDataSent(nextNode);
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), null);
 	}
 
-	public byte[] announceDataSent(String remoteHost)
+	public void announceDataSent(String remoteHost)
 			throws InternalKVStoreFailureException {
 		try {
-			return this.remoteRequest(CommandEnum.DATA_SENT.getCode(), null,
-					null, remoteHost);
+			ConnectionService.connectToGossip(CommandEnum.DATA_SENT.getCode(),
+					null, null, remoteHost);
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
 			throw new InternalKVStoreFailureException();
@@ -132,7 +133,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 				if (node.equals(this.local.getHostName())
 						|| node.equals(sender))
 					continue;
-				this.remoteRequest(CommandEnum.ANNOUNCE_LEAVING.getCode(),
+
+				ConnectionService.connectToGossip(
+						CommandEnum.ANNOUNCE_LEAVING.getCode(),
 						MessageUtilities.intToByteArray(hostNamehashCode, 32),
 						null, node);
 			} catch (Exception e) {
@@ -169,71 +172,40 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 	}
 
-	public void execInternal(Selector selector, final SelectionKey handle,
-			SocketChannel socketChannel, int command, byte[] key, byte[] value) {
-		byte[] replyMessage = null;
+	public void execInternal(Socket socket, int command, byte[] key,
+			byte[] value) {
 		try {
-			if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
-
-				try {
-					replyMessage = handleAnnouncedFailure();
-					handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
-							ByteBuffer.wrap(replyMessage)));
-					handle.interestOps(SelectionKey.OP_WRITE);
-
-					Dispatcher.getDemultiplexer().wakeup();
-				} catch (InternalKVStoreFailureException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			} else if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE
-					.getCode()) {
+			if (command == CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode()) {
 				this.handleNeighbourAnnouncedFailure(key, value);
-				handle.cancel();
 				return;
 			} else if (command == CommandEnum.ANNOUNCE_LEAVING.getCode()) {
-				this.handleAnnouncedLeaving(socketChannel.socket()
-						.getInetAddress().getHostName(), key);
-				handle.cancel();
+				this.handleAnnouncedLeaving(socket.getInetAddress()
+						.getHostName(), key);
 				return;
 			} // else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
 				// replyMessage = this.handleAnnouncedJoining(new
 				// String(value));
 
 			else if (command == CommandEnum.DATA_SENT.getCode()) {
-				this.handleNeighbourDataSent(socketChannel.socket()
-						.getInetAddress().getHostName());
-				handle.cancel();
+				this.handleNeighbourDataSent(socket.getInetAddress()
+						.getHostName());
 				return;
 			} else
 				throw new UnrecognizedCommandException();
 
 		} catch (InexistentKeyException ex) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INEXISTENT_KEY.getCode(), null);
+			ex.printStackTrace();
 		} catch (UnrecognizedCommandException uc) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null);
+			uc.printStackTrace();
 		} catch (InternalKVStoreFailureException internalException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+			internalException.printStackTrace();
 		} catch (InvalidKeyException invalideKeyException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INVALID_KEY.getCode(), null);
+			invalideKeyException.printStackTrace();
 		} catch (OutOfSpaceException e) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.OUT_OF_SPACE.getCode(), null);
+			e.printStackTrace();
 		} catch (Exception e) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
+			e.printStackTrace();
 		}
-
-		handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE, ByteBuffer
-				.wrap(replyMessage)));
-		handle.interestOps(SelectionKey.OP_WRITE);
-
-		Dispatcher.getDemultiplexer().wakeup();
 
 	}
 
@@ -248,7 +220,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				 * replyMessage = this.remoteRequest(command, key.getBytes(),
 				 * value.getBytes(), node);
 				 */
-				this.connectRemoteServer(node, selector, handle,
+				ConnectionService.connectToNIOServer(node, selector, handle,
 						MessageUtilities.requestMessage(command, key, value));
 			} else {
 				if (command == CommandEnum.PUT.getCode()) {
@@ -288,50 +260,13 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	private void connectRemoteServer(String host, Selector selector,
-			SelectionKey handle, ByteBuffer message) throws Exception {
-		System.out.println("connect remote server : " + host);
-		SocketChannel client;
-		try {
-			client = SocketChannel.open();
-
-			client.configureBlocking(false);
-			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_SERVER_PORT));
-			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
-					handle, message);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void connectRemoteServer(String host, int command, byte[] key,
-			byte[] value) throws Exception {
-		System.out.println("connect remote server : " + host);
-		SocketChannel client;
-		try {
-			client = SocketChannel.open();
-
-			client.configureBlocking(false);
-			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_GOSSIP_PORT));
-
-			byte[] v = MessageUtilities.formateRequestMessage(command, key,
-					value);
-			GossipDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
-					ByteBuffer.wrap(v));
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public byte[] remoteRequest(int command, byte[] key, byte[] value,
 			String server) throws InternalKVStoreFailureException,
 			InvalidKeyException {
 		byte[] reply = null;
 		try {
 			System.out.println("trying remote request to host " + server);
-			Socket socket = new Socket(server, 4560);
+			Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
 
 			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();

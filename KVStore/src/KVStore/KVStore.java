@@ -1,13 +1,18 @@
 package KVStore;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+import Interface.ConsistentHashInterface;
 import NIO.AcceptEventHandler;
 import NIO.Dispatcher;
 import NIO.ReadEventHandler;
@@ -16,10 +21,7 @@ import NIO_Client.ClientDispatcher;
 import NIO_Client.ConnectionEventHandler;
 import NIO_Client.ReadReplyEventHandler;
 import NIO_Client.WriteRequestEventHandler;
-import NIO_Gossip.ConnectionGossipHandler;
-import NIO_Gossip.GossipDispatcher;
-import NIO_Gossip.ReadGossipHandler;
-import NIO_Gossip.WriteGossipHandler;
+import Utilities.Message.MessageUtilities;
 
 public class KVStore {
 
@@ -32,8 +34,10 @@ public class KVStore {
 	private static Thread clientThread;
 	private static Thread gossipThread;
 
-	public void initiateReactiveServer(String localHostName, Chord chord)
-			throws Exception {
+	private static ConsistentHashInterface cHash;
+
+	public void initiateReactiveServer(String localHostName,
+			ConsistentHashInterface cHash) throws Exception {
 		System.out.println("Starting NIO server at port : " + NIO_SERVER_PORT);
 
 		ServerSocketChannel server = ServerSocketChannel.open();
@@ -48,7 +52,7 @@ public class KVStore {
 				new AcceptEventHandler(Dispatcher.getDemultiplexer()));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_READ,
-				new ReadEventHandler(Dispatcher.getDemultiplexer(), chord));
+				new ReadEventHandler(Dispatcher.getDemultiplexer(), cHash));
 
 		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
 				new WriteEventHandler());
@@ -77,33 +81,28 @@ public class KVStore {
 		clientThread.start();
 	}
 
-	public void initiateGossipServer(String localHostName) throws Exception {
-		System.out.println("Starting NIO gossip at port : " + NIO_GOSSIP_PORT);
+	public void initiateSocketServer(ConsistentHashInterface cHash)
+			throws Exception {
+		System.out.println("Starting gossip at port : " + NIO_GOSSIP_PORT);
 
-		ServerSocketChannel server = ServerSocketChannel.open();
-		server.socket().bind(
-				new InetSocketAddress(localHostName, NIO_GOSSIP_PORT));
-		server.configureBlocking(false);
+		ServerSocket serverSocket = new ServerSocket(NIO_GOSSIP_PORT);
+		Socket server;
 
-		GossipDispatcher dispatcher = new GossipDispatcher();
-		dispatcher.registerChannel(SelectionKey.OP_ACCEPT, server);
+		while (true) {
+			server = serverSocket.accept();
+			System.out.println("socket accepting: "
+					+ server.getInetAddress().getHostName());
 
-		dispatcher.registerEventHandler(SelectionKey.OP_ACCEPT,
-				new AcceptEventHandler(GossipDispatcher.getDemultiplexer()));
+			InputStream reader = server.getInputStream();
 
-		dispatcher.registerEventHandler(SelectionKey.OP_READ,
-				new ReadGossipHandler(GossipDispatcher.getDemultiplexer()));
+			int command = reader.read();
+			
+			byte[] key = MessageUtilities.checkRequestKey(command, reader);
+			byte[] value =MessageUtilities.checkRequestValue(command, reader);
 
-		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
-				new WriteGossipHandler(GossipDispatcher.getDemultiplexer()));
-		dispatcher
-				.registerEventHandler(
-						SelectionKey.OP_CONNECT,
-						new ConnectionGossipHandler(GossipDispatcher
-								.getDemultiplexer()));
+			cHash.execInternal(server, command, key, value);
 
-		gossipThread = new Thread(dispatcher);
-		gossipThread.start(); // Run the dispatcher loop
+		}
 
 	}
 
@@ -117,13 +116,13 @@ public class KVStore {
 		String localHostName = InetAddress.getLocalHost().getHostName();
 		List<String> nodes = new ArrayList<String>();
 
-		nodes.add("planetlab2.cs.ubc.ca");
-		nodes.add("planetlab1.cs.ubc.ca");
+		// nodes.add("planetlab2.cs.ubc.ca");
+		// nodes.add("planetlab1.cs.ubc.ca");
+
+		nodes.add("pl-node-1.csl.sri.com");
+		nodes.add("planetlab-4.eecs.cwru.edu");
+		nodes.add("planetlab-2.cs.auckland.ac.nz");
 		/*
-		 * nodes.add("pl-node-1.csl.sri.com");
-		 * nodes.add("planetlab-4.eecs.cwru.edu");
-		 * nodes.add("planetlab-2.cs.auckland.ac.nz");
-		 * 
 		 * nodes.add("planetlab-2.sysu.edu.cn");
 		 * nodes.add("planetlab1.acis.ufl.edu"); nodes.add("pl2.eecs.utk.edu");
 		 * nodes.add("ricepl-5.cs.rice.edu"); nodes.add("planetlab2.s3.kth.se");
@@ -166,11 +165,11 @@ public class KVStore {
 		 * nodes.add("planetlab1.tmit.bme.hu");
 		 * 
 		 * nodes.add("planetlab3.hiit.fi"); nodes.add("planetlab2.cs.uit.no");
+		 * 
+		 * nodes.add("planetlab-12.e5.ijs.si");
+		 * nodes.add("planetlab4.cs.st-andrews.ac.uk");
+		 * nodes.add("planetlab-4.imperial.ac.uk");
 		 */
-		nodes.add("planetlab-12.e5.ijs.si");
-		nodes.add("planetlab4.cs.st-andrews.ac.uk");
-		nodes.add("planetlab-4.imperial.ac.uk");
-
 		// nodes.add(localHostName);
 		// System.out.println(localHostName);
 
@@ -181,10 +180,23 @@ public class KVStore {
 
 		try {
 
-			KVStore kvStore = new KVStore();
-			kvStore.initiateReactiveServer(localHostName, new Chord(nodes));
+			final KVStore kvStore = new KVStore();
+			cHash = new ConsistentHash(1, new Chord(nodes));
+			kvStore.initiateReactiveServer(localHostName, cHash);
 			kvStore.initiateReactiveClient();
-			kvStore.initiateGossipServer(localHostName);
+			// kvStore.initiateGossipServer(localHostName);
+
+			(new Thread() {
+				@Override
+				public void run() {
+					try {
+						kvStore.initiateSocketServer(cHash);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}).start();
 
 		} catch (Exception e) { // TODO Auto-generated catch block
 			e.printStackTrace();
@@ -195,7 +207,6 @@ public class KVStore {
 			public void run() {
 				Dispatcher.stop();
 				ClientDispatcher.stop();
-				GossipDispatcher.stop();
 				/*
 				 * try { //KVStore.serverThread.join(); } catch
 				 * (InterruptedException e) { // TODO Auto-generated catch block
