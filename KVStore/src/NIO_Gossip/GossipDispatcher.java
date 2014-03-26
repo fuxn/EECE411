@@ -34,13 +34,12 @@ public class GossipDispatcher implements Runnable {
 	}
 
 	public static void registerChannel(int eventType,
-			SelectableChannel channel, SelectionKey serverHandle,
-			ByteBuffer message) throws Exception {
+			SelectableChannel channel, ByteBuffer message)
+			throws Exception {
 		selectorLock.lock();
 		try {
 			demultiplexer.wakeup();
-			channel.register(demultiplexer, SelectionKey.OP_CONNECT,
-					new RemoteMessage(serverHandle, message));
+			channel.register(demultiplexer, SelectionKey.OP_CONNECT, message);
 
 		} finally {
 			selectorLock.unlock();
@@ -88,14 +87,21 @@ public class GossipDispatcher implements Runnable {
 						handleIterator.remove();
 					}
 
+					if (handle.isValid() && handle.isAcceptable()) {
+						EventHandler handler = (EventHandler) this.registeredHandlers
+								.get(SelectionKey.OP_ACCEPT);
+						handler.handleEvent(handle);
+
+					}
+
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void stop(){
+
+	public static void stop() {
 		stop = true;
 	}
 

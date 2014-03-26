@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import NIO.AcceptEventHandler;
@@ -17,12 +16,21 @@ import NIO_Client.ClientDispatcher;
 import NIO_Client.ConnectionEventHandler;
 import NIO_Client.ReadReplyEventHandler;
 import NIO_Client.WriteRequestEventHandler;
+import NIO_Gossip.ConnectionGossipHandler;
+import NIO_Gossip.GossipDispatcher;
+import NIO_Gossip.ReadGossipHandler;
+import NIO_Gossip.WriteGossipHandler;
 
 public class KVStore {
 
 	private static final int NIO_SERVER_PORT = 4560;
+	private static final int NIO_GOSSIP_PORT = 4590;
+
+	private static int STATUS = 0;
+
 	private static Thread serverThread;
 	private static Thread clientThread;
+	private static Thread gossipThread;
 
 	public void initiateReactiveServer(String localHostName, Chord chord)
 			throws Exception {
@@ -67,6 +75,42 @@ public class KVStore {
 
 		clientThread = new Thread(clientDispatcher);
 		clientThread.start();
+	}
+
+	public void initiateGossipServer(String localHostName) throws Exception {
+		System.out.println("Starting NIO gossip at port : " + NIO_GOSSIP_PORT);
+
+		ServerSocketChannel server = ServerSocketChannel.open();
+		server.socket().bind(
+				new InetSocketAddress(localHostName, NIO_GOSSIP_PORT));
+		server.configureBlocking(false);
+
+		GossipDispatcher dispatcher = new GossipDispatcher();
+		dispatcher.registerChannel(SelectionKey.OP_ACCEPT, server);
+
+		dispatcher.registerEventHandler(SelectionKey.OP_ACCEPT,
+				new AcceptEventHandler(GossipDispatcher.getDemultiplexer()));
+
+		dispatcher.registerEventHandler(SelectionKey.OP_READ,
+				new ReadGossipHandler(GossipDispatcher.getDemultiplexer()));
+
+		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
+				new WriteGossipHandler(GossipDispatcher.getDemultiplexer()));
+		dispatcher
+				.registerEventHandler(
+						SelectionKey.OP_CONNECT,
+						new ConnectionGossipHandler(GossipDispatcher
+								.getDemultiplexer()));
+
+		gossipThread = new Thread(dispatcher);
+		gossipThread.start(); // Run the dispatcher loop
+
+	}
+
+	public static void checkStatus() {
+		STATUS += 1;
+		if (STATUS == 3)
+			System.exit(0);
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -123,9 +167,9 @@ public class KVStore {
 		 * 
 		 * nodes.add("planetlab3.hiit.fi"); nodes.add("planetlab2.cs.uit.no");
 		 */
-		 nodes.add("planetlab-12.e5.ijs.si");
-		 nodes.add("planetlab4.cs.st-andrews.ac.uk");
-		 nodes.add("planetlab-4.imperial.ac.uk");
+		nodes.add("planetlab-12.e5.ijs.si");
+		nodes.add("planetlab4.cs.st-andrews.ac.uk");
+		nodes.add("planetlab-4.imperial.ac.uk");
 
 		// nodes.add(localHostName);
 		// System.out.println(localHostName);
@@ -140,6 +184,7 @@ public class KVStore {
 			KVStore kvStore = new KVStore();
 			kvStore.initiateReactiveServer(localHostName, new Chord(nodes));
 			kvStore.initiateReactiveClient();
+			kvStore.initiateGossipServer(localHostName);
 
 		} catch (Exception e) { // TODO Auto-generated catch block
 			e.printStackTrace();
@@ -150,6 +195,7 @@ public class KVStore {
 			public void run() {
 				Dispatcher.stop();
 				ClientDispatcher.stop();
+				GossipDispatcher.stop();
 				/*
 				 * try { //KVStore.serverThread.join(); } catch
 				 * (InterruptedException e) { // TODO Auto-generated catch block
