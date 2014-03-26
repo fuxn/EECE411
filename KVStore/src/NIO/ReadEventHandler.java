@@ -51,10 +51,18 @@ public class ReadEventHandler implements EventHandler {
 
 		int c = command[0];
 
-		byte[] key = MessageUtilities.checkRequestKey(c, this.socketChannel,
-				this.keyBuffer);
-		byte[] value = MessageUtilities.checkRequestValue(c,
-				this.socketChannel, this.valueBuffer);
+		MessageUtilities.checkRequestKey(c, this.socketChannel, this.keyBuffer);
+
+		this.keyBuffer.flip();
+		byte[] key = new byte[this.keyBuffer.limit()];
+		this.keyBuffer.get(key);
+
+		MessageUtilities.checkRequestValue(c, this.socketChannel,
+				this.valueBuffer);
+
+		this.valueBuffer.flip();
+		byte[] value = new byte[this.valueBuffer.limit()];
+		this.valueBuffer.get(value);
 
 		commandBuffer.clear();
 		keyBuffer.clear();

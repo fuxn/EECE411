@@ -123,9 +123,9 @@ public class KVStore {
 		 * 
 		 * nodes.add("planetlab3.hiit.fi"); nodes.add("planetlab2.cs.uit.no");
 		 */
-		// nodes.add("planetlab-12.e5.ijs.si");
-		// nodes.add("planetlab4.cs.st-andrews.ac.uk");
-		// nodes.add("planetlab-4.imperial.ac.uk");
+		 nodes.add("planetlab-12.e5.ijs.si");
+		 nodes.add("planetlab4.cs.st-andrews.ac.uk");
+		 nodes.add("planetlab-4.imperial.ac.uk");
 
 		// nodes.add(localHostName);
 		// System.out.println(localHostName);

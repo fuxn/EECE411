@@ -328,7 +328,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 				 * replyMessage = this.remoteRequest(command, key.getBytes(),
 				 * value.getBytes(), node);
 				 */
-				this.connectRemoteServer(new String(node), selector, handle,
+				this.connectRemoteServer(node, selector, handle,
 						MessageUtilities.requestMessage(command, key, value));
 			} else {
 				if (command == CommandEnum.PUT.getCode()) {

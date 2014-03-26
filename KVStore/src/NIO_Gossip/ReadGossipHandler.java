@@ -43,8 +43,8 @@ public class ReadGossipHandler implements EventHandler {
 
 		int c = message.getMessage().array()[0];
 
-		this.value = MessageUtilities.checkReplyValue(socketChannel, c,
-				valueBuffer);
+		 MessageUtilities.checkReplyValue(socketChannel, c,
+				valueBuffer,this.value);
 
 		errorCodeBuffer.clear();
 		valueBuffer.clear();
