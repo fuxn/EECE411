@@ -137,6 +137,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 			} catch (Exception e) {
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
+
+				e.printStackTrace();
 			}
 		}
 	}
