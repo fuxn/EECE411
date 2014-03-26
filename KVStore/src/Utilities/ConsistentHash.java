@@ -24,6 +24,7 @@ import Interface.ConsistentHashInterface;
 import KVStore.Chord;
 import NIO.Dispatcher;
 import NIO_Client.ClientDispatcher;
+import NIO_Gossip.GossipDispatcher;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.Requests;
 
@@ -295,9 +296,29 @@ public class ConsistentHash implements ConsistentHashInterface {
 			client = SocketChannel.open();
 
 			client.configureBlocking(false);
-			client.connect(new InetSocketAddress(host, 4560));
+			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_GOSSIP_PORT));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
 					handle, message);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void connectRemoteServer(String host, int command, byte[] key,
+			byte[] value) throws Exception {
+		System.out.println("connect remote server : " + host);
+		SocketChannel client;
+		try {
+			client = SocketChannel.open();
+
+			client.configureBlocking(false);
+			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_GOSSIP_PORT));
+
+			byte[] v = MessageUtilities.formateRequestMessage(command, key,
+					value);
+			GossipDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
+					ByteBuffer.wrap(v));
 
 		} catch (IOException e) {
 			e.printStackTrace();

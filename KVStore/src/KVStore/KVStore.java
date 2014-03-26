@@ -23,8 +23,8 @@ import NIO_Gossip.WriteGossipHandler;
 
 public class KVStore {
 
-	private static final int NIO_SERVER_PORT = 4560;
-	private static final int NIO_GOSSIP_PORT = 4590;
+	public static final int NIO_SERVER_PORT = 4560;
+	public static final int NIO_GOSSIP_PORT = 4590;
 
 	private static int STATUS = 0;
 
