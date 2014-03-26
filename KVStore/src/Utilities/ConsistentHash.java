@@ -296,7 +296,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			client = SocketChannel.open();
 
 			client.configureBlocking(false);
-			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_GOSSIP_PORT));
+			client.connect(new InetSocketAddress(host, KVStore.KVStore.NIO_SERVER_PORT));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
 					handle, message);
 
