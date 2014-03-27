@@ -28,10 +28,6 @@ public class PlanetLabNode {
 			throw new OutOfSpaceException();
 		}
 
-		for (Integer k : this.values.keySet()) {
-			System.out.println("Key " + k + "value " + this.values.get(k));
-		}
-
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}

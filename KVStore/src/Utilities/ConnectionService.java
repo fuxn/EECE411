@@ -35,7 +35,6 @@ public class ConnectionService {
 
 	public static void connectToGossip(int command, byte[] key, byte[] value,
 			String server) throws IOException {
-		System.out.println("gossip info to server : " + server);
 		Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
 
 		OutputStream out = socket.getOutputStream();

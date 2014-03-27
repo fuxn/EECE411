@@ -41,7 +41,6 @@ public class Chord {
 			this.participantingNodes.remove(this.chord.get(hostNameHashCode).trim());
 			this.chord.remove(hostNameHashCode);
 		}
-		System.out.println(participantingNodes);
 	}
 
 	/*
