@@ -18,6 +18,7 @@ public class Dispatcher implements Runnable {
 
 	private static Selector demultiplexer;
 	private static boolean stop = false;
+	private static boolean accepting = true;
 
 	public Dispatcher() throws Exception {
 		demultiplexer = Selector.open();
@@ -54,13 +55,14 @@ public class Dispatcher implements Runnable {
 				while (handleIterator.hasNext()) {
 					SelectionKey handle = handleIterator.next();
 
-					if (handle.isValid() && handle.isAcceptable()) {
+					if (handle.isValid() && handle.isAcceptable()&& accepting) {
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_ACCEPT);
 						handler.handleEvent(handle);
 						// Note : Here we don't remove this handle from
 						// selector since we want to keep listening to
 						// new client connections
+						
 					}
 
 					if (handle.isValid() && handle.isReadable()) {
@@ -87,6 +89,10 @@ public class Dispatcher implements Runnable {
 
 	public static void stop() {
 		stop = true;
+	}
+	
+	public static void stopAccept(){
+		accepting = false;
 	}
 
 }

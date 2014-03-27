@@ -80,8 +80,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		return this.local.remove(key);
 	}
 
-	public void handleAnnouncedFailure()
-			throws InternalKVStoreFailureException {
+	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
 
 		Map<Integer, byte[]> keys = this.local.getKeys();
 		String nextNode = this.topologyService.getNextNodeByHostName(this.local
@@ -242,41 +241,31 @@ public class ConsistentHash implements ConsistentHashInterface {
 					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
 		}
 
-		handle.attach(new Requests(CommandEnum.PUT, ByteBuffer
-				.wrap(replyMessage)));
+		handle.attach(ByteBuffer.wrap(replyMessage));
 		handle.interestOps(SelectionKey.OP_WRITE);
 		selector.wakeup();
 
 	}
 
-	/*public byte[] remoteRequest(int command, byte[] key, byte[] value,
-			String server) throws InternalKVStoreFailureException,
-			InvalidKeyException {
-		byte[] reply = null;
-		try {
-			System.out.println("trying remote request to host " + server);
-			Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
-
-			InputStream in = socket.getInputStream();
-			OutputStream out = socket.getOutputStream();
-
-			byte[] v = MessageUtilities.formateRequestMessage(command, key,
-					value);
-			out.write(v);
-			out.flush();
-
-			if (MessageUtilities.isCheckReply(command))
-				reply = MessageUtilities.checkReplyValue(command, in);
-			else
-				reply = MessageUtilities.formateReplyMessage(
-						ErrorEnum.SUCCESS.getCode(), null);
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new InternalKVStoreFailureException();
-		}
-		return reply;
-	}
-*/
+	/*
+	 * public byte[] remoteRequest(int command, byte[] key, byte[] value, String
+	 * server) throws InternalKVStoreFailureException, InvalidKeyException {
+	 * byte[] reply = null; try {
+	 * System.out.println("trying remote request to host " + server); Socket
+	 * socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
+	 * 
+	 * InputStream in = socket.getInputStream(); OutputStream out =
+	 * socket.getOutputStream();
+	 * 
+	 * byte[] v = MessageUtilities.formateRequestMessage(command, key, value);
+	 * out.write(v); out.flush();
+	 * 
+	 * if (MessageUtilities.isCheckReply(command)) reply =
+	 * MessageUtilities.checkReplyValue(command, in); else reply =
+	 * MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(), null);
+	 * } catch (IOException e) { e.printStackTrace(); throw new
+	 * InternalKVStoreFailureException(); } return reply; }
+	 */
 	/*
 	 * public byte[] handleNeighbourAnnouncedJoining(String hostName) throws
 	 * InternalKVStoreFailureException, InexistentKeyException,

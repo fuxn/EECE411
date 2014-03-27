@@ -12,6 +12,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+import Exception.InternalKVStoreFailureException;
 import Interface.ConsistentHashInterface;
 import NIO.AcceptEventHandler;
 import NIO.Dispatcher;
@@ -90,9 +91,6 @@ public class KVStore {
 
 		while (true) {
 			server = serverSocket.accept();
-			System.out.println("socket accepting: "
-					+ server.getInetAddress().getHostName());
-
 			InputStream reader = server.getInputStream();
 
 			int command = reader.read();
@@ -116,15 +114,14 @@ public class KVStore {
 		String localHostName = InetAddress.getLocalHost().getHostName();
 		List<String> nodes = new ArrayList<String>();
 
-		// nodes.add("planetlab2.cs.ubc.ca");
-		// nodes.add("planetlab1.cs.ubc.ca");
+		nodes.add("planetlab2.cs.ubc.ca");
+		 nodes.add("planetlab1.cs.ubc.ca");
 
 		nodes.add("pl-node-1.csl.sri.com");
 		nodes.add("planetlab-4.eecs.cwru.edu");
 		nodes.add("planetlab-2.cs.auckland.ac.nz");
-		/*
-		 * nodes.add("planetlab-2.sysu.edu.cn");
-		 * nodes.add("planetlab1.acis.ufl.edu"); nodes.add("pl2.eecs.utk.edu");
+		 nodes.add("planetlab-2.sysu.edu.cn");
+		 /* nodes.add("planetlab1.acis.ufl.edu"); nodes.add("pl2.eecs.utk.edu");
 		 * nodes.add("ricepl-5.cs.rice.edu"); nodes.add("planetlab2.s3.kth.se");
 		 * 
 		 * nodes.add("planet-lab4.uba.ar");
@@ -132,25 +129,26 @@ public class KVStore {
 		 * nodes.add("planetlab1.cs.uml.edu");
 		 * nodes.add("planetlab2.buaa.edu.cn");
 		 * nodes.add("planetlab2.georgetown.edu");
-		 * 
-		 * nodes.add("planetlab-2.scie.uestc.edu.cn");
-		 * nodes.add("planetlab-2.usask.ca");
+		 */ 
+		 nodes.add("planetlab-2.scie.uestc.edu.cn");
+		 /* nodes.add("planetlab-2.usask.ca");
 		 * nodes.add("planet-lab1.cs.ucr.edu");
 		 * nodes.add("planetlab1.cs.pitt.edu");
 		 * nodes.add("planetlab2.cis.upenn.edu");
-		 * 
-		 * nodes.add("planetlab-2.cmcl.cs.cmu.edu");
-		 * nodes.add("planetlab-1.cmcl.cs.cmu.edu");
+		 */ 
+		 nodes.add("planetlab-2.cmcl.cs.cmu.edu");
+		 /* nodes.add("planetlab-1.cmcl.cs.cmu.edu");
 		 * nodes.add("plonk.cs.uwaterloo.ca");
 		 * nodes.add("planetlab1.cs.stevens-tech.edu");
 		 * nodes.add("planet-plc-3.mpi-sws.org");
-		 * 
-		 * nodes.add("planetlab1.eecs.umich.edu");
-		 * nodes.add("planetlab2.bgu.ac.il"); nodes.add("kupl2.ittc.ku.edu");
+		 */ 
+		  nodes.add("planetlab1.eecs.umich.edu");
+		 /* nodes.add("planetlab2.bgu.ac.il"); nodes.add("kupl2.ittc.ku.edu");
 		 * nodes.add("planet-lab2.uba.ar"); nodes.add("pl2.pku.edu.cn");
-		 * 
-		 * nodes.add("planetlab1.pop-pa.rnp.br"); nodes.add("pln.zju.edu.cn");
-		 * nodes.add("planetlab-1.sjtu.edu.cn");
+		  
+		 */ nodes.add("planetlab1.pop-pa.rnp.br"); 
+		 //nodes.add("pln.zju.edu.cn");
+		 /* nodes.add("planetlab-1.sjtu.edu.cn");
 		 * nodes.add("node2.planetlab.mathcs.emory.edu");
 		 * nodes.add("planetlab4.williams.edu");
 		 * 
@@ -170,6 +168,7 @@ public class KVStore {
 		 * nodes.add("planetlab4.cs.st-andrews.ac.uk");
 		 * nodes.add("planetlab-4.imperial.ac.uk");
 		 */
+	
 		// nodes.add(localHostName);
 		// System.out.println(localHostName);
 
@@ -205,6 +204,12 @@ public class KVStore {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
+				try {
+					cHash.handleAnnouncedFailure();
+				} catch (InternalKVStoreFailureException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				Dispatcher.stop();
 				ClientDispatcher.stop();
 				/*

@@ -19,7 +19,7 @@ public class ReadEventHandler implements EventHandler {
 	private Selector selector;
 	private SocketChannel socketChannel;
 
-	private static int maxThreads = 5;
+	private static int maxThreads = 10;
 	private static int maxTasks = 40000;
 	private static ThreadPool threadPool;
 
@@ -82,28 +82,21 @@ public class ReadEventHandler implements EventHandler {
 		if (command == 1 || command == 2 || command == 3) {
 			cHash.execHashOperation(selector, handle, command, key, value);
 		} else if (command == 4) {
-			try {
-				cHash.handleAnnouncedFailure();
-				handle.attach(new Requests(CommandEnum.ANNOUNCE_FAILURE,
-						ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
-								ErrorEnum.SUCCESS.getCode(), null))));
-				handle.interestOps(SelectionKey.OP_WRITE);
 
-				Dispatcher.getDemultiplexer().wakeup();
-			} catch (InternalKVStoreFailureException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				handle.attach(new Requests(
-						CommandEnum.PUT,
-						ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
-								ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null))));
-				handle.interestOps(SelectionKey.OP_WRITE);
-
-				Dispatcher.getDemultiplexer().wakeup();
-			}
+			Dispatcher.stopAccept();
+			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
+					ErrorEnum.SUCCESS.getCode(), null)));
+			handle.interestOps(SelectionKey.OP_WRITE);
+			Dispatcher.getDemultiplexer().wakeup();
+			System.exit(0);
 
 		} else {
+			handle.attach(new Requests(CommandEnum.PUT, ByteBuffer
+					.wrap(MessageUtilities.formateReplyMessage(
+							ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null))));
+			handle.interestOps(SelectionKey.OP_WRITE);
 
+			Dispatcher.getDemultiplexer().wakeup();
 		}
 	}
 
