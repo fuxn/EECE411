@@ -130,9 +130,9 @@ public class KVStore {
 		 * nodes.add("planetlab2.buaa.edu.cn");
 		 * nodes.add("planetlab2.georgetown.edu");
 		 */ 
-		 nodes.add("planetlab-2.scie.uestc.edu.cn");
-		 /* nodes.add("planetlab-2.usask.ca");
-		 * nodes.add("planet-lab1.cs.ucr.edu");
+		 //nodes.add("planetlab-2.scie.uestc.edu.cn");
+		  nodes.add("planetlab-2.usask.ca");
+		 /* nodes.add("planet-lab1.cs.ucr.edu");
 		 * nodes.add("planetlab1.cs.pitt.edu");
 		 * nodes.add("planetlab2.cis.upenn.edu");
 		 */ 

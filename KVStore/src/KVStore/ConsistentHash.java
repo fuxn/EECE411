@@ -1,5 +1,6 @@
 package KVStore;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -22,7 +23,6 @@ import Utilities.ConnectionService;
 import Utilities.ErrorEnum;
 import Utilities.PlanetLabNode;
 import Utilities.Message.MessageUtilities;
-import Utilities.Message.Requests;
 
 public class ConsistentHash implements ConsistentHashInterface {
 
@@ -94,7 +94,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						MessageUtilities.intToByteArray(key, 32),
 						keys.get(key), nextNode);
-			} catch (Exception e) {
+			} catch (IOException e) {
+				this.topologyService.handleNodeLeaving(nextNode.hashCode());
 				e.printStackTrace();
 				throw new InternalKVStoreFailureException();
 			}
@@ -109,8 +110,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 		try {
 			ConnectionService.connectToGossip(CommandEnum.DATA_SENT.getCode(),
 					null, null, remoteHost);
-		} catch (InvalidKeyException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
+			this.topologyService.handleNodeLeaving(remoteHost.hashCode());
 			throw new InternalKVStoreFailureException();
 		}
 	}
@@ -129,7 +131,8 @@ public class ConsistentHash implements ConsistentHashInterface {
 						CommandEnum.ANNOUNCE_LEAVING.getCode(),
 						MessageUtilities.intToByteArray(hostNamehashCode, 32),
 						null, node);
-			} catch (Exception e) {
+			} catch (IOException e) {
+				this.topologyService.handleNodeLeaving(hostNamehashCode);
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
 

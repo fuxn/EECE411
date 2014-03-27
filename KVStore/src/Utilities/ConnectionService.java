@@ -28,28 +28,20 @@ public class ConnectionService {
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
 					handle, message);
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void connectToGossip(int command, byte[] key, byte[] value,
-			String server) throws InternalKVStoreFailureException,
-			InvalidKeyException {
-		try {
-			Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
+			String server) throws IOException {
+		Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
 
-			OutputStream out = socket.getOutputStream();
+		OutputStream out = socket.getOutputStream();
 
-			byte[] v = MessageUtilities.formateRequestMessage(command, key,
-					value);
-			out.write(v);
-			out.flush();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new InternalKVStoreFailureException();
-		}
+		byte[] v = MessageUtilities.formateRequestMessage(command, key, value);
+		out.write(v);
+		out.flush();
 	}
 
 }
