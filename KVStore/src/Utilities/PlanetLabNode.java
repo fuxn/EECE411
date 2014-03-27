@@ -28,12 +28,6 @@ public class PlanetLabNode {
 			throw new OutOfSpaceException();
 		}
 
-		if (!this.values.isEmpty()) {
-			for (Integer index : values.keySet()) {
-				System.out.println("key: " + index + " value: "
-						+ new String(values.get(index)));
-			}
-		}
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}
@@ -42,7 +36,6 @@ public class PlanetLabNode {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
-		// System.out.println("get :" + this.values.get(key));
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
 	}
@@ -52,13 +45,6 @@ public class PlanetLabNode {
 			throw new InexistentKeyException();
 
 		this.values.remove(key);
-
-		if (!this.values.isEmpty()) {
-			for (Integer index : values.keySet()) {
-				System.out.println("key: " + index + " value: "
-						+ new String(values.get(index)));
-			}
-		}
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null);
 	}

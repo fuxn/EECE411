@@ -6,9 +6,6 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
-
 import Utilities.CommandEnum;
 
 public class MessageUtilities {
@@ -57,51 +54,6 @@ public class MessageUtilities {
 		return message;
 	}
 
-	public static byte[] checkReplyValue(int command, InputStream in) {
-		int errorCode = -2;
-		try {
-			errorCode = in.read();
-			if (errorCode == 0 && MessageUtilities.isCheckReplyValue(command)) {
-				byte[] reply = new byte[1024];
-				int bytesRcvd;
-				int totalBytesRcvd = 0;
-				while ((totalBytesRcvd < reply.length)) {
-					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
-							reply.length - totalBytesRcvd)) == -1)
-						throw new SocketException(
-								"connection close prematurely.");
-					totalBytesRcvd += bytesRcvd;
-				}
-				return MessageUtilities.formateReplyMessage(errorCode, reply);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return MessageUtilities.formateReplyMessage(errorCode, null);
-	}
-
-	public static void checkReplyValue(SocketChannel socketChannel,
-			int command, ByteBuffer buffer) {
-		if (MessageUtilities.isCheckReplyValue(command)) {
-			try {
-				int bytesRcvd;
-				int totalBytesRcvd = 0;
-				while (totalBytesRcvd < buffer.limit()) {
-					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
-						throw new SocketException(
-								"connection close prematurely.");
-
-					totalBytesRcvd += bytesRcvd;
-				}
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
 	public static byte[] checkRequestKey(int command, InputStream in) {
 		byte[] key = new byte[32];
 		try {
@@ -141,7 +93,6 @@ public class MessageUtilities {
 
 					totalBytesRcvd += bytesRcvd;
 				}
-
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -227,8 +178,29 @@ public class MessageUtilities {
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 		return bb.getInt();
 	}
+	
+	/*public static void checkReplyValue(SocketChannel socketChannel,
+			int command, ByteBuffer buffer) {
+		if (MessageUtilities.isCheckReplyValue(command)) {
+			try {
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < buffer.limit()) {
+					if ((bytesRcvd = socketChannel.read(buffer)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
 
-	public static ByteBuffer handleFailureMessage(Integer command, String key,
+					totalBytesRcvd += bytesRcvd;
+				}
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}*/
+
+	/*public static ByteBuffer handleFailureMessage(Integer command, String key,
 			String value) {
 		List<Byte> message = new ArrayList<Byte>();
 		message.add(command.byteValue());
@@ -255,4 +227,29 @@ public class MessageUtilities {
 		return ByteBuffer.wrap(request);
 
 	}
+	*/
+	/*public static byte[] checkReplyValue(int command, InputStream in) {
+		int errorCode = -2;
+		try {
+			errorCode = in.read();
+			if (errorCode == 0 && MessageUtilities.isCheckReplyValue(command)) {
+				byte[] reply = new byte[1024];
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while ((totalBytesRcvd < reply.length)) {
+					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+							reply.length - totalBytesRcvd)) == -1)
+						throw new SocketException(
+								"connection close prematurely.");
+					totalBytesRcvd += bytesRcvd;
+				}
+				return MessageUtilities.formateReplyMessage(errorCode, reply);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return MessageUtilities.formateReplyMessage(errorCode, null);
+	}
+*/
 }

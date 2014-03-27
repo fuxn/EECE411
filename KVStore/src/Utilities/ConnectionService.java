@@ -19,7 +19,6 @@ public class ConnectionService {
 
 	public static void connectToNIOServer(String host, Selector selector,
 			SelectionKey handle, ByteBuffer message) throws Exception {
-		System.out.println("connect remote server : " + host);
 		SocketChannel client;
 		try {
 			client = SocketChannel.open();
@@ -38,7 +37,6 @@ public class ConnectionService {
 			String server) throws InternalKVStoreFailureException,
 			InvalidKeyException {
 		try {
-			System.out.println("trying remote request to host " + server);
 			Socket socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
 
 			OutputStream out = socket.getOutputStream();

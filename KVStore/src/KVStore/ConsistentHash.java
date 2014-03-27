@@ -1,8 +1,5 @@
 package KVStore;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -121,7 +118,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public void announceLeaving(String sender, Integer hostNamehashCode)
 			throws InternalKVStoreFailureException {
-		System.out.println("cHash announce leaving :" + hostNamehashCode);
 		List<String> randomNodes = this.topologyService.getRandomNodes(3);
 
 		for (String node : randomNodes) {
@@ -158,13 +154,10 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public void handleAnnouncedLeaving(String sender, byte[] hostNameHashCode)
 			throws InternalKVStoreFailureException {
-		System.out.println("cHash handleAnnouncedLeaving " + hostNameHashCode);
-
 		int hash = MessageUtilities.byteArrayToInt(hostNameHashCode);
 		if (this.topologyService.isNodeExist(hash)) {
 			this.topologyService.handleNodeLeaving(hash);
 			this.announceLeaving(sender, hash);
-			System.out.println("broadcast leaving : " + hostNameHashCode);
 		}
 	}
 
@@ -256,7 +249,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public byte[] remoteRequest(int command, byte[] key, byte[] value,
+	/*public byte[] remoteRequest(int command, byte[] key, byte[] value,
 			String server) throws InternalKVStoreFailureException,
 			InvalidKeyException {
 		byte[] reply = null;
@@ -283,7 +276,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 		return reply;
 	}
-
+*/
 	/*
 	 * public byte[] handleNeighbourAnnouncedJoining(String hostName) throws
 	 * InternalKVStoreFailureException, InexistentKeyException,

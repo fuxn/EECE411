@@ -23,7 +23,6 @@ public class ChordTopologyService {
 			throw new InternalKVStoreFailureException();
 
 		int hash = key;
-		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
 					hash);
@@ -42,7 +41,6 @@ public class ChordTopologyService {
 		List<String> nodes = new ArrayList<String>();
 
 		int hash = fromKey;
-		System.out.println("PlanetLabNode getNode key hashCode : " + hash);
 		if (!this.chord.getChord().containsKey(hash)) {
 			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
 					hash);
@@ -107,7 +105,6 @@ public class ChordTopologyService {
 			if (!list.contains(randomHost.trim()))
 				list.add(randomHost);
 		}
-		System.out.println("random list : " + list);
 		return list;
 	}
 

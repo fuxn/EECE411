@@ -36,7 +36,6 @@ public class ReadEventHandler implements EventHandler {
 	public void handleEvent(SelectionKey handle) throws Exception {
 		this.socketChannel = (SocketChannel) handle.channel();
 
-		System.out.println("Server channel reading ");
 		// Read data from client
 		ByteBuffer buffer = ByteBuffer.allocate(1);
 		this.socketChannel.read(buffer);

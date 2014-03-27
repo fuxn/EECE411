@@ -3,8 +3,6 @@ package Interface;
 import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;

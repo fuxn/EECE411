@@ -11,7 +11,6 @@ public class WriteEventHandler implements EventHandler {
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
-		System.out.println("write reply");
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		Requests requests = (Requests) handle.attachment();
 		ByteBuffer buffer = requests.getReply();
@@ -20,8 +19,8 @@ public class WriteEventHandler implements EventHandler {
 		}
 		socketChannel.close(); // Close connection
 
-		if (CommandEnum.ANNOUNCE_FAILURE.equals(requests.getCommand()));
-		//	System.exit(0);
+		if (CommandEnum.ANNOUNCE_FAILURE.equals(requests.getCommand()))
+			System.exit(0);
 	}
 
 }
