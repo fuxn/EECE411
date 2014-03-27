@@ -9,7 +9,6 @@ import NIO.EventHandler;
 import Utilities.CommandEnum;
 import Utilities.Message.MessageUtilities;
 import Utilities.Message.RemoteMessage;
-import Utilities.Message.Requests;
 
 public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;

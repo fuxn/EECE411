@@ -5,13 +5,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
-import Exception.InternalKVStoreFailureException;
 import Exception.SystemOverloadException;
 import Interface.ConsistentHashInterface;
-import Utilities.CommandEnum;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
-import Utilities.Message.Requests;
 import Utilities.Thread.ThreadPool;
 
 public class ReadEventHandler implements EventHandler {
@@ -91,9 +88,8 @@ public class ReadEventHandler implements EventHandler {
 			System.exit(0);
 
 		} else {
-			handle.attach(new Requests(CommandEnum.PUT, ByteBuffer
-					.wrap(MessageUtilities.formateReplyMessage(
-							ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null))));
+			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
+					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null)));
 			handle.interestOps(SelectionKey.OP_WRITE);
 
 			Dispatcher.getDemultiplexer().wakeup();
