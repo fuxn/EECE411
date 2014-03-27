@@ -90,6 +90,10 @@ public class ChordTopologyService {
 		return this.chord.getChord().get(hash);
 	}
 
+	public List<String> getAllNodes() {
+		return this.chord.getAllNodes();
+	}
+
 	public List<String> getRandomNodes(int numberOfNodes)
 			throws InternalKVStoreFailureException {
 		if (this.chord.getChord().isEmpty())
@@ -116,7 +120,6 @@ public class ChordTopologyService {
 		this.chord.leave(hostNamehashCode);
 	}
 
-	
 	public boolean isSuccessor(String localHost, String remoteHost) {
 		String successor = null;
 		try {
@@ -128,11 +131,11 @@ public class ChordTopologyService {
 
 		return localHost.equals(successor);
 	}
-	
-/*	public void handleNodeJoining(String hostName) {
-		this.chord.join(hostName);
-	}
-*/
+
+	/*
+	 * public void handleNodeJoining(String hostName) {
+	 * this.chord.join(hostName); }
+	 */
 	/*
 	 * public byte[] remoteRequest(int command, byte[] key, byte[] value, String
 	 * serverHostName) throws InternalKVStoreFailureException { try { byte[]

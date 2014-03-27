@@ -119,7 +119,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public void announceLeaving(String sender, Integer hostNamehashCode)
 			throws InternalKVStoreFailureException {
-		List<String> randomNodes = this.topologyService.getRandomNodes(3);
+		List<String> randomNodes = this.topologyService.getAllNodes();
 
 		for (String node : randomNodes) {
 			try {
@@ -149,9 +149,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	public void handleNeighbourDataSent(String hostName)
 			throws InternalKVStoreFailureException {
-
-		this.handleAnnouncedLeaving(hostName,
-				MessageUtilities.intToByteArray(hostName.hashCode(), 32));
+		int hashNameHashCode = hostName.hashCode();
+		if (this.topologyService.isNodeExist(hashNameHashCode)) {
+			this.topologyService.handleNodeLeaving(hashNameHashCode);
+			this.announceLeaving(hostName, hashNameHashCode);
+		}
 	}
 
 	public void handleAnnouncedLeaving(String sender, byte[] hostNameHashCode)
@@ -159,7 +161,6 @@ public class ConsistentHash implements ConsistentHashInterface {
 		int hash = MessageUtilities.byteArrayToInt(hostNameHashCode);
 		if (this.topologyService.isNodeExist(hash)) {
 			this.topologyService.handleNodeLeaving(hash);
-			this.announceLeaving(sender, hash);
 		}
 	}
 

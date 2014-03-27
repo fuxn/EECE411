@@ -8,10 +8,10 @@ import java.util.TreeMap;
 public class Chord {
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
-	private List<String> indexs = new ArrayList<String>();
+	private List<String> participantingNodes = new ArrayList<String>();
 
 	public Chord(List<String> nodes) {
-		this.indexs = nodes;
+		this.participantingNodes = nodes;
 		for (String node : nodes) {
 			this.chord.put(node.hashCode(), node);
 		}
@@ -21,11 +21,15 @@ public class Chord {
 	}
 
 	public String getNodeByIndex(int index) {
-		if (this.indexs.size() > index)
-			return this.indexs.get(index);
+		if (this.participantingNodes.size() > index)
+			return this.participantingNodes.get(index);
 
 		else
-			return this.indexs.get(0);
+			return this.participantingNodes.get(0);
+	}
+
+	public List<String> getAllNodes() {
+		return this.participantingNodes;
 	}
 
 	public SortedMap<Integer, String> getChord() {
@@ -34,31 +38,29 @@ public class Chord {
 
 	public void leave(Integer hostNameHashCode) {
 		if (this.chord.containsKey(hostNameHashCode)) {
-			this.indexs.remove(this.chord.get(hostNameHashCode).trim());
+			this.participantingNodes.remove(this.chord.get(hostNameHashCode).trim());
 			this.chord.remove(hostNameHashCode);
 		}
+		System.out.println(participantingNodes);
 	}
-	
-	/*public void join(String hostName) {
-	this.chord.put(hostName.hashCode(), hostName);
-	this.indexs.add(hostName.trim());
-}*/
-	
-	/*public void partition(List<String> nodes) {
-		Integer hashSpace = (int) Math.pow(2, 32);
-		Integer nodePartitionSpace = hashSpace / nodes.size();
 
-		int minHash = -(int) Math.pow(2, 31);
-		int maxHash = (int) Math.pow(2, 31) - 1;
+	/*
+	 * public void join(String hostName) { this.chord.put(hostName.hashCode(),
+	 * hostName); this.indexs.add(hostName.trim()); }
+	 */
 
-		for (String node : nodes) {
-			minHash = minHash * nodes.indexOf(node) + 1;
-			for (int i = minHash; i < minHash + nodePartitionSpace; i++) {
-				this.chord.put(i, node);
-			}
-		}
-
-		System.out.println("chord hashspace : " + maxHash + " contains: "
-				+ this.chord.get(maxHash));
-	}*/
+	/*
+	 * public void partition(List<String> nodes) { Integer hashSpace = (int)
+	 * Math.pow(2, 32); Integer nodePartitionSpace = hashSpace / nodes.size();
+	 * 
+	 * int minHash = -(int) Math.pow(2, 31); int maxHash = (int) Math.pow(2, 31)
+	 * - 1;
+	 * 
+	 * for (String node : nodes) { minHash = minHash * nodes.indexOf(node) + 1;
+	 * for (int i = minHash; i < minHash + nodePartitionSpace; i++) {
+	 * this.chord.put(i, node); } }
+	 * 
+	 * System.out.println("chord hashspace : " + maxHash + " contains: " +
+	 * this.chord.get(maxHash)); }
+	 */
 }
