@@ -102,7 +102,9 @@ public class ConsistentHash implements ConsistentHashInterface {
 		}
 		this.local.removeAll();
 
-		this.announceDataSent(nextNode);
+		//this.announceDataSent(nextNode);
+		this.announceLeaving(this.local.getHostName(), this.local.getHostName()
+				.hashCode());
 	}
 
 	public void announceDataSent(String remoteHost)
