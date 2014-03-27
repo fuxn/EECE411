@@ -9,8 +9,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
-import Exception.InternalKVStoreFailureException;
-import Exception.InvalidKeyException;
 import KVStore.KVStore;
 import NIO_Client.ClientDispatcher;
 import Utilities.Message.MessageUtilities;
