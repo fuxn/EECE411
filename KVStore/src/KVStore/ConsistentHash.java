@@ -1,13 +1,12 @@
 package KVStore;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,125 +15,70 @@ import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
-import Interface.ConsistentHashInterface;
+import NIO.Dispatcher;
 import Utilities.ChordTopologyService;
 import Utilities.CommandEnum;
 import Utilities.ConnectionService;
 import Utilities.ErrorEnum;
-import Utilities.PlanetLabNode;
 import Utilities.Message.MessageUtilities;
 
-public class ConsistentHash implements ConsistentHashInterface {
+public class ConsistentHash {
 
-	private ChordTopologyService topologyService;
-	private int numberOfReplicas;
 	private PlanetLabNode local;
 
-	public ConsistentHash(int numberOfReplicas, Chord chord) {
-		this.topologyService = new ChordTopologyService(chord);
-		this.numberOfReplicas = numberOfReplicas;
+	public static int localHostHashCode;
+
+	public static Map<Integer, byte[]> commandQueue = new HashMap<Integer, byte[]>();
+	public static Map<Integer, Integer> version = new HashMap<Integer, Integer>();
+	public static Map<Integer, Integer> numACK = new HashMap<Integer, Integer>();
+
+	public ConsistentHash() {
 
 		try {
-			String localHost = InetAddress.getLocalHost().getHostName();
-			this.local = new PlanetLabNode(localHost);
-		} catch (UnknownHostException e) {
-
+			localHostHashCode = KVStore.localHost.hashCode();
+			this.local = new PlanetLabNode();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public byte[] put(Integer key, byte[] value) throws InexistentKeyException,
-			InternalKVStoreFailureException, InvalidKeyException,
-			OutOfSpaceException {
-		List<String> nodes = this.topologyService.getNodes(key,
-				this.numberOfReplicas);
-
-		String firstNode = nodes.get(0);
-		byte[] reply = this.put(firstNode, key, value);
-		nodes.remove(0);
-
-		for (String node : nodes) {
-			this.put(node, key, value);
-		}
-
-		return reply;
-
-	}
-
-	private byte[] put(String node, Integer key, byte[] value)
-			throws InexistentKeyException, OutOfSpaceException,
-			InternalKVStoreFailureException {
-
-		return this.local.put(key, value);
-	}
-
-	public byte[] get(Integer key) throws InexistentKeyException,
-			InternalKVStoreFailureException, InvalidKeyException {
-		return this.local.get(key);
-	}
-
-	public byte[] remove(Integer key) throws InexistentKeyException,
-			InternalKVStoreFailureException, InvalidKeyException {
-		return this.local.remove(key);
-	}
-
 	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
 
 		Map<Integer, byte[]> keys = this.local.getKeys();
-		String nextNode = this.topologyService.getNextNodeByHostName(this.local
-				.getHostName());
+		String nextNode = ChordTopologyService.getSuccessor(KVStore.localHost);
+		ChordTopologyService.handleNodeLeaving(localHostHashCode);
 
 		for (Integer key : keys.keySet()) {
 			try {
-				this.topologyService.handleNodeLeaving(this.local.getHostName()
-						.hashCode());
 				ConnectionService.connectToGossip(
 						CommandEnum.HANDLE_ANNOUNCED_FAILURE.getCode(),
 						MessageUtilities.intToByteArray(key, 32),
 						keys.get(key), nextNode);
 			} catch (IOException e) {
-				this.topologyService.handleNodeLeaving(nextNode.hashCode());
+				ChordTopologyService.handleNodeLeaving(nextNode.hashCode());
 				e.printStackTrace();
 				throw new InternalKVStoreFailureException();
 			}
 		}
 		this.local.removeAll();
 
-		//this.announceDataSent(nextNode);
-		this.announceLeaving(this.local.getHostName(), this.local.getHostName()
-				.hashCode());
+		// this.announceDataSent(nextNode);
+		this.announceLeaving(localHostHashCode);
 	}
 
-	public void announceDataSent(String remoteHost)
+	public void announceLeaving(Integer hostNamehashCode)
 			throws InternalKVStoreFailureException {
-		try {
-			ConnectionService.connectToGossip(CommandEnum.DATA_SENT.getCode(),
-					null, null, remoteHost);
-		} catch (IOException e) {
-			e.printStackTrace();
-			this.topologyService.handleNodeLeaving(remoteHost.hashCode());
-			throw new InternalKVStoreFailureException();
-		}
-	}
-
-	public void announceLeaving(String sender, Integer hostNamehashCode)
-			throws InternalKVStoreFailureException {
-		List<String> randomNodes = this.topologyService.getAllNodes();
+		List<String> randomNodes = ChordTopologyService.getAllNodes();
 
 		for (String node : randomNodes) {
 			try {
-				if (node.equals(this.local.getHostName())
-						|| node.equals(sender))
-					continue;
-
 				ConnectionService.connectToGossip(
 						CommandEnum.ANNOUNCE_LEAVING.getCode(),
 						MessageUtilities.intToByteArray(hostNamehashCode, 32),
 						null, node);
 			} catch (IOException e) {
-				this.topologyService.handleNodeLeaving(hostNamehashCode);
+				ChordTopologyService.handleNodeLeaving(hostNamehashCode);
 				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
 					continue;
 
@@ -149,20 +93,11 @@ public class ConsistentHash implements ConsistentHashInterface {
 		this.local.put(MessageUtilities.byteArrayToInt(key), value);
 	}
 
-	public void handleNeighbourDataSent(String hostName)
-			throws InternalKVStoreFailureException {
-		int hashNameHashCode = hostName.hashCode();
-		if (this.topologyService.isNodeExist(hashNameHashCode)) {
-			this.topologyService.handleNodeLeaving(hashNameHashCode);
-			this.announceLeaving(hostName, hashNameHashCode);
-		}
-	}
-
 	public void handleAnnouncedLeaving(String sender, byte[] hostNameHashCode)
 			throws InternalKVStoreFailureException {
 		int hash = MessageUtilities.byteArrayToInt(hostNameHashCode);
-		if (this.topologyService.isNodeExist(hash)) {
-			this.topologyService.handleNodeLeaving(hash);
+		if (ChordTopologyService.isNodeExist(hash)) {
+			ChordTopologyService.handleNodeLeaving(hash);
 		}
 	}
 
@@ -179,12 +114,7 @@ public class ConsistentHash implements ConsistentHashInterface {
 			} // else if (command == CommandEnum.ANNOUNCE_JOINING.getCode())
 				// replyMessage = this.handleAnnouncedJoining(new
 				// String(value));
-
-			else if (command == CommandEnum.DATA_SENT.getCode()) {
-				this.handleNeighbourDataSent(socket.getInetAddress()
-						.getHostName());
-				return;
-			} else
+			else
 				throw new UnrecognizedCommandException();
 
 		} catch (InexistentKeyException ex) {
@@ -203,127 +133,185 @@ public class ConsistentHash implements ConsistentHashInterface {
 
 	}
 
-	public void execHashOperation(Selector selector, SelectionKey handle,
-			int command, byte[] key, byte[] value) {
-		byte[] replyMessage = null;
+	public void put(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
 		Integer keyHash = Arrays.hashCode(key);
 		try {
-			String node = this.topologyService.getNode(keyHash);
-			if (!node.equals(this.local.getHostName())) {
-				/*
-				 * replyMessage = this.remoteRequest(command, key.getBytes(),
-				 * value.getBytes(), node);
-				 */
-				ConnectionService.connectToNIOServer(node, selector, handle,
-						MessageUtilities.requestMessage(command, key, value));
+			List<String> coord = ChordTopologyService
+					.getCoordinatorAndReplicas(keyHash);
+			ByteBuffer message = MessageUtilities.requestMessage(
+					CommandEnum.PUT_REPLICA.getCode(), key, value);
+
+			if (coord.contains(KVStore.localHost)) {
+				Dispatcher.response(handle, this.local.put(keyHash, value));
+				coord.remove(KVStore.localHost);
+				putToReplica(coord, handle, message, keyHash);
 			} else {
-				if (command == CommandEnum.PUT.getCode()) {
-					replyMessage = this.local.put(keyHash, value);
-				} else if (command == CommandEnum.GET.getCode()) {
-					replyMessage = this.local.get(keyHash);
-				} else if (command == CommandEnum.DELETE.getCode()) {
-					replyMessage = this.local.remove(keyHash);
-				} else
-					throw new UnrecognizedCommandException();
+				ConnectionService.connectToNIORemote(
+						coord.get(0),
+						handle,
+						MessageUtilities.requestMessage(
+								CommandEnum.PUT.getCode(), key, value));
 			}
 
-		} catch (InexistentKeyException ex) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INEXISTENT_KEY.getCode(), null);
-		} catch (InternalKVStoreFailureException internalException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
-		} catch (UnrecognizedCommandException uc) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null);
-		} catch (InvalidKeyException invalideKeyException) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INVALID_KEY.getCode(), null);
-		} catch (OutOfSpaceException e) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.OUT_OF_SPACE.getCode(), null);
-		} catch (Exception e) {
-			replyMessage = MessageUtilities.formateReplyMessage(
-					ErrorEnum.INTERNAL_FAILURE.getCode(), null);
-		}
+		} catch (InexistentKeyException e) {
+			System.out.println("inexistent");
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+		} catch (InternalKVStoreFailureException e) {
+			System.out.println("internal");
 
-		handle.attach(ByteBuffer.wrap(replyMessage));
-		handle.interestOps(SelectionKey.OP_WRITE);
-		selector.wakeup();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		} catch (OutOfSpaceException e) {
+			System.out.println("outofspace");
+
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.OUT_OF_SPACE.getCode()));
+		} catch (Exception e) {
+			System.out.println("exception");
+			e.printStackTrace();
+
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		}
 
 	}
 
-	/*
-	 * public byte[] remoteRequest(int command, byte[] key, byte[] value, String
-	 * server) throws InternalKVStoreFailureException, InvalidKeyException {
-	 * byte[] reply = null; try {
-	 * System.out.println("trying remote request to host " + server); Socket
-	 * socket = new Socket(server, KVStore.NIO_GOSSIP_PORT);
-	 * 
-	 * InputStream in = socket.getInputStream(); OutputStream out =
-	 * socket.getOutputStream();
-	 * 
-	 * byte[] v = MessageUtilities.formateRequestMessage(command, key, value);
-	 * out.write(v); out.flush();
-	 * 
-	 * if (MessageUtilities.isCheckReply(command)) reply =
-	 * MessageUtilities.checkReplyValue(command, in); else reply =
-	 * MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(), null);
-	 * } catch (IOException e) { e.printStackTrace(); throw new
-	 * InternalKVStoreFailureException(); } return reply; }
-	 */
-	/*
-	 * public byte[] handleNeighbourAnnouncedJoining(String hostName) throws
-	 * InternalKVStoreFailureException, InexistentKeyException,
-	 * OutOfSpaceException, InvalidKeyException { if (hostName.length() != 32)
-	 * throw new InvalidKeyException("Illegal Key Size.");
-	 * 
-	 * System.out.println("handling neighbour announced joining @ " +
-	 * this.local.getHostName());
-	 * 
-	 * this.handleAnnouncedJoining(hostName); Map<Integer, byte[]> keys =
-	 * this.local.getKeys(Arrays.hashCode(hostName .getBytes())); try { for
-	 * (Integer key : keys.keySet()) { this.remoteRequest(
-	 * CommandEnum.PUT.getCode(), MessageUtilities.standarizeMessage( new byte[]
-	 * { key.byteValue() }, 32), keys.get(key), new String(hostName)); } } catch
-	 * (Exception e) { return MessageUtilities.formateReplyMessage(
-	 * ErrorEnum.INTERNAL_FAILURE.getCode(), null); }
-	 * 
-	 * return MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(),
-	 * null); }
-	 */
+	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
 
-	/*
-	 * public byte[] handleAnnouncedJoining(String hostName) throws
-	 * InternalKVStoreFailureException, InexistentKeyException,
-	 * OutOfSpaceException, InvalidKeyException { if
-	 * (!this.topologyService.isNodeExist(hostName)) {
-	 * System.out.println("announcing joing " + hostName);
-	 * this.announceJoining(hostName);
-	 * this.topologyService.handleNodeJoining(hostName);
-	 * 
-	 * if (this.topologyService.isSuccessor(this.local.getHostName(), hostName))
-	 * this.handleNeighbourAnnouncedJoining(hostName);
-	 * 
-	 * return MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(),
-	 * null); } else { System.out.println("already exist"); return
-	 * MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(), null);
-	 * } }
-	 */
+		Integer keyHash = Arrays.hashCode(key);
+		byte[] reply = null;
+		try {
+			reply = this.local.put(keyHash, value);
 
-	/*
-	 * public byte[] announceJoining(String hostName) throws
-	 * InternalKVStoreFailureException { List<String> randomNodes =
-	 * this.topologyService.getRandomNodes(3); for (String node : randomNodes) {
-	 * try { if (node.equals(this.local.getHostName())) continue;
-	 * System.out.println("announce joining to host:" + node);
-	 * this.remoteRequest(CommandEnum.ANNOUNCE_JOINING.getCode(), null,
-	 * MessageUtilities.standarizeMessage( hostName.getBytes(), 1024), node); }
-	 * catch (Exception e) { if (randomNodes.indexOf(node) != randomNodes.size()
-	 * - 1) continue; else return MessageUtilities.formateReplyMessage(
-	 * ErrorEnum.INTERNAL_FAILURE.getCode(), null); } } return
-	 * MessageUtilities.formateReplyMessage( ErrorEnum.SUCCESS.getCode(), null);
-	 * }
-	 */
+		} catch (InexistentKeyException e) {
+			e.printStackTrace();
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
+		} catch (OutOfSpaceException e) {
+			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
+					.getCode());
+		} catch (Exception e) {
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
+		}
+		Dispatcher.response(handle, reply);
+	}
+
+	public void get(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
+		Integer keyHash = Arrays.hashCode(key);
+		System.out.println("***************GET******************");
+		try {
+			List<String> coords = ChordTopologyService
+					.getCoordinatorAndReplicas(keyHash);
+
+			if (coords.contains(KVStore.localHost)) {
+				System.out.println("get local ");
+				Dispatcher.response(handle, this.local.get(keyHash));
+			} else {
+
+				System.out.println("get remote " + handle.isValid());
+				ConnectionService.connectToNIORemote(
+						coords.get(0),
+						handle,
+						MessageUtilities.requestMessage(
+								CommandEnum.GET.getCode(), key, value));
+
+			}
+		} catch (InexistentKeyException e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+		} catch (InternalKVStoreFailureException e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		}
+
+	}
+
+	public void removeReplica(Selector selector, SelectionKey handle,
+			byte[] key, byte[] value) {
+		Integer keyHash = Arrays.hashCode(key);
+		byte[] reply = null;
+		try {
+			reply = this.local.remove(keyHash);
+
+		} catch (InexistentKeyException e) {
+			e.printStackTrace();
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
+		} catch (Exception e) {
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
+		}
+		Dispatcher.response(handle, reply);
+	}
+
+	public void remove(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
+		Integer keyHash = Arrays.hashCode(key);
+		try {
+			List<String> coords = ChordTopologyService
+					.getCoordinatorAndReplicas(keyHash);
+			if (coords.contains(KVStore.localHost)) {
+				Dispatcher.response(handle, this.local.remove(keyHash));
+				coords.remove(KVStore.localHost);
+				removeFromReplica(coords, handle,
+						MessageUtilities.requestMessage(
+								CommandEnum.DELETE_REPLICA.getCode(), key,
+								value), keyHash);
+			} else {
+				ConnectionService.connectToNIORemote(
+						coords.get(0),
+						handle,
+						MessageUtilities.requestMessage(
+								CommandEnum.DELETE.getCode(), key, value));
+			}
+
+		} catch (InexistentKeyException e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+		} catch (InternalKVStoreFailureException e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+		}
+
+	}
+
+	public static void putToReplica(List<String> nodes, SelectionKey handle,
+			ByteBuffer message, Integer key) throws Exception {
+		for (String n : nodes) {
+			ConnectionService.connectToReplica(n, handle, message, key);
+		}
+	}
+
+	public static void getFromSuccessor(String coord, SelectionKey handle,
+			ByteBuffer message, Integer key) throws Exception {
+		String successor = ChordTopologyService.getSuccessor(coord);
+		ConnectionService.connectToReplica(successor, handle, message, key);
+
+	}
+
+	public static void removeFromReplica(List<String> nodes,
+			SelectionKey handle, ByteBuffer message, Integer key)
+			throws Exception {
+		for (String n : nodes) {
+			ConnectionService.connectToReplica(n, handle, message, key);
+		}
+	}
 
 }

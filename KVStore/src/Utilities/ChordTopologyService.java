@@ -11,92 +11,60 @@ import Exception.InternalKVStoreFailureException;
 
 public class ChordTopologyService {
 
-	private Chord chord;
+	private static Chord chord;
 
-	public ChordTopologyService(Chord chord) {
-		this.chord = chord;
+	public ChordTopologyService() {
+		chord = new Chord();
 	}
 
-	public String getNode(Integer key) throws InexistentKeyException,
-			InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
+	public static String getCoordinator(Integer key)
+			throws InexistentKeyException, InternalKVStoreFailureException {
+		if (chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
 		int hash = key;
-		if (!this.chord.getChord().containsKey(hash)) {
-			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
-					hash);
-			hash = tailMap.isEmpty() ? this.chord.getChord().firstKey()
-					: tailMap.firstKey();
+		if (!chord.getChord().containsKey(hash)) {
+			SortedMap<Integer, String> tailMap = chord.getChord().tailMap(hash);
+			hash = tailMap.isEmpty() ? chord.getChord().firstKey() : tailMap
+					.firstKey();
 		}
 
-		return this.chord.getChord().get(hash);
+		return chord.getChord().get(hash);
 	}
 
-	public List<String> getNodes(Integer fromKey, int numOfReplicas)
+	public static List<String> getCoordinatorAndReplicas(Integer key)
 			throws InexistentKeyException, InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
-			throw new InternalKVStoreFailureException();
-
+		String coord = getCoordinator(key);
 		List<String> nodes = new ArrayList<String>();
+		nodes.add(coord);
 
-		int hash = fromKey;
-		if (!this.chord.getChord().containsKey(hash)) {
-			SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
-					hash);
-			hash = tailMap.isEmpty() ? this.chord.getChord().firstKey()
-					: tailMap.firstKey();
-		}
-
-		nodes.add(this.chord.getChord().get(hash));
-
-		for (int i = 0; i < numOfReplicas - 1; i++) {
-			nodes.add(this.getNextNode(hash));
-		}
+		nodes.addAll(getSuccessors(coord));
 
 		return nodes;
 	}
 
-	private String getNextNode(Integer key)
+	public static String getSuccessor(String hostName)
 			throws InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
-			throw new InternalKVStoreFailureException();
-
-		SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(key);
-		int hash = tailMap.isEmpty() ? this.chord.getChord().firstKey()
-				: tailMap.firstKey();
-
-		return this.chord.getChord().get(hash);
+		return chord.getSuccessor(hostName);
 	}
 
-	public String getNodeByHostName(String hostName)
+	public static List<String> getSuccessors(String hostName)
 			throws InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
-			throw new InternalKVStoreFailureException();
-
-		return this.chord.getChord().get(hostName.hashCode());
+		return chord.getSuccessors(hostName);
 	}
 
-	public String getNextNodeByHostName(String hostName)
+	public static List<String> getMySuccessors()
 			throws InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
-			throw new InternalKVStoreFailureException();
-
-		SortedMap<Integer, String> tailMap = this.chord.getChord().tailMap(
-				hostName.hashCode() + 1);
-		int hash = tailMap.isEmpty() ? this.chord.getChord().firstKey()
-				: tailMap.firstKey();
-
-		return this.chord.getChord().get(hash);
+		return chord.getSuccessors();
 	}
 
-	public List<String> getAllNodes() {
-		return this.chord.getAllNodes();
+	public static List<String> getAllNodes() {
+		return chord.getAllNodes();
 	}
 
-	public List<String> getRandomNodes(int numberOfNodes)
+	public static List<String> getRandomNodes(int numberOfNodes)
 			throws InternalKVStoreFailureException {
-		if (this.chord.getChord().isEmpty())
+		if (chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
 		Random random = new Random();
@@ -104,26 +72,26 @@ public class ChordTopologyService {
 		List<String> list = new ArrayList<String>();
 
 		for (int i = 0; i < numberOfNodes; i++) {
-			int randomNumber = random.nextInt(this.chord.getChord().size());
-			String randomHost = this.chord.getNodeByIndex(randomNumber);
+			int randomNumber = random.nextInt(chord.getChord().size());
+			String randomHost = chord.getNodeByIndex(randomNumber);
 			if (!list.contains(randomHost.trim()))
 				list.add(randomHost);
 		}
 		return list;
 	}
 
-	public boolean isNodeExist(Integer hostNameHashCode) {
-		return this.chord.getChord().containsKey(hostNameHashCode);
+	public static boolean isNodeExist(Integer hostNameHashCode) {
+		return chord.getChord().containsKey(hostNameHashCode);
 	}
 
-	public void handleNodeLeaving(Integer hostNamehashCode) {
-		this.chord.leave(hostNamehashCode);
+	public static void handleNodeLeaving(Integer hostNamehashCode) {
+		chord.remove(hostNamehashCode);
 	}
 
-	public boolean isSuccessor(String localHost, String remoteHost) {
+	public static boolean isSuccessor(String localHost, String remoteHost) {
 		String successor = null;
 		try {
-			successor = this.getNextNodeByHostName(remoteHost);
+			successor = getSuccessor(remoteHost);
 		} catch (InternalKVStoreFailureException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

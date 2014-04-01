@@ -1,4 +1,4 @@
-package NIO_Client;
+package NIO.Client.Replica;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -7,10 +7,10 @@ import java.nio.channels.SocketChannel;
 import NIO.EventHandler;
 import Utilities.Message.RemoteMessage;
 
-public class ConnectionEventHandler implements EventHandler {
+public class ConnectReplicaHandler implements EventHandler {
 	private Selector selector;
 
-	public ConnectionEventHandler(Selector demultiplexer) {
+	public ConnectReplicaHandler(Selector demultiplexer) {
 		this.selector = demultiplexer;
 	}
 
@@ -23,6 +23,8 @@ public class ConnectionEventHandler implements EventHandler {
 				&& (System.currentTimeMillis() < endTimeMillis)) {
 			System.out.println("pending connection");
 		}
+		ReplicaDispatcher.enQueueHandle(handle, message.getServerHandle(),
+				message.getKey());
 		channel.configureBlocking(false);
 		channel.register(this.selector, SelectionKey.OP_WRITE, message);
 	}

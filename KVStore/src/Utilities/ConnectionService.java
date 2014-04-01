@@ -6,29 +6,42 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
 import KVStore.KVStore;
-import NIO_Client.ClientDispatcher;
+import NIO.Client.ClientDispatcher;
+import NIO.Client.Replica.ReplicaDispatcher;
 import Utilities.Message.MessageUtilities;
 
 public class ConnectionService {
 
-	public static void connectToNIOServer(String host, Selector selector,
-			SelectionKey handle, ByteBuffer message) throws Exception {
+	public static void connectToNIORemote(String host, SelectionKey handle,
+			ByteBuffer message) throws Exception {
 		SocketChannel client;
 		try {
 			client = SocketChannel.open();
 
+			System.out.println("connect to nio remote "+ handle.isValid());
 			client.configureBlocking(false);
 			client.connect(new InetSocketAddress(host, KVStore.NIO_SERVER_PORT));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
-					handle, message);
+					handle, message,host);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static void connectToReplica(String host, SelectionKey handle,
+			ByteBuffer message, Integer key) throws Exception {
+
+		SocketChannel client = SocketChannel.open();
+
+		client.configureBlocking(false);
+		client.connect(new InetSocketAddress(host, KVStore.NIO_SERVER_PORT));
+		ReplicaDispatcher.registerChannel(SelectionKey.OP_CONNECT, client, key,
+				message, handle,host);
+
 	}
 
 	public static void connectToGossip(int command, byte[] key, byte[] value,

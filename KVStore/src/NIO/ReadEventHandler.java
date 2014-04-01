@@ -6,7 +6,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
 import Exception.SystemOverloadException;
-import Interface.ConsistentHashInterface;
+import KVStore.ConsistentHash;
+import Utilities.CommandEnum;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 import Utilities.Thread.ThreadPool;
@@ -20,10 +21,9 @@ public class ReadEventHandler implements EventHandler {
 	private static int maxTasks = 40000;
 	private static ThreadPool threadPool;
 
-	private ConsistentHashInterface cHash;
+	private ConsistentHash cHash;
 
-	public ReadEventHandler(Selector demultiplexer,
-			ConsistentHashInterface cHash) {
+	public ReadEventHandler(Selector demultiplexer, ConsistentHash cHash) {
 		this.selector = demultiplexer;
 		this.cHash = cHash;
 		threadPool = new ThreadPool(maxThreads, maxTasks);
@@ -56,14 +56,16 @@ public class ReadEventHandler implements EventHandler {
 		}
 		buffer.clear();
 
+		System.out.println("Server reading " + c);
+
 		// threadPool.execute(new Processor(handle, c, key, value));
 
 		try {
 			threadPool.execute(new Processor(handle, this.socketChannel, c,
 					key, value));
 		} catch (SystemOverloadException e) {
-			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
-					ErrorEnum.OUT_OF_SPACE.getCode(), null)));
+			handle.attach(ByteBuffer.wrap(MessageUtilities
+					.formateReplyMessage(ErrorEnum.OUT_OF_SPACE.getCode())));
 			handle.interestOps(SelectionKey.OP_WRITE);
 			selector.wakeup();
 
@@ -76,23 +78,30 @@ public class ReadEventHandler implements EventHandler {
 	public void process(final SelectionKey handle,
 			final SocketChannel socketChannel, final int command,
 			final byte[] key, final byte[] value) {
-		if (command == 1 || command == 2 || command == 3) {
-			cHash.execHashOperation(selector, handle, command, key, value);
-		} else if (command == 4) {
+		System.out.println(command + " " + key + " " + value);
+
+		if (command == CommandEnum.PUT.getCode())
+			cHash.put(selector, handle, key, value);
+		else if (command == CommandEnum.PUT_REPLICA.getCode())
+			cHash.putReplica(selector, handle, key, value);
+		else if (command == CommandEnum.GET.getCode())
+			cHash.get(selector, handle, key, value);
+		else if (command == CommandEnum.DELETE.getCode())
+			cHash.remove(selector, handle, key, value);
+		else if (command == CommandEnum.DELETE_REPLICA.getCode())
+			cHash.removeReplica(selector, handle, key, value);
+
+		else if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
 
 			Dispatcher.stopAccept();
-			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
-					ErrorEnum.SUCCESS.getCode(), null)));
-			handle.interestOps(SelectionKey.OP_WRITE);
-			Dispatcher.getDemultiplexer().wakeup();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.SUCCESS.getCode()));
+
 			System.exit(0);
-
 		} else {
-			handle.attach(ByteBuffer.wrap(MessageUtilities.formateReplyMessage(
-					ErrorEnum.UNRECOGNIZED_COMMAND.getCode(), null)));
-			handle.interestOps(SelectionKey.OP_WRITE);
-
-			Dispatcher.getDemultiplexer().wakeup();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND
+							.getCode()));
 		}
 	}
 

@@ -18,8 +18,16 @@ public class KVStore {
 
 			int commandCode = getCommandCode(args[2].toString());
 
-			byte[] v = Message.formateRequestMessage(commandCode,
-					args[3].getBytes(), args[4].getBytes());
+			byte[] v = null;
+			if (commandCode == 1)
+				v = Message.formateRequestMessage(commandCode,
+						args[3].getBytes(), args[4].getBytes());
+			else if (commandCode == 4)
+				v = Message.formateRequestMessage(commandCode, null, null);
+			else
+				v = Message.formateRequestMessage(commandCode,
+						args[3].getBytes(), null);
+
 			out.write(v);
 			out.flush();
 

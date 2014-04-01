@@ -14,15 +14,19 @@ import java.util.List;
 import java.util.Properties;
 
 import Exception.InternalKVStoreFailureException;
-import Interface.ConsistentHashInterface;
 import NIO.AcceptEventHandler;
 import NIO.Dispatcher;
 import NIO.ReadEventHandler;
 import NIO.WriteEventHandler;
-import NIO_Client.ClientDispatcher;
-import NIO_Client.ConnectionEventHandler;
-import NIO_Client.ReadReplyEventHandler;
-import NIO_Client.WriteRequestEventHandler;
+import NIO.Client.ClientDispatcher;
+import NIO.Client.ConnectionEventHandler;
+import NIO.Client.ReadReplyEventHandler;
+import NIO.Client.WriteRequestEventHandler;
+import NIO.Client.Replica.ConnectReplicaHandler;
+import NIO.Client.Replica.ReadACKEventHandler;
+import NIO.Client.Replica.ReplicaDispatcher;
+import NIO.Client.Replica.WriteReplicaHandler;
+import Utilities.ChordTopologyService;
 import Utilities.Message.MessageUtilities;
 
 public class KVStore {
@@ -32,20 +36,20 @@ public class KVStore {
 	public static final int PARTICIPATING_NODES = 10;
 
 	private static int STATUS = 0;
+	public static String localHost;
 
 	private static Thread serverThread;
 	private static Thread clientThread;
-	private static Thread gossipThread;
+	private static Thread replicaThread;
 
-	private static ConsistentHashInterface cHash;
+	private static ConsistentHash cHash;
 
-	public void initiateReactiveServer(String localHostName,
-			ConsistentHashInterface cHash) throws Exception {
+	public void initiateReactiveServer(ConsistentHash cHash) throws Exception {
 		System.out.println("Starting NIO server at port : " + NIO_SERVER_PORT);
 
 		ServerSocketChannel server = ServerSocketChannel.open();
 		server.socket().bind(
-				new InetSocketAddress(localHostName, NIO_SERVER_PORT));
+				new InetSocketAddress(KVStore.localHost, NIO_SERVER_PORT));
 		server.configureBlocking(false);
 
 		Dispatcher dispatcher = new Dispatcher();
@@ -84,8 +88,24 @@ public class KVStore {
 		clientThread.start();
 	}
 
-	public void initiateSocketServer(ConsistentHashInterface cHash)
-			throws Exception {
+	public void initiateReactiveReplica() throws Exception {
+
+		ReplicaDispatcher replicaDispatcher = new ReplicaDispatcher();
+		replicaDispatcher
+				.registerEventHandler(
+						SelectionKey.OP_CONNECT,
+						new ConnectReplicaHandler(ReplicaDispatcher
+								.getDemultiplexer()));
+		replicaDispatcher.registerEventHandler(SelectionKey.OP_WRITE,
+				new WriteReplicaHandler(ReplicaDispatcher.getDemultiplexer()));
+		replicaDispatcher.registerEventHandler(SelectionKey.OP_READ,
+				new ReadACKEventHandler());
+
+		replicaThread = new Thread(replicaDispatcher);
+		replicaThread.start();
+	}
+
+	public void initiateSocketServer(ConsistentHash cHash) throws Exception {
 		System.out.println("Starting gossip at port : " + NIO_GOSSIP_PORT);
 
 		ServerSocket serverSocket = new ServerSocket(NIO_GOSSIP_PORT);
@@ -113,42 +133,29 @@ public class KVStore {
 	}
 
 	public static void main(String[] args) throws IOException {
-		String localHostName = InetAddress.getLocalHost().getHostName();
-		List<String> nodes = new ArrayList<String>();
-
-		Properties prop = new Properties();
-		InputStream input = null;
+		localHost = InetAddress.getLocalHost().getHostName();
 
 		try {
-			input = new FileInputStream("participatingNodes.properties");
-			prop.load(input);
 
-			for (int i = 1; i <= PARTICIPATING_NODES; i++) {
-				nodes.add(prop.getProperty(String.valueOf(i)));
-			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		} finally {
-			if (input != null) {
-				try {
-					input.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		/*
-		 * ProtocolImpl protocol = new ProtocolImpl(nodes);
-		 * protocol.startServer();
-		 */
-
-		try {
+			/*
+			 * List<String> nodes = new ArrayList<String>(); Properties prop =
+			 * new Properties(); InputStream input = null; try { input = new
+			 * FileInputStream("participatingNodes.properties");
+			 * prop.load(input); for (int i = 1; i <= PARTICIPATING_NODES; i++)
+			 * { nodes.add(prop.getProperty(String.valueOf(i))); } } catch
+			 * (IOException ex) { ex.printStackTrace(); } finally { if (input !=
+			 * null) { try { input.close(); } catch (IOException e) {
+			 * e.printStackTrace(); } } }
+			 * 
+			 * System.out.println(nodes.size());
+			 */
 
 			final KVStore kvStore = new KVStore();
-			cHash = new ConsistentHash(1, new Chord(nodes));
-			kvStore.initiateReactiveServer(localHostName, cHash);
+			new ChordTopologyService();
+			cHash = new ConsistentHash();
+			kvStore.initiateReactiveServer(cHash);
 			kvStore.initiateReactiveClient();
+			kvStore.initiateReactiveReplica();
 			// kvStore.initiateGossipServer(localHostName);
 
 			(new Thread() {
@@ -167,7 +174,7 @@ public class KVStore {
 			e.printStackTrace();
 		}
 
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+		/*Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
 				try {
@@ -178,16 +185,8 @@ public class KVStore {
 				}
 				Dispatcher.stop();
 				ClientDispatcher.stop();
-				/*
-				 * try { //KVStore.serverThread.join(); } catch
-				 * (InterruptedException e) { // TODO Auto-generated catch block
-				 * e.printStackTrace(); } try { //KVStore.clientThread.join(); }
-				 * catch (InterruptedException e) { // TODO Auto-generated catch
-				 * block e.printStackTrace(); }
-				 */
-
 			}
-		});
+		});*/
 
 		// server wait for incoming requests;
 	}

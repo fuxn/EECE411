@@ -1,4 +1,4 @@
-package NIO_Client;
+package NIO.Client;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
@@ -10,7 +10,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+import KVStore.ConsistentHash;
 import NIO.EventHandler;
+import Utilities.CommandEnum;
+import Utilities.Message.MessageUtilities;
 import Utilities.Message.RemoteMessage;
 
 public class ClientDispatcher implements Runnable {
@@ -35,12 +38,14 @@ public class ClientDispatcher implements Runnable {
 
 	public static void registerChannel(int eventType,
 			SelectableChannel channel, SelectionKey serverHandle,
-			ByteBuffer message) throws Exception {
+			ByteBuffer message,String coord) throws Exception {
 		selectorLock.lock();
 		try {
 			demultiplexer.wakeup();
 			channel.register(demultiplexer, SelectionKey.OP_CONNECT,
-					new RemoteMessage(serverHandle, message));
+					new RemoteMessage(serverHandle,null, message,coord));
+			System.out.println("registerChannel, ensure serverHandle "
+					+ serverHandle.isValid());
 
 		} finally {
 			selectorLock.unlock();
@@ -70,6 +75,7 @@ public class ClientDispatcher implements Runnable {
 					if (handle.isValid() && handle.isConnectable()) {
 						EventHandler handler = (EventHandler) this.registeredHandlers
 								.get(SelectionKey.OP_CONNECT);
+						
 						handler.handleEvent(handle);
 						handleIterator.remove();
 					}

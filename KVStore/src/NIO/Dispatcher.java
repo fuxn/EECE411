@@ -1,5 +1,6 @@
 package NIO;
 
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -43,6 +44,13 @@ public class Dispatcher implements Runnable {
 		return demultiplexer;
 	}
 
+	public static void response(SelectionKey handle, byte[] message) {
+		handle.interestOps(SelectionKey.OP_WRITE);
+		handle.attach(ByteBuffer.wrap(message));
+
+		demultiplexer.wakeup();
+	}
+
 	public void run() {
 		try {
 			while (!stop) { // Loop indefinitely
@@ -54,14 +62,10 @@ public class Dispatcher implements Runnable {
 				while (handleIterator.hasNext()) {
 					SelectionKey handle = handleIterator.next();
 
-					if (handle.isValid() && handle.isAcceptable()&& accepting) {
+					if (handle.isValid() && handle.isAcceptable() && accepting) {
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_ACCEPT);
 						handler.handleEvent(handle);
-						// Note : Here we don't remove this handle from
-						// selector since we want to keep listening to
-						// new client connections
-						
 					}
 
 					if (handle.isValid() && handle.isReadable()) {
@@ -72,7 +76,6 @@ public class Dispatcher implements Runnable {
 					}
 
 					if (handle.isValid() && handle.isWritable()) {
-
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_WRITE);
 
@@ -89,8 +92,8 @@ public class Dispatcher implements Runnable {
 	public static void stop() {
 		stop = true;
 	}
-	
-	public static void stopAccept(){
+
+	public static void stopAccept() {
 		accepting = false;
 	}
 

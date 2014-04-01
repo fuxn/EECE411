@@ -7,7 +7,7 @@ public class Message {
 	private String value;
 
 	public Message(Integer command, byte[] key, byte[] value) {
-	
+
 		this.command = command;
 		if (key != null)
 			this.key = new String(key);

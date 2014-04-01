@@ -1,4 +1,4 @@
-package NIO_Client;
+package NIO.Client;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -13,10 +13,6 @@ public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
 	private byte[] value;
 
-	public ReadReplyEventHandler() {
-
-	}
-
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
@@ -28,7 +24,7 @@ public class ReadReplyEventHandler implements EventHandler {
 		buffer.flip();
 		this.errorCode = buffer.array()[0];
 
-		if (MessageUtilities.isCheckReplyValue(c)) {
+		if (MessageUtilities.isGetCommand(c)) {
 			buffer = ByteBuffer.allocate(1024);
 			socketChannel.read(buffer);
 			buffer.flip();
@@ -37,17 +33,12 @@ public class ReadReplyEventHandler implements EventHandler {
 		buffer.clear();
 
 		SelectionKey serverHandle = message.getServerHandle();
-		serverHandle.interestOps(SelectionKey.OP_WRITE);
-		serverHandle.attach(ByteBuffer.wrap(MessageUtilities
-				.formateReplyMessage(this.errorCode, this.value)));
-
-		Dispatcher.getDemultiplexer().wakeup();
+		if (serverHandle != null) {
+			Dispatcher.response(serverHandle, MessageUtilities
+					.formateReplyMessage(this.errorCode, this.value));
+		}
 
 		socketChannel.close();
 	}
 
-	public byte[] getReplyMessage() {
-		return MessageUtilities.formateReplyMessage(
-				Integer.valueOf(this.errorCode), this.value);
-	}
 }

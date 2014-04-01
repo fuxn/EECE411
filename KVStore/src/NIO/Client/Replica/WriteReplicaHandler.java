@@ -1,4 +1,4 @@
-package NIO_Client;
+package NIO.Client.Replica;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -8,10 +8,10 @@ import java.nio.channels.SocketChannel;
 import NIO.EventHandler;
 import Utilities.Message.RemoteMessage;
 
-public class WriteRequestEventHandler implements EventHandler {
+public class WriteReplicaHandler implements EventHandler {
 	private Selector selector;
 
-	public WriteRequestEventHandler(Selector demultiplexer) {
+	public WriteReplicaHandler(Selector demultiplexer) {
 		this.selector = demultiplexer;
 	}
 
@@ -23,7 +23,10 @@ public class WriteRequestEventHandler implements EventHandler {
 		while (m.hasRemaining()) {
 			socketChannel.write(m);
 		}
-
-		socketChannel.register(this.selector, SelectionKey.OP_READ,message);
+		m.flip();
+		if (!ReplicaDispatcher.pendingHandle
+				.contains(message.getServerHandle()))
+			ReplicaDispatcher.pendingHandle.add(message.getServerHandle());
+		socketChannel.register(this.selector, SelectionKey.OP_READ, message);
 	}
 }

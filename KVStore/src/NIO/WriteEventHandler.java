@@ -14,6 +14,7 @@ public class WriteEventHandler implements EventHandler {
 		while (buffer.hasRemaining()) {
 			socketChannel.write(buffer);
 		}
+		buffer.flip();
 		socketChannel.close(); // Close connection
 
 	}
