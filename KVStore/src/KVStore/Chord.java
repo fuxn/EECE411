@@ -27,7 +27,60 @@ public class Chord {
 		participantingNodes.add("planetlab-4.imperial.ac.uk");
 		participantingNodes.add("planetlab-4.eecs.cwru.edu");
 		participantingNodes.add("planetlab-2.cs.auckland.ac.nz");
+		
+		participantingNodes.add("ricepl-5.cs.rice.edu");
+		participantingNodes.add("planetlab-2.usask.ca");
+		participantingNodes.add("planetlab-2.cmcl.cs.cmu.edu");
+		participantingNodes.add("planetlab1.eecs.umich.edu");
+		participantingNodes.add("planetlab1.pop-pa.rnp.br");
+		
+		participantingNodes.add("planet-lab4.uba.ar");
+		participantingNodes.add("planetlab2.thlab.net");
+		participantingNodes.add("planetlab1.cs.uml.edu");
+		participantingNodes.add("plab-1.diegm.uniud.it");
+		participantingNodes.add("planetlab1.ionio.gr");
+		
+		participantingNodes.add("plab4.ple.silweb.pl");
+		participantingNodes.add("planetlab-3.cs.ucy.ac.cy");
+		participantingNodes.add("planet-lab1.cs.ucr.edu");
+		participantingNodes.add("planetlab1.cs.pitt.edu");
+		participantingNodes.add("planetlab2.cis.upenn.edu");
+		
+		participantingNodes.add("planetlab2.s3.kth.se");
+		participantingNodes.add("planetlab-1.cmcl.cs.cmu.edu");
+		participantingNodes.add("planetlab2.science.unitn.it");
+		participantingNodes.add("planetlab1.cs.stevens-tech.edu");
+		participantingNodes.add("planet-plc-3.mpi-sws.org");
+		
+		participantingNodes.add("orval.infonet.fundp.ac.be");
+		participantingNodes.add("planetlab2.bgu.ac.il");
+		participantingNodes.add("kupl2.ittc.ku.edu");
+		participantingNodes.add("planet-lab2.uba.ar");
+		participantingNodes.add("planetlab2.ifi.uio.no");
 
+		participantingNodes.add("planetlab-1.ing.unimo.it");
+		participantingNodes.add("planetlab1.ifi.uio.no");
+		participantingNodes.add("planetlab2.eurecom.fr");
+		participantingNodes.add("node2.planetlab.mathcs.emory.edu");
+		participantingNodes.add("planetlab4.williams.edu");
+
+		participantingNodes.add("planetlab-13.e5.ijs.si");
+		participantingNodes.add("planetlab-coffee.ait.ie");
+		participantingNodes.add("ple2.tu.koszalin.pl");
+		participantingNodes.add("planetlab1.sics.se");
+		participantingNodes.add("planetlab1.lkn.ei.tum.de");
+		
+		participantingNodes.add("aguila2.lsi.upc.edu");
+		participantingNodes.add("aguila1.lsi.upc.edu");
+		participantingNodes.add("planetlab1.exp-math.uni-essen.de");
+		participantingNodes.add("planet1.l3s.uni-hannover.de");
+		participantingNodes.add("planetlab1.tmit.bme.hu");
+		
+		participantingNodes.add("planetlab3.hiit.fi");
+		participantingNodes.add("planetlab2.cs.uit.no");
+		participantingNodes.add("planetlab-12.e5.ijs.si");
+		participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
+		participantingNodes.add("ple2.dmcs.p.lodz.pl");
 
 		for (String node : participantingNodes) {
 			chord.put(node.hashCode(), node);
