@@ -24,9 +24,7 @@ public class WriteReplicaHandler implements EventHandler {
 			socketChannel.write(m);
 		}
 		m.flip();
-		if (!ReplicaDispatcher.pendingHandle
-				.contains(message.getServerHandle()))
-			ReplicaDispatcher.pendingHandle.add(message.getServerHandle());
+		
 		socketChannel.register(this.selector, SelectionKey.OP_READ, message);
 	}
 }

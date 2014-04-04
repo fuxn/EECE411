@@ -38,7 +38,6 @@ public class ConsistentHash {
 			localHostHashCode = KVStore.localHost.hashCode();
 			this.local = new PlanetLabNode();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -135,7 +134,10 @@ public class ConsistentHash {
 
 	public void put(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
+		System.out.println("***************PUT******************");
 		Integer keyHash = Arrays.hashCode(key);
+		byte[] reply = null;
+		
 		try {
 			List<String> coord = ChordTopologyService
 					.getCoordinatorAndReplicas(keyHash);
@@ -143,7 +145,8 @@ public class ConsistentHash {
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
 
 			if (coord.contains(KVStore.localHost)) {
-				Dispatcher.response(handle, this.local.put(keyHash, value));
+				
+				reply = this.local.put(keyHash, value);
 				coord.remove(KVStore.localHost);
 				putToReplica(coord, handle, message, keyHash);
 			} else {
@@ -156,30 +159,34 @@ public class ConsistentHash {
 
 		} catch (InexistentKeyException e) {
 			System.out.println("inexistent");
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (InternalKVStoreFailureException e) {
 			System.out.println("internal");
 
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		} catch (OutOfSpaceException e) {
 			System.out.println("outofspace");
 
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.OUT_OF_SPACE.getCode()));
+			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
+					.getCode());
 		} catch (Exception e) {
 			System.out.println("exception");
 			e.printStackTrace();
 
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
+
+		Dispatcher.response(handle, reply);
 
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
+
+		System.out.println("***************PUT REPLICA******************");
 
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
@@ -204,13 +211,14 @@ public class ConsistentHash {
 			byte[] value) {
 		Integer keyHash = Arrays.hashCode(key);
 		System.out.println("***************GET******************");
+		byte[] replyMessage = null;
 		try {
 			List<String> coords = ChordTopologyService
 					.getCoordinatorAndReplicas(keyHash);
 
 			if (coords.contains(KVStore.localHost)) {
 				System.out.println("get local ");
-				Dispatcher.response(handle, this.local.get(keyHash));
+				replyMessage = this.local.get(keyHash);
 			} else {
 
 				System.out.println("get remote " + handle.isValid());
@@ -223,22 +231,26 @@ public class ConsistentHash {
 			}
 		} catch (InexistentKeyException e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (InternalKVStoreFailureException e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		} catch (Exception e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
+
+		Dispatcher.response(handle, replyMessage);
 
 	}
 
 	public void removeReplica(Selector selector, SelectionKey handle,
 			byte[] key, byte[] value) {
+		System.out.println("***************REMOVE REPLICA******************");
+
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
 		try {
@@ -257,12 +269,15 @@ public class ConsistentHash {
 
 	public void remove(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
+		System.out.println("***************REMOVE******************");
+
 		Integer keyHash = Arrays.hashCode(key);
+		byte[] replyMessage = null;
 		try {
 			List<String> coords = ChordTopologyService
 					.getCoordinatorAndReplicas(keyHash);
 			if (coords.contains(KVStore.localHost)) {
-				Dispatcher.response(handle, this.local.remove(keyHash));
+				replyMessage = this.local.remove(keyHash);
 				coords.remove(KVStore.localHost);
 				removeFromReplica(coords, handle,
 						MessageUtilities.requestMessage(
@@ -278,17 +293,19 @@ public class ConsistentHash {
 
 		} catch (InexistentKeyException e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (InternalKVStoreFailureException e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		} catch (Exception e) {
 			e.printStackTrace();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode()));
+			replyMessage = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
+
+		Dispatcher.response(handle, replyMessage);
 
 	}
 

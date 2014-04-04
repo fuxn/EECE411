@@ -43,7 +43,7 @@ public class ReadACKEventHandler implements EventHandler {
 			this.version = this.errorBuffer.array()[0];
 
 			Dispatcher.response(message.getServerHandle(),
-					MessageUtilities.formateReplyMessage(errorCode, value));
+					MessageUtilities.formateReplyMessage(this.errorCode, this.value));
 		}
 		this.valueBuffer.clear();
 		this.errorBuffer.clear();

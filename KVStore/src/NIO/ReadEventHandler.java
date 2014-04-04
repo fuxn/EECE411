@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 import Exception.SystemOverloadException;
 import KVStore.ConsistentHash;
@@ -78,7 +79,7 @@ public class ReadEventHandler implements EventHandler {
 	public void process(final SelectionKey handle,
 			final SocketChannel socketChannel, final int command,
 			final byte[] key, final byte[] value) {
-		System.out.println(command + " " + key + " " + value);
+		System.out.println(command + " " +  Arrays.hashCode(key) + " " + value);
 
 		if (command == CommandEnum.PUT.getCode())
 			cHash.put(selector, handle, key, value);

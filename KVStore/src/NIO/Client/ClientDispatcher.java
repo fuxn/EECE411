@@ -44,8 +44,6 @@ public class ClientDispatcher implements Runnable {
 			demultiplexer.wakeup();
 			channel.register(demultiplexer, SelectionKey.OP_CONNECT,
 					new RemoteMessage(serverHandle,null, message,coord));
-			System.out.println("registerChannel, ensure serverHandle "
-					+ serverHandle.isValid());
 
 		} finally {
 			selectorLock.unlock();
