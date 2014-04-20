@@ -155,6 +155,7 @@ public class ConsistentHash {
 						handle,
 						MessageUtilities.requestMessage(
 								CommandEnum.PUT.getCode(), key, value));
+				return;
 			}
 
 		} catch (InexistentKeyException e) {
@@ -227,6 +228,7 @@ public class ConsistentHash {
 						handle,
 						MessageUtilities.requestMessage(
 								CommandEnum.GET.getCode(), key, value));
+				return;
 
 			}
 		} catch (InexistentKeyException e) {
@@ -289,6 +291,7 @@ public class ConsistentHash {
 						handle,
 						MessageUtilities.requestMessage(
 								CommandEnum.DELETE.getCode(), key, value));
+				return;
 			}
 
 		} catch (InexistentKeyException e) {
