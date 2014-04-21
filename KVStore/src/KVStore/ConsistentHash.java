@@ -10,11 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import CommandHandler.GetCommandHandler;
+import CommandHandler.PutCommandHandler;
+import CommandHandler.RemoveCommandHandler;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
+import Interface.CommandHandler;
 import NIO.Dispatcher;
 import NIO.Client.Replica.ReplicaDispatcher;
 import Utilities.ChordTopologyService;
@@ -33,6 +37,8 @@ public class ConsistentHash {
 	public static Map<Integer, Integer> version = new HashMap<Integer, Integer>();
 	public static Map<Integer, Integer> numACK = new HashMap<Integer, Integer>();
 
+	public static Map<Integer, CommandHandler> commandHandlers = new HashMap<Integer, CommandHandler>();
+
 	public ConsistentHash() {
 
 		try {
@@ -41,6 +47,12 @@ public class ConsistentHash {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		commandHandlers.put(CommandEnum.PUT.getCode(), new PutCommandHandler());
+		commandHandlers.put(CommandEnum.GET.getCode(), new GetCommandHandler());
+		commandHandlers.put(CommandEnum.DELETE.getCode(),
+				new RemoveCommandHandler());
+		commandHandlers.put(CommandEnum.ANNOUNCE_FAILURE.getCode(),
+				new RemoveCommandHandler());
 	}
 
 	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
