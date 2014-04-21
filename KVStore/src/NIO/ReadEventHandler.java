@@ -81,39 +81,42 @@ public class ReadEventHandler implements EventHandler {
 
 	}
 
+	/*
+	 * public void process(final SelectionKey handle, final SocketChannel
+	 * socketChannel, final int command, final byte[] key, final byte[] value) {
+	 * System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
+	 * 
+	 * if (ConsistentHash.commandHandlers.containsKey(command)) { CommandHandler
+	 * cmdHandler = ConsistentHash.commandHandlers .get(command);
+	 * cmdHandler.executCommand(selector, handle, key, value); } else {
+	 * Dispatcher.response(handle, MessageUtilities
+	 * .formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND .getCode())); } }
+	 */
+
 	public void process(final SelectionKey handle,
 			final SocketChannel socketChannel, final int command,
 			final byte[] key, final byte[] value) {
 		System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
 
-		if (ConsistentHash.commandHandlers.containsKey(command)) {
-			CommandHandler cmdHandler = ConsistentHash.commandHandlers
-					.get(command);
-			cmdHandler.executCommand(selector, handle, key, value);
+		if (command == CommandEnum.PUT.getCode())
+			cHash.put(selector, handle, key, value);
+		else if (command == CommandEnum.GET.getCode())
+			cHash.get(selector, handle, key, value);
+		else if (command == CommandEnum.DELETE.getCode())
+			cHash.remove(selector, handle, key, value);
+		else if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
+
+			Dispatcher.stopAccept();
+			Dispatcher.response(handle, MessageUtilities
+					.formateReplyMessage(ErrorEnum.SUCCESS.getCode()));
+
+			System.exit(0);
 		} else {
 			Dispatcher.response(handle, MessageUtilities
 					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND
 							.getCode()));
 		}
 	}
-
-	/*
-	 * public void process(final SelectionKey handle, final SocketChannel
-	 * socketChannel, final int command, final byte[] key, final byte[] value) {
-	 * System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
-	 * 
-	 * if (command == CommandEnum.PUT.getCode()) cHash.put(selector, handle,
-	 * key, value); else if (command == CommandEnum.GET.getCode())
-	 * cHash.get(selector, handle, key, value); else if (command ==
-	 * CommandEnum.DELETE.getCode()) cHash.remove(selector, handle, key, value);
-	 * else if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
-	 * 
-	 * Dispatcher.stopAccept(); Dispatcher.response(handle, MessageUtilities
-	 * .formateReplyMessage(ErrorEnum.SUCCESS.getCode()));
-	 * 
-	 * System.exit(0); } else { Dispatcher.response(handle, MessageUtilities
-	 * .formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND .getCode())); } }
-	 */
 
 	class Processor implements Runnable {
 		private int command;
