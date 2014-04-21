@@ -7,6 +7,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 
 import Exception.SystemOverloadException;
+import Interface.CommandHandler;
 import KVStore.ConsistentHash;
 import NIO.EventHandler;
 import Utilities.CommandEnum;
@@ -86,18 +87,30 @@ public class ReplicaServerReadHandler implements EventHandler {
 			final byte[] key, final byte[] value) {
 		System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
 
-		if (command == CommandEnum.PUT_REPLICA.getCode())
-			cHash.putReplica(selector, handle, key, value);
-		else if (command == CommandEnum.GET_REPLICA.getCode())
-			cHash.getReplica(selector, handle, key, value);
-		else if (command == CommandEnum.DELETE_REPLICA.getCode())
-			cHash.removeReplica(selector, handle, key, value);
-		else {
+		if (ConsistentHash.commandHandlers.containsKey(command)) {
+			CommandHandler cmdHandler = ConsistentHash.commandHandlers
+					.get(command);
+			cmdHandler.executCommand(cHash, selector, handle, key, value);
+		} else {
 			ReplicaServerDispatcher.response(handle, MessageUtilities
 					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND
 							.getCode()));
 		}
 	}
+
+	/*
+	 * public void process(final SelectionKey handle, final SocketChannel
+	 * socketChannel, final int command, final byte[] key, final byte[] value) {
+	 * System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
+	 * 
+	 * if (command == CommandEnum.PUT_REPLICA.getCode())
+	 * cHash.putReplica(selector, handle, key, value); else if (command ==
+	 * CommandEnum.GET_REPLICA.getCode()) cHash.getReplica(selector, handle,
+	 * key, value); else if (command == CommandEnum.DELETE_REPLICA.getCode())
+	 * cHash.removeReplica(selector, handle, key, value); else {
+	 * ReplicaServerDispatcher.response(handle, MessageUtilities
+	 * .formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND .getCode())); } }
+	 */
 
 	class Processor implements Runnable {
 		private int command;

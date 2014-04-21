@@ -10,8 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import CommandHandler.DeleteReplicaCommandHandler;
 import CommandHandler.GetCommandHandler;
+import CommandHandler.GetReplicaCommandHandler;
 import CommandHandler.PutCommandHandler;
+import CommandHandler.PutReplicaCommandHandler;
 import CommandHandler.RemoveCommandHandler;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
@@ -47,12 +50,22 @@ public class ConsistentHash {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		this.initiateCommandHandlers();
+	}
+
+	public void initiateCommandHandlers() {
 		commandHandlers.put(CommandEnum.PUT.getCode(), new PutCommandHandler());
 		commandHandlers.put(CommandEnum.GET.getCode(), new GetCommandHandler());
 		commandHandlers.put(CommandEnum.DELETE.getCode(),
 				new RemoveCommandHandler());
 		commandHandlers.put(CommandEnum.ANNOUNCE_FAILURE.getCode(),
 				new RemoveCommandHandler());
+		commandHandlers.put(CommandEnum.PUT_REPLICA.getCode(),
+				new PutReplicaCommandHandler());
+		commandHandlers.put(CommandEnum.GET_REPLICA.getCode(),
+				new GetReplicaCommandHandler());
+		commandHandlers.put(CommandEnum.DELETE_REPLICA.getCode(),
+				new DeleteReplicaCommandHandler());
 	}
 
 	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
