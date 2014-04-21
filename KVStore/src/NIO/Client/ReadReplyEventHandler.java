@@ -12,25 +12,26 @@ import Utilities.Message.RemoteMessage;
 public class ReadReplyEventHandler implements EventHandler {
 	private int errorCode;
 	private byte[] value;
+	private ByteBuffer errorCodeBuffer = ByteBuffer.allocate(1);
+	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
 
 	@Override
-	public void handleEvent(SelectionKey handle) throws Exception {
+	public synchronized void handleEvent(SelectionKey handle) throws Exception {
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		RemoteMessage message = (RemoteMessage) handle.attachment();
 		int c = message.getMessage().array()[0];
 
-		ByteBuffer buffer = ByteBuffer.allocate(1);
-		socketChannel.read(buffer);
-		buffer.flip();
-		this.errorCode = buffer.array()[0];
+		socketChannel.read(errorCodeBuffer);
+		errorCodeBuffer.flip();
+		this.errorCode = errorCodeBuffer.array()[0];
 
 		if (MessageUtilities.isGetCommand(c)) {
-			buffer = ByteBuffer.allocate(1024);
-			socketChannel.read(buffer);
-			buffer.flip();
-			this.value = buffer.array();
+			socketChannel.read(valueBuffer);
+			valueBuffer.flip();
+			this.value = valueBuffer.array();
 		}
-		buffer.clear();
+		valueBuffer.clear();
+		errorCodeBuffer.clear();
 
 		SelectionKey serverHandle = message.getServerHandle();
 		if (serverHandle != null) {

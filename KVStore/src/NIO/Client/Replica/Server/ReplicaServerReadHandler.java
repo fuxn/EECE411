@@ -1,4 +1,4 @@
-package NIO;
+package NIO.Client.Replica.Server;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -8,12 +8,13 @@ import java.util.Arrays;
 
 import Exception.SystemOverloadException;
 import KVStore.ConsistentHash;
+import NIO.EventHandler;
 import Utilities.CommandEnum;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 import Utilities.Thread.ThreadPool;
 
-public class ReadEventHandler implements EventHandler {
+public class ReplicaServerReadHandler implements EventHandler {
 
 	private Selector selector;
 	private SocketChannel socketChannel;
@@ -28,7 +29,7 @@ public class ReadEventHandler implements EventHandler {
 
 	private ConsistentHash cHash;
 
-	public ReadEventHandler(Selector demultiplexer, ConsistentHash cHash) {
+	public ReplicaServerReadHandler(Selector demultiplexer, ConsistentHash cHash) {
 		this.selector = demultiplexer;
 		this.cHash = cHash;
 		threadPool = new ThreadPool(maxThreads, maxTasks);
@@ -57,7 +58,7 @@ public class ReadEventHandler implements EventHandler {
 			value = valueBuffer.array();
 		}
 
-		System.out.println("Server reading " + c);
+		System.out.println("Replica Server reading " + c);
 
 		// threadPool.execute(new Processor(handle, c, key, value));
 
@@ -85,21 +86,14 @@ public class ReadEventHandler implements EventHandler {
 			final byte[] key, final byte[] value) {
 		System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
 
-		if (command == CommandEnum.PUT.getCode())
-			cHash.put(selector, handle, key, value);
-		else if (command == CommandEnum.GET.getCode())
-			cHash.get(selector, handle, key, value);
-		else if (command == CommandEnum.DELETE.getCode())
-			cHash.remove(selector, handle, key, value);
-		else if (command == CommandEnum.ANNOUNCE_FAILURE.getCode()) {
-
-			Dispatcher.stopAccept();
-			Dispatcher.response(handle, MessageUtilities
-					.formateReplyMessage(ErrorEnum.SUCCESS.getCode()));
-
-			System.exit(0);
-		} else {
-			Dispatcher.response(handle, MessageUtilities
+		if (command == CommandEnum.PUT_REPLICA.getCode())
+			cHash.putReplica(selector, handle, key, value);
+		else if (command == CommandEnum.GET_REPLICA.getCode())
+			cHash.getReplica(selector, handle, key, value);
+		else if (command == CommandEnum.DELETE_REPLICA.getCode())
+			cHash.removeReplica(selector, handle, key, value);
+		else {
+			ReplicaServerDispatcher.response(handle, MessageUtilities
 					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND
 							.getCode()));
 		}

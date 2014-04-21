@@ -26,6 +26,10 @@ import NIO.Client.Replica.ConnectReplicaHandler;
 import NIO.Client.Replica.ReadACKEventHandler;
 import NIO.Client.Replica.ReplicaDispatcher;
 import NIO.Client.Replica.WriteReplicaHandler;
+import NIO.Client.Replica.Server.AcceptReplicaHandler;
+import NIO.Client.Replica.Server.ReplicaServerDispatcher;
+import NIO.Client.Replica.Server.ReplicaServerReadHandler;
+import NIO.Client.Replica.Server.ReplicaServerWriteHandler;
 import Utilities.ChordTopologyService;
 import Utilities.Message.MessageUtilities;
 
@@ -33,6 +37,7 @@ public class KVStore {
 
 	public static final int NIO_SERVER_PORT = 4560;
 	public static final int NIO_GOSSIP_PORT = 4590;
+	public static final int NIO_REPLICA_PORT = 5010;
 	public static final int PARTICIPATING_NODES = 10;
 
 	private static int STATUS = 0;
@@ -41,6 +46,7 @@ public class KVStore {
 	private static Thread serverThread;
 	private static Thread clientThread;
 	private static Thread replicaThread;
+	private static Thread replicaServerThread;
 
 	private static ConsistentHash cHash;
 
@@ -66,6 +72,31 @@ public class KVStore {
 
 		serverThread = new Thread(dispatcher);
 		serverThread.start(); // Run the dispatcher loop
+
+	}
+	
+	public void initiateReplicaReactiveServer(ConsistentHash cHash) throws Exception {
+		System.out.println("Starting NIO server at port : " + NIO_REPLICA_PORT);
+
+		ServerSocketChannel server = ServerSocketChannel.open();
+		server.socket().bind(
+				new InetSocketAddress(KVStore.localHost, NIO_REPLICA_PORT));
+		server.configureBlocking(false);
+
+		ReplicaServerDispatcher dispatcher = new ReplicaServerDispatcher();
+		dispatcher.registerChannel(SelectionKey.OP_ACCEPT, server);
+
+		dispatcher.registerEventHandler(SelectionKey.OP_ACCEPT,
+				new AcceptReplicaHandler(ReplicaServerDispatcher.getDemultiplexer()));
+
+		dispatcher.registerEventHandler(SelectionKey.OP_READ,
+				new ReplicaServerReadHandler(ReplicaServerDispatcher.getDemultiplexer(), cHash));
+
+		dispatcher.registerEventHandler(SelectionKey.OP_WRITE,
+				new ReplicaServerWriteHandler());
+
+		replicaServerThread = new Thread(dispatcher);
+		replicaServerThread.start(); // Run the dispatcher loop
 
 	}
 
@@ -156,6 +187,7 @@ public class KVStore {
 			kvStore.initiateReactiveServer(cHash);
 			kvStore.initiateReactiveClient();
 			kvStore.initiateReactiveReplica();
+			kvStore.initiateReplicaReactiveServer(cHash);
 			// kvStore.initiateGossipServer(localHostName);
 
 			(new Thread() {

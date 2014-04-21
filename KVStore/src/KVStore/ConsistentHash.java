@@ -16,6 +16,7 @@ import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import NIO.Dispatcher;
+import NIO.Client.Replica.ReplicaDispatcher;
 import Utilities.ChordTopologyService;
 import Utilities.CommandEnum;
 import Utilities.ConnectionService;
@@ -137,7 +138,7 @@ public class ConsistentHash {
 		System.out.println("***************PUT******************");
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
-		
+
 		try {
 			List<String> coord = ChordTopologyService
 					.getCoordinatorAndReplicas(keyHash);
@@ -145,7 +146,7 @@ public class ConsistentHash {
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
 
 			if (coord.contains(KVStore.localHost)) {
-				
+
 				reply = this.local.put(keyHash, value);
 				coord.remove(KVStore.localHost);
 				putToReplica(coord, handle, message, keyHash);
@@ -213,32 +214,73 @@ public class ConsistentHash {
 		Integer keyHash = Arrays.hashCode(key);
 		System.out.println("***************GET******************");
 		byte[] replyMessage = null;
+		List<String> coords;
 		try {
-			List<String> coords = ChordTopologyService
-					.getCoordinatorAndReplicas(keyHash);
+			coords = ChordTopologyService.getCoordinatorAndReplicas(keyHash);
 
-			if (coords.contains(KVStore.localHost)) {
-				System.out.println("get local ");
-				replyMessage = this.local.get(keyHash);
-			} else {
+			try {
 
-				System.out.println("get remote " + handle.isValid());
-				ConnectionService.connectToNIORemote(
-						coords.get(0),
-						handle,
-						MessageUtilities.requestMessage(
-								CommandEnum.GET.getCode(), key, value));
+				if (coords.contains(KVStore.localHost)) {
+					System.out.println("get local ");
+					replyMessage = this.local.get(keyHash);
+				} else {
+
+					System.out.println("get remote " + handle.isValid());
+					ConnectionService.connectToNIORemote(
+							coords.get(0),
+							handle,
+							MessageUtilities.requestMessage(
+									CommandEnum.GET.getCode(), key, value));
+					return;
+
+				}
+			} catch (InexistentKeyException e) {
+				e.printStackTrace();
+				ByteBuffer message = MessageUtilities.requestMessage(
+						CommandEnum.GET_REPLICA.getCode(), key, value);
+				coords.remove(KVStore.localHost);
+				try {
+					getFromReplica(coords, handle, message, keyHash);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				return;
-
+			} catch (InternalKVStoreFailureException e) {
+				e.printStackTrace();
+				replyMessage = MessageUtilities
+						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
+								.getCode());
+			} catch (Exception e) {
+				e.printStackTrace();
+				replyMessage = MessageUtilities
+						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
+								.getCode());
 			}
+		} catch (InexistentKeyException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (InternalKVStoreFailureException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		Dispatcher.response(handle, replyMessage);
+
+	}
+
+	public void getReplica(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
+		System.out.println("***************GET REPLICA******************");
+
+		Integer keyHash = Arrays.hashCode(key);
+		byte[] replyMessage = null;
+		try {
+			replyMessage = this.local.getReplica(keyHash);
+
 		} catch (InexistentKeyException e) {
 			e.printStackTrace();
 			replyMessage = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
-		} catch (InternalKVStoreFailureException e) {
-			e.printStackTrace();
-			replyMessage = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		} catch (Exception e) {
 			e.printStackTrace();
 			replyMessage = MessageUtilities
@@ -314,6 +356,14 @@ public class ConsistentHash {
 
 	public static void putToReplica(List<String> nodes, SelectionKey handle,
 			ByteBuffer message, Integer key) throws Exception {
+		for (String n : nodes) {
+			ConnectionService.connectToReplica(n, handle, message, key);
+		}
+	}
+
+	public static void getFromReplica(List<String> nodes, SelectionKey handle,
+			ByteBuffer message, Integer key) throws Exception {
+		ReplicaDispatcher.pendingGet.put(handle, null);
 		for (String n : nodes) {
 			ConnectionService.connectToReplica(n, handle, message, key);
 		}

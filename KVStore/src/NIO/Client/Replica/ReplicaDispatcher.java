@@ -18,9 +18,7 @@ import Utilities.Message.RemoteMessage;
 
 public class ReplicaDispatcher implements Runnable {
 	private Map<Integer, EventHandler> registeredHandlers = new ConcurrentHashMap<Integer, EventHandler>();
-	private static Map<SelectionKey, SelectionKey> handleQueue = new HashMap<SelectionKey, SelectionKey>();
-	private static Map<SelectionKey, Integer> keyQueue = new HashMap<SelectionKey, Integer>();
-	public static List<SelectionKey> pendingHandle = new ArrayList<SelectionKey>();
+	public static Map<SelectionKey, byte[]> pendingGet = new HashMap<SelectionKey, byte[]>();
 	
 	private static Selector demultiplexer;
 	private static boolean stop = false;
@@ -54,29 +52,10 @@ public class ReplicaDispatcher implements Runnable {
 		}
 	}
 
-	public static void enQueueHandle(SelectionKey client, SelectionKey server,Integer key) {
-		handleQueue.put(client, server);
-		keyQueue.put(client, key);
-	}
-
-	public static SelectionKey deQueueHandle(SelectionKey client) {
-		SelectionKey server = handleQueue.get(client);
-		handleQueue.remove(server);
-		return server;
-	}
-
 	public static Selector getDemultiplexer() {
 		return demultiplexer;
 	}
 	
-	public static Map<SelectionKey, Integer> getKeyQueue(){
-		return keyQueue;
-	}
-	
-	public static Map<SelectionKey, SelectionKey> getHandleQueue(){
-		return handleQueue;
-	}
-
 	public void run() {
 		try {
 			while (!stop) { // Loop indefinitely
@@ -123,6 +102,14 @@ public class ReplicaDispatcher implements Runnable {
 
 	public static void stop() {
 		stop = true;
+	}
+
+	public Map<SelectionKey, byte[]> getPendingGet() {
+		return pendingGet;
+	}
+
+	public void setPendingGet(Map<SelectionKey, byte[]> pendingGet) {
+		this.pendingGet = pendingGet;
 	}
 
 }

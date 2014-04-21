@@ -14,7 +14,7 @@ import Exception.OutOfSpaceException;
 public class PlanetLabNode {
 
 	private ConcurrentHashMap<Integer, byte[]> values = new ConcurrentHashMap<Integer, byte[]>();
-	private HashMap<Integer, Integer> version = new HashMap<Integer, Integer>();
+	private ConcurrentHashMap<Integer, Integer> version = new ConcurrentHashMap<Integer, Integer>();
 
 	public byte[] put(Integer key, byte[] value) throws InexistentKeyException,
 			OutOfSpaceException {
@@ -23,11 +23,10 @@ public class PlanetLabNode {
 
 		try {
 			this.values.put(key, value);
-			if (this.version.containsKey(key)) {
-				Integer v = this.version.get(key);
-				this.version.put(key, v++);
-			} else
+			if (!this.version.contains(key))
 				this.version.put(key, 0);
+			else
+				this.version.put(key, this.version.get(key) + 1);
 
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
@@ -37,18 +36,17 @@ public class PlanetLabNode {
 				ErrorEnum.SUCCESS.getCode(), null, null);
 	}
 
-	public boolean put_Local(Integer key, byte[] value) throws InexistentKeyException,
-			OutOfSpaceException {
+	public boolean put_Local(Integer key, byte[] value)
+			throws InexistentKeyException, OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
 
 		try {
 			this.values.put(key, value);
-			if (this.version.containsKey(key)) {
-				Integer v = this.version.get(key);
-				this.version.put(key, v++);
-			} else
+			if (!this.version.contains(key))
 				this.version.put(key, 0);
+			else
+				this.version.put(key, this.version.get(key) + 1);
 
 		} catch (OutOfMemoryError e) {
 			throw new OutOfSpaceException();
@@ -61,11 +59,23 @@ public class PlanetLabNode {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
+		System.out.println("get: "+ key);
+		
+		return MessageUtilities.formateReplyMessage(
+				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
+	}
+
+	public byte[] getReplica(Integer key) throws InexistentKeyException {
+		if (this.isInexistentKey(key))
+			throw new InexistentKeyException();
+		
+		System.out.println("get replica: "+ key);
+
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key),
 				this.version.get(key));
 	}
-	
+
 	public byte[] remove(Integer key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();

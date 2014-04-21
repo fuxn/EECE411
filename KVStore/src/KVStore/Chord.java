@@ -22,19 +22,19 @@ public class Chord {
 
 	public Chord() {
 		
-		participantingNodes.add("planetlab2.cs.ubc.ca");
-		participantingNodes.add("planetlab1.cs.ubc.ca");
-		participantingNodes.add("planetlab-4.imperial.ac.uk");
-		participantingNodes.add("planetlab-4.eecs.cwru.edu");
-		participantingNodes.add("planetlab-2.cs.auckland.ac.nz");
+		participantingNodes.add("ricepl-1.cs.rice.edu");
+		participantingNodes.add("planetlab-01.vt.nodes.planet-lab.org");
+		participantingNodes.add("planetlab1.csee.usf.edu");
+		participantingNodes.add("planetlab3.csee.usf.edu");
+		participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
 		
-		participantingNodes.add("ricepl-5.cs.rice.edu");
-		participantingNodes.add("planetlab-2.usask.ca");
-		participantingNodes.add("planetlab-2.cmcl.cs.cmu.edu");
-		participantingNodes.add("planetlab1.eecs.umich.edu");
-		participantingNodes.add("planetlab1.pop-pa.rnp.br");
+		//participantingNodes.add("planetlab2.poly.edu");
+		//participantingNodes.add("salt.planetlab.cs.umd.edu");
+		//participantingNodes.add("miranda.planetlab.cs.umd.edu");
+		//participantingNodes.add("planetlab4.csee.usf.edu");
+		//participantingNodes.add("planetlab2.sfc.wide.ad.jp");
 		
-		participantingNodes.add("planet-lab4.uba.ar");
+		/*participantingNodes.add("planet-lab4.uba.ar");
 		participantingNodes.add("planetlab2.thlab.net");
 		participantingNodes.add("planetlab1.cs.uml.edu");
 		participantingNodes.add("plab-1.diegm.uniud.it");
@@ -80,7 +80,7 @@ public class Chord {
 		participantingNodes.add("planetlab2.cs.uit.no");
 		participantingNodes.add("planetlab-12.e5.ijs.si");
 		participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
-		participantingNodes.add("ple2.dmcs.p.lodz.pl");
+		participantingNodes.add("ple2.dmcs.p.lodz.pl");*/
 
 		for (String node : participantingNodes) {
 			chord.put(node.hashCode(), node);

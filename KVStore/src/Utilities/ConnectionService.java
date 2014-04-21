@@ -21,11 +21,11 @@ public class ConnectionService {
 		try {
 			client = SocketChannel.open();
 
-			System.out.println("connect to nio remote "+ handle.isValid());
+			System.out.println("connect to nio remote " + handle.isValid());
 			client.configureBlocking(false);
 			client.connect(new InetSocketAddress(host, KVStore.NIO_SERVER_PORT));
 			ClientDispatcher.registerChannel(SelectionKey.OP_CONNECT, client,
-					handle, message,host);
+					handle, message, host);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -38,9 +38,9 @@ public class ConnectionService {
 		SocketChannel client = SocketChannel.open();
 
 		client.configureBlocking(false);
-		client.connect(new InetSocketAddress(host, KVStore.NIO_SERVER_PORT));
+		client.connect(new InetSocketAddress(host, KVStore.NIO_REPLICA_PORT));
 		ReplicaDispatcher.registerChannel(SelectionKey.OP_CONNECT, client, key,
-				message, handle,host);
+				message, handle, host);
 
 	}
 

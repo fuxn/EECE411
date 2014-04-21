@@ -21,6 +21,9 @@ public class ReadACKEventHandler implements EventHandler {
 
 	private ByteBuffer errorBuffer = ByteBuffer.allocate(1);
 	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
+	private ByteBuffer versionBuffer = ByteBuffer.allocate(1);
+
+	private Map<byte[], Integer> valueToVersion = new HashMap<byte[], Integer>();
 
 	@Override
 	public void handleEvent(SelectionKey handle) throws Exception {
@@ -38,12 +41,35 @@ public class ReadACKEventHandler implements EventHandler {
 			this.valueBuffer.flip();
 			this.value = this.valueBuffer.array();
 
-			socketChannel.read(this.errorBuffer);
-			this.errorBuffer.flip();
-			this.version = this.errorBuffer.array()[0];
+			socketChannel.read(this.versionBuffer);
+			this.versionBuffer.flip();
+			this.version = this.versionBuffer.array()[0];
 
-			Dispatcher.response(message.getServerHandle(),
-					MessageUtilities.formateReplyMessage(this.errorCode, this.value));
+			if (this.errorCode == ErrorEnum.SUCCESS.getCode()) {
+				SelectionKey serverhandle = message.getServerHandle();
+				if (ReplicaDispatcher.pendingGet.containsKey(serverhandle)) {
+					Dispatcher.response(serverhandle, MessageUtilities
+							.formateReplyMessage(this.errorCode, this.value));
+					ReplicaDispatcher.pendingGet.remove(serverhandle);
+				}
+
+				/*
+				 * if (ReplicaDispatcher.pendingGet.containsKey(serverhandle))
+				 * if (ReplicaDispatcher.pendingGet.get(serverhandle) == null) {
+				 * ReplicaDispatcher.pendingGet.put(serverhandle, value);
+				 * this.valueToVersion.put(value, version); } else { byte[] v =
+				 * ReplicaDispatcher.pendingGet .get(serverhandle); Integer
+				 * versionOld = this.valueToVersion.get(v); if (this.version >
+				 * versionOld) Dispatcher.response(serverhandle,
+				 * MessageUtilities .formateReplyMessage(this.errorCode,
+				 * this.value)); else Dispatcher.response(serverhandle,
+				 * MessageUtilities .formateReplyMessage(this.errorCode, v));
+				 * 
+				 * ReplicaDispatcher.pendingGet.remove(serverhandle);
+				 * this.valueToVersion.remove(v); }
+				 */
+
+			}
 		}
 		this.valueBuffer.clear();
 		this.errorBuffer.clear();

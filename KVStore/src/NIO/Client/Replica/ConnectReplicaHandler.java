@@ -23,8 +23,7 @@ public class ConnectReplicaHandler implements EventHandler {
 				&& (System.currentTimeMillis() < endTimeMillis)) {
 			System.out.println("pending connection");
 		}
-		ReplicaDispatcher.enQueueHandle(handle, message.getServerHandle(),
-				message.getKey());
+		
 		channel.configureBlocking(false);
 		channel.register(this.selector, SelectionKey.OP_WRITE, message);
 	}
