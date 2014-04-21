@@ -89,7 +89,7 @@ public class ReadEventHandler implements EventHandler {
 		if (ConsistentHash.commandHandlers.containsKey(command)) {
 			CommandHandler cmdHandler = ConsistentHash.commandHandlers
 					.get(command);
-			cmdHandler.executCommand(cHash, selector, handle, key, value);
+			cmdHandler.executCommand(selector, handle, key, value);
 		} else {
 			Dispatcher.response(handle, MessageUtilities
 					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND

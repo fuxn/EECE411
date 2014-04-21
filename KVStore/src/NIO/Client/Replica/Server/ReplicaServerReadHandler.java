@@ -90,7 +90,7 @@ public class ReplicaServerReadHandler implements EventHandler {
 		if (ConsistentHash.commandHandlers.containsKey(command)) {
 			CommandHandler cmdHandler = ConsistentHash.commandHandlers
 					.get(command);
-			cmdHandler.executCommand(cHash, selector, handle, key, value);
+			cmdHandler.executCommand(selector, handle, key, value);
 		} else {
 			ReplicaServerDispatcher.response(handle, MessageUtilities
 					.formateReplyMessage(ErrorEnum.UNRECOGNIZED_COMMAND

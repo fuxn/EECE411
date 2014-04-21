@@ -32,7 +32,7 @@ import Utilities.Message.MessageUtilities;
 
 public class ConsistentHash {
 
-	private PlanetLabNode local;
+	public static PlanetLabNode local;
 
 	public static int localHostHashCode;
 
@@ -46,7 +46,7 @@ public class ConsistentHash {
 
 		try {
 			localHostHashCode = KVStore.localHost.hashCode();
-			this.local = new PlanetLabNode();
+			local = new PlanetLabNode();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
