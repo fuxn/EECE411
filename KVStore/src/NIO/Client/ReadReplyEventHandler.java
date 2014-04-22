@@ -26,7 +26,11 @@ public class ReadReplyEventHandler implements EventHandler {
 		this.errorCode = errorCodeBuffer.array()[0];
 
 		if (MessageUtilities.isGetCommand(c)) {
-			socketChannel.read(valueBuffer);
+			int totalByte = 0;
+			while (totalByte < 1024) {
+				totalByte += socketChannel.read(valueBuffer);
+			}
+
 			valueBuffer.flip();
 			this.value = valueBuffer.array();
 		}

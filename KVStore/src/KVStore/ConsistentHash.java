@@ -142,20 +142,16 @@ public class ConsistentHash {
 		try {
 			String coord = ChordTopologyService.getCoordinator(keyHash);
 
-			if (coord.trim().equals(KVStore.localHost.trim())) {
+			if (coord.equals(KVStore.localHost)) {
 				reply = this.local.put(keyHash, value);
 				byte[] message = MessageUtilities.formateRequestMessage(
 						CommandEnum.PUT_REPLICA.getCode(), key, value);
 				putToReplica(coord, handle, message, keyHash);
-
 			} else {
-				long s = System.currentTimeMillis();
 				ConnectionService.connectToSocketRemote(coord, handle,
 						MessageUtilities.formateRequestMessage(
 								CommandEnum.PUT_COORD.getCode(), key, value),
 						false);
-				long e = System.currentTimeMillis();
-				System.out.print("YF NIO put CONNECT: " + (e - s) + "ms");
 				return;
 			}
 
@@ -176,11 +172,7 @@ public class ConsistentHash {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
-		long s = System.currentTimeMillis();
 		Dispatcher.response(handle, reply);
-		long e = System.currentTimeMillis();
-		System.out.println("YF NIO put response: " + (e - s) + " ms");
-
 	}
 
 	public void putCoord(Selector selector, SelectionKey handle, byte[] key,
@@ -207,11 +199,7 @@ public class ConsistentHash {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
-		long s = System.currentTimeMillis();
 		Dispatcher.response(handle, reply);
-		long e = System.currentTimeMillis();
-		System.out.println("YF NIO put coord response: " + (e - s) + " ms");
-
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -243,10 +231,10 @@ public class ConsistentHash {
 
 			try {
 
-				if (coords.trim().equals(KVStore.localHost.trim())) {
+				if (coords.equals(KVStore.localHost)) {
 					System.out.println("get local ");
 					replyMessage = this.local.get(keyHash);
-					System.out.println("get Reply "+replyMessage);
+					System.out.println("get Reply size" + replyMessage.length);
 				} else {
 
 					System.out.println("get remote " + handle.isValid());
@@ -379,8 +367,8 @@ public class ConsistentHash {
 		private byte[] message;
 		private Integer key;
 
-		public putToReplica(String coord, SelectionKey handle,
-				byte[] message, Integer key) {
+		public putToReplica(String coord, SelectionKey handle, byte[] message,
+				Integer key) {
 			this.coord = coord;
 			this.handle = handle;
 			this.message = message;
@@ -393,7 +381,8 @@ public class ConsistentHash {
 			try {
 				List<String> nodes = ChordTopologyService.getSuccessors(coord);
 				for (String n : nodes) {
-					ConnectionService.connectToSocketReplica(n, handle, message, false);
+					ConnectionService.connectToSocketReplica(n, handle,
+							message, false);
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -419,8 +408,7 @@ public class ConsistentHash {
 	}
 
 	public static void removeFromReplica(List<String> nodes,
-			SelectionKey handle, byte[] message, Integer key)
-			throws Exception {
+			SelectionKey handle, byte[] message, Integer key) throws Exception {
 		for (String n : nodes) {
 			ConnectionService.connectToSocketReplica(n, handle, message, false);
 		}

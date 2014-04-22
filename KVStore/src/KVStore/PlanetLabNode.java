@@ -16,8 +16,7 @@ public class PlanetLabNode {
 	private ConcurrentHashMap<Integer, byte[]> values = new ConcurrentHashMap<Integer, byte[]>();
 	private ConcurrentHashMap<Integer, Integer> version = new ConcurrentHashMap<Integer, Integer>();
 
-	public byte[] put(Integer key, byte[] value) throws
-			OutOfSpaceException {
+	public byte[] put(Integer key, byte[] value) throws OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
 
@@ -32,8 +31,8 @@ public class PlanetLabNode {
 			throw new OutOfSpaceException();
 		}
 
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode());
+		return MessageUtilities
+				.formateReplyMessage(ErrorEnum.SUCCESS.getCode());
 	}
 
 	public boolean put_Local(Integer key, byte[] value)
@@ -56,30 +55,30 @@ public class PlanetLabNode {
 	}
 
 	public byte[] get(Integer key) throws InexistentKeyException {
-		if (this.isInexistentKey(key))
+		try {
+			byte[] value = this.values.get(key);
+			return MessageUtilities.formateReplyMessage(
+					ErrorEnum.SUCCESS.getCode(), value);
+		} catch (NullPointerException e) {
 			throw new InexistentKeyException();
-
-		System.out.println("get: " + key);
-
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
+		}
 	}
 
 	public byte[] getReplica(Integer key) throws InexistentKeyException {
-		if (this.isInexistentKey(key))
+		try {
+			byte[] value = this.values.get(key);
+			Integer version = this.version.get(key);
+			return MessageUtilities.formateReplyMessage(
+					ErrorEnum.SUCCESS.getCode(), value, version);
+		} catch (NullPointerException e) {
 			throw new InexistentKeyException();
-
-		System.out.println("get replica: " + key);
-
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), this.values.get(key),
-				this.version.get(key));
+		}
 	}
 
 	public byte[] remove(Integer key) {
 		this.values.remove(key);
-		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode());
+		return MessageUtilities
+				.formateReplyMessage(ErrorEnum.SUCCESS.getCode());
 	}
 
 	public Map<Integer, byte[]> getKeys(int toKey) {

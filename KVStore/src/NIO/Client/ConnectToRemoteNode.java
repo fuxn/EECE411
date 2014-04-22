@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
@@ -37,10 +38,28 @@ public class ConnectToRemoteNode implements Runnable {
 			InputStream in = socket.getInputStream();
 
 			int errorCode = in.read();
+			System.out.println("connectToRemote command :"+message[0] + " error code :"+errorCode);
 
 			if (waitForReply) {
 				byte[] reply = new byte[1024];
-				in.read(reply);
+
+				try {
+					int bytesRcvd;
+					int totalBytesRcvd = 0;
+					while (totalBytesRcvd < reply.length) {
+						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+								reply.length - totalBytesRcvd)) == -1){
+							throw new SocketException(
+									"connection close prematurely.");
+						}
+
+						totalBytesRcvd += bytesRcvd;
+					}
+
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				Dispatcher.response(serverHandle,
 						MessageUtilities.formateReplyMessage(errorCode, reply));
 			} else
