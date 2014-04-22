@@ -36,21 +36,15 @@ public class ConnectionService {
 	}
 	
 	public static void connectToSocketRemote(String host, SelectionKey handle, byte[] message, boolean waitForReply){
-		try {
+		
 			KVStore.threadPool.execute(new ConnectToRemoteNode(host,message,handle,waitForReply));
-		} catch (SystemOverloadException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 	}
 	
 	public static void connectToSocketReplica(String host, SelectionKey handle, byte[] message, boolean waitForReply){
-		try {
+		
 			KVStore.threadPool.execute(new ConnectToReplica(host,message,handle,waitForReply));
-		} catch (SystemOverloadException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 	}
 
 	public static void connectToReplica(String host, SelectionKey handle,

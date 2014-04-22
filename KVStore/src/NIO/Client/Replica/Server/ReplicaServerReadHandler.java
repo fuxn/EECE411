@@ -32,7 +32,7 @@ public class ReplicaServerReadHandler implements EventHandler {
 		byte[] key = null;
 		byte[] value = null;
 		int c = 0;
-		
+
 		if (this.socketChannel.read(this.commandBuffer) != -1) {
 
 			this.commandBuffer.flip();
@@ -57,15 +57,9 @@ public class ReplicaServerReadHandler implements EventHandler {
 		}
 
 		System.out.println("Replica Server reading " + c);
-		try {
-			KVStore.KVStore.threadPool.execute(new Processor(handle, this.socketChannel, c,
-					key, value));
-		} catch (SystemOverloadException e) {
-			handle.attach(ByteBuffer.wrap(MessageUtilities
-					.formateReplyMessage(ErrorEnum.OUT_OF_SPACE.getCode())));
-			handle.interestOps(4);
-			this.selector.wakeup();
-		}
+
+		KVStore.KVStore.threadPool.execute(new Processor(handle,
+				this.socketChannel, c, key, value));
 
 		this.valueBuffer.clear();
 		this.keyBuffer.clear();
@@ -105,8 +99,8 @@ public class ReplicaServerReadHandler implements EventHandler {
 		}
 
 		public void run() {
-			process(this.handle,
-					this.socketChannel, this.command, this.key, this.value);
+			process(this.handle, this.socketChannel, this.command, this.key,
+					this.value);
 		}
 	}
 }

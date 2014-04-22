@@ -12,6 +12,8 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import Exception.InternalKVStoreFailureException;
 import NIO.AcceptEventHandler;
@@ -52,13 +54,13 @@ public class KVStore {
 	private static int maxThreads = 230;
 	private static int maxTasks = 40000;
 	
-	public static ThreadPool threadPool;
+	public static Executor threadPool;
 	
 
 	private static ConsistentHash cHash;
 	
 	public KVStore(){
-		threadPool = new ThreadPool(maxThreads, maxTasks);
+		threadPool = Executors.newFixedThreadPool(maxThreads);
 	}
 
 	public void initiateReactiveServer(ConsistentHash cHash) throws Exception {

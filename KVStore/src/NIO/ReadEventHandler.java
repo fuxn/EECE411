@@ -56,15 +56,10 @@ public class ReadEventHandler implements EventHandler {
 		}
 
 		System.out.println("Server reading " + c);
-		try {
+		
 			KVStore.KVStore.threadPool.execute(new Processor(handle, this.socketChannel, c,
 					key, value));
-		} catch (SystemOverloadException e) {
-			handle.attach(ByteBuffer.wrap(MessageUtilities
-					.formateReplyMessage(ErrorEnum.OUT_OF_SPACE.getCode())));
-			handle.interestOps(4);
-			this.selector.wakeup();
-		}
+		
 
 		this.valueBuffer.clear();
 		this.keyBuffer.clear();
