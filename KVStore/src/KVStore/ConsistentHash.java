@@ -144,17 +144,16 @@ public class ConsistentHash {
 
 			if (coord.trim().equals(KVStore.localHost.trim())) {
 				reply = this.local.put(keyHash, value);
-				ByteBuffer message = MessageUtilities.requestMessage(
+				byte[] message = MessageUtilities.formateRequestMessage(
 						CommandEnum.PUT_REPLICA.getCode(), key, value);
 				putToReplica(coord, handle, message, keyHash);
 
 			} else {
 				long s = System.currentTimeMillis();
-				ConnectionService.connectToNIORemote(
-						coord,
-						handle,
-						MessageUtilities.requestMessage(
-								CommandEnum.PUT_COORD.getCode(), key, value));
+				ConnectionService.connectToSocketRemote(coord, handle,
+						MessageUtilities.formateRequestMessage(
+								CommandEnum.PUT_COORD.getCode(), key, value),
+						false);
 				long e = System.currentTimeMillis();
 				System.out.print("YF NIO put CONNECT: " + (e - s) + "ms");
 				return;
@@ -176,12 +175,12 @@ public class ConsistentHash {
 
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		} 
-			long s = System.currentTimeMillis();
-			Dispatcher.response(handle, reply);
-			long e = System.currentTimeMillis();
-			System.out.println("YF NIO put response: " + (e - s) + " ms");
-		
+		}
+		long s = System.currentTimeMillis();
+		Dispatcher.response(handle, reply);
+		long e = System.currentTimeMillis();
+		System.out.println("YF NIO put response: " + (e - s) + " ms");
+
 	}
 
 	public void putCoord(Selector selector, SelectionKey handle, byte[] key,
@@ -191,7 +190,7 @@ public class ConsistentHash {
 		try {
 			reply = this.local.put(keyHash, value);
 
-			ByteBuffer message = MessageUtilities.requestMessage(
+			byte[] message = MessageUtilities.formateRequestMessage(
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
 
 			putToReplica(KVStore.localHost.trim(), handle, message, keyHash);
@@ -207,12 +206,12 @@ public class ConsistentHash {
 
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		} 
-			long s = System.currentTimeMillis();
-			Dispatcher.response(handle, reply);
-			long e = System.currentTimeMillis();
-			System.out.println("YF NIO put coord response: " + (e - s) + " ms");
-		
+		}
+		long s = System.currentTimeMillis();
+		Dispatcher.response(handle, reply);
+		long e = System.currentTimeMillis();
+		System.out.println("YF NIO put coord response: " + (e - s) + " ms");
+
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -228,9 +227,9 @@ public class ConsistentHash {
 		} catch (OutOfSpaceException e) {
 			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
 					.getCode());
-		} 
-			Dispatcher.response(handle, reply);
-		
+		}
+		Dispatcher.response(handle, reply);
+
 	}
 
 	public void get(Selector selector, SelectionKey handle, byte[] key,
@@ -247,46 +246,43 @@ public class ConsistentHash {
 				if (coords.trim().equals(KVStore.localHost.trim())) {
 					System.out.println("get local ");
 					replyMessage = this.local.get(keyHash);
-					System.out.println(replyMessage);
+					System.out.println("get Reply "+replyMessage);
 				} else {
 
 					System.out.println("get remote " + handle.isValid());
-					ConnectionService.connectToNIORemote(
-							coords.trim(),
-							handle,
-							MessageUtilities.requestMessage(
-									CommandEnum.GET.getCode(), key, value));
+					ConnectionService.connectToSocketRemote(coords.trim(),
+							handle, MessageUtilities.formateRequestMessage(
+									CommandEnum.GET.getCode(), key, value),
+							true);
 					return;
 
 				}
 			} catch (InexistentKeyException e) {
 				replyMessage = MessageUtilities
 						.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
-			} catch (InternalKVStoreFailureException e) {
-				replyMessage = MessageUtilities
-						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
-								.getCode());
 			} catch (Exception e) {
 				System.out
 						.println("************coord unreachable, get next succsessor********** "
 								+ handle.isValid());
 				try {
-					ConnectionService.connectToNIORemote(
-							ChordTopologyService.getSuccessor(coords),
-							handle,
-							MessageUtilities.requestMessage(
-									CommandEnum.GET.getCode(), key, value));
+					ConnectionService.connectToSocketRemote(coords.trim(),
+							handle, MessageUtilities.formateRequestMessage(
+									CommandEnum.GET.getCode(), key, value),
+							true);
+					return;
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
-				return;
 			}
 		} catch (InternalKVStoreFailureException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		} 
-			Dispatcher.response(handle, replyMessage);
-		
+		}
+
+		System.out.println("reply to get: " + replyMessage);
+
+		Dispatcher.response(handle, replyMessage);
+
 	}
 
 	public void getReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -308,8 +304,8 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 
-			Dispatcher.response(handle, replyMessage);
-		
+		Dispatcher.response(handle, replyMessage);
+
 	}
 
 	public void removeReplica(Selector selector, SelectionKey handle,
@@ -324,9 +320,9 @@ public class ConsistentHash {
 		} catch (Exception e) {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		} 
-			Dispatcher.response(handle, reply);
-		
+		}
+		Dispatcher.response(handle, reply);
+
 	}
 
 	public void remove(Selector selector, SelectionKey handle, byte[] key,
@@ -343,15 +339,14 @@ public class ConsistentHash {
 				replyMessage = this.local.remove(keyHash);
 				coords.remove(KVStore.localHost);
 				removeFromReplica(coords, handle,
-						MessageUtilities.requestMessage(
+						MessageUtilities.formateRequestMessage(
 								CommandEnum.DELETE_REPLICA.getCode(), key,
 								value), keyHash);
 			} else {
-				ConnectionService.connectToNIORemote(
-						coords.get(0),
-						handle,
-						MessageUtilities.requestMessage(
-								CommandEnum.DELETE.getCode(), key, value));
+				ConnectionService.connectToSocketRemote(coords.get(0), handle,
+						MessageUtilities.formateRequestMessage(
+								CommandEnum.DELETE.getCode(), key, value),
+						false);
 				return;
 			}
 
@@ -365,12 +360,12 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 
-			Dispatcher.response(handle, replyMessage);
-		
+		Dispatcher.response(handle, replyMessage);
+
 	}
 
 	public void putToReplica(final String coord, final SelectionKey handle,
-			final ByteBuffer message, final Integer key) throws Exception {
+			final byte[] message, final Integer key) throws Exception {
 
 		Thread t = new Thread(new putToReplica(coord, handle, message, key));
 		t.start();
@@ -381,11 +376,11 @@ public class ConsistentHash {
 
 		private String coord;
 		private SelectionKey handle;
-		private ByteBuffer message;
+		private byte[] message;
 		private Integer key;
 
 		public putToReplica(String coord, SelectionKey handle,
-				ByteBuffer message, Integer key) {
+				byte[] message, Integer key) {
 			this.coord = coord;
 			this.handle = handle;
 			this.message = message;
@@ -398,7 +393,7 @@ public class ConsistentHash {
 			try {
 				List<String> nodes = ChordTopologyService.getSuccessors(coord);
 				for (String n : nodes) {
-					ConnectionService.connectToReplica(n, handle, message, key);
+					ConnectionService.connectToSocketReplica(n, handle, message, false);
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -409,10 +404,10 @@ public class ConsistentHash {
 	}
 
 	public static void getFromReplica(List<String> nodes, SelectionKey handle,
-			ByteBuffer message, Integer key) throws Exception {
+			byte[] message, Integer key) throws Exception {
 		ReplicaDispatcher.pendingGet.put(handle, null);
 		for (String n : nodes) {
-			ConnectionService.connectToReplica(n, handle, message, key);
+			ConnectionService.connectToSocketReplica(n, handle, message, true);
 		}
 	}
 
@@ -424,10 +419,10 @@ public class ConsistentHash {
 	}
 
 	public static void removeFromReplica(List<String> nodes,
-			SelectionKey handle, ByteBuffer message, Integer key)
+			SelectionKey handle, byte[] message, Integer key)
 			throws Exception {
 		for (String n : nodes) {
-			ConnectionService.connectToReplica(n, handle, message, key);
+			ConnectionService.connectToSocketReplica(n, handle, message, false);
 		}
 	}
 

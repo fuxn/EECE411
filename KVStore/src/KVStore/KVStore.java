@@ -32,6 +32,7 @@ import NIO.Client.Replica.Server.ReplicaServerReadHandler;
 import NIO.Client.Replica.Server.ReplicaServerWriteHandler;
 import Utilities.ChordTopologyService;
 import Utilities.Message.MessageUtilities;
+import Utilities.Thread.ThreadPool;
 
 public class KVStore {
 
@@ -47,8 +48,18 @@ public class KVStore {
 	private static Thread clientThread;
 	private static Thread replicaThread;
 	private static Thread replicaServerThread;
+	
+	private static int maxThreads = 230;
+	private static int maxTasks = 40000;
+	
+	public static ThreadPool threadPool;
+	
 
 	private static ConsistentHash cHash;
+	
+	public KVStore(){
+		threadPool = new ThreadPool(maxThreads, maxTasks);
+	}
 
 	public void initiateReactiveServer(ConsistentHash cHash) throws Exception {
 		System.out.println("Starting NIO server at port : " + NIO_SERVER_PORT);

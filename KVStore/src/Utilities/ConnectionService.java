@@ -8,8 +8,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
+import Exception.SystemOverloadException;
 import KVStore.KVStore;
 import NIO.Client.ClientDispatcher;
+import NIO.Client.ConnectToRemoteNode;
+import NIO.Client.Replica.ConnectToReplica;
 import NIO.Client.Replica.ReplicaDispatcher;
 import Utilities.Message.MessageUtilities;
 
@@ -28,6 +31,24 @@ public class ConnectionService {
 					handle, message, host);
 
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void connectToSocketRemote(String host, SelectionKey handle, byte[] message, boolean waitForReply){
+		try {
+			KVStore.threadPool.execute(new ConnectToRemoteNode(host,message,handle,waitForReply));
+		} catch (SystemOverloadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void connectToSocketReplica(String host, SelectionKey handle, byte[] message, boolean waitForReply){
+		try {
+			KVStore.threadPool.execute(new ConnectToReplica(host,message,handle,waitForReply));
+		} catch (SystemOverloadException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

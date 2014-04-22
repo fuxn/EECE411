@@ -45,6 +45,9 @@ public class Dispatcher implements Runnable {
 	}
 
 	public static void response(SelectionKey handle, byte[] message) {
+		if (!handle.isValid())
+			return;
+		
 		handle.interestOps(SelectionKey.OP_WRITE);
 		handle.attach(ByteBuffer.wrap(message));
 

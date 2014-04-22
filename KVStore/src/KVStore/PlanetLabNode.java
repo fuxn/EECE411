@@ -33,7 +33,7 @@ public class PlanetLabNode {
 		}
 
 		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), null, null);
+				ErrorEnum.SUCCESS.getCode());
 	}
 
 	public boolean put_Local(Integer key, byte[] value)
@@ -79,7 +79,7 @@ public class PlanetLabNode {
 	public byte[] remove(Integer key) {
 		this.values.remove(key);
 		return MessageUtilities.formateReplyMessage(
-				ErrorEnum.SUCCESS.getCode(), null, null);
+				ErrorEnum.SUCCESS.getCode());
 	}
 
 	public Map<Integer, byte[]> getKeys(int toKey) {

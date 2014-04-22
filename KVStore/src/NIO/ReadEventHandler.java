@@ -15,9 +15,6 @@ import java.util.Arrays;
 public class ReadEventHandler implements EventHandler {
 	private Selector selector;
 	private SocketChannel socketChannel;
-	private static int maxThreads = 60;
-	private static int maxTasks = 40000;
-	private static ThreadPool threadPool;
 	private ByteBuffer commandBuffer = ByteBuffer.allocate(1);
 	private ByteBuffer keyBuffer = ByteBuffer.allocate(32);
 	private ByteBuffer valueBuffer = ByteBuffer.allocate(1024);
@@ -26,7 +23,6 @@ public class ReadEventHandler implements EventHandler {
 	public ReadEventHandler(Selector demultiplexer, ConsistentHash cHash) {
 		this.selector = demultiplexer;
 		this.cHash = cHash;
-		threadPool = new ThreadPool(maxThreads, maxTasks);
 	}
 
 	public synchronized void handleEvent(SelectionKey handle) throws Exception {
@@ -61,7 +57,7 @@ public class ReadEventHandler implements EventHandler {
 
 		System.out.println("Server reading " + c);
 		try {
-			threadPool.execute(new Processor(handle, this.socketChannel, c,
+			KVStore.KVStore.threadPool.execute(new Processor(handle, this.socketChannel, c,
 					key, value));
 		} catch (SystemOverloadException e) {
 			handle.attach(ByteBuffer.wrap(MessageUtilities
