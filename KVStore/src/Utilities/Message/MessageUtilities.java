@@ -164,11 +164,7 @@ public class MessageUtilities {
 	public static boolean isGetCommand(int command) {
 		return CommandEnum.commandsWithReplyValue.contains(command);
 	}
-
-	public static boolean isCheckReply(int command) {
-		return CommandEnum.commandsWithReply.contains(command);
-	}
-
+	
 	public static boolean isCheckRequestValue(int command) {
 		return CommandEnum.commandsWithRequestValue.contains(command);
 	}

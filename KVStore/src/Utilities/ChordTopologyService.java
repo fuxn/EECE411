@@ -11,14 +11,13 @@ import Exception.InternalKVStoreFailureException;
 
 public class ChordTopologyService {
 
-	private static Chord chord;
+	private static Chord chord = new Chord();
 
 	public ChordTopologyService() {
-		chord = new Chord();
 	}
 
-	public static String getCoordinator(Integer key)
-			throws InexistentKeyException, InternalKVStoreFailureException {
+	public static String getCoordinator(Integer key) throws InexistentKeyException,
+			InternalKVStoreFailureException {
 		if (chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
@@ -32,7 +31,7 @@ public class ChordTopologyService {
 		return chord.getChord().get(hash);
 	}
 
-	public static List<String> getCoordinatorAndReplicas(Integer key)
+	public List<String> getCoordinatorAndReplicas(Integer key)
 			throws InexistentKeyException, InternalKVStoreFailureException {
 		String coord = getCoordinator(key);
 		List<String> nodes = new ArrayList<String>();

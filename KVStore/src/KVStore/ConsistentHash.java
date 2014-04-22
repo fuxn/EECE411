@@ -10,18 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import CommandHandler.DeleteReplicaCommandHandler;
-import CommandHandler.GetCommandHandler;
-import CommandHandler.GetReplicaCommandHandler;
-import CommandHandler.PutCommandHandler;
-import CommandHandler.PutReplicaCommandHandler;
-import CommandHandler.RemoveCommandHandler;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 import Exception.InvalidKeyException;
 import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
-import Interface.CommandHandler;
 import NIO.Dispatcher;
 import NIO.Client.Replica.ReplicaDispatcher;
 import Utilities.ChordTopologyService;
@@ -32,15 +25,13 @@ import Utilities.Message.MessageUtilities;
 
 public class ConsistentHash {
 
-	public static PlanetLabNode local;
+	private PlanetLabNode local;
 
 	public static int localHostHashCode;
 
 	public static Map<Integer, byte[]> commandQueue = new HashMap<Integer, byte[]>();
 	public static Map<Integer, Integer> version = new HashMap<Integer, Integer>();
 	public static Map<Integer, Integer> numACK = new HashMap<Integer, Integer>();
-
-	public static Map<Integer, CommandHandler> commandHandlers = new HashMap<Integer, CommandHandler>();
 
 	public ConsistentHash() {
 
@@ -50,22 +41,6 @@ public class ConsistentHash {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		this.initiateCommandHandlers();
-	}
-
-	public void initiateCommandHandlers() {
-		commandHandlers.put(CommandEnum.PUT.getCode(), new PutCommandHandler());
-		commandHandlers.put(CommandEnum.GET.getCode(), new GetCommandHandler());
-		commandHandlers.put(CommandEnum.DELETE.getCode(),
-				new RemoveCommandHandler());
-		commandHandlers.put(CommandEnum.ANNOUNCE_FAILURE.getCode(),
-				new RemoveCommandHandler());
-		commandHandlers.put(CommandEnum.PUT_REPLICA.getCode(),
-				new PutReplicaCommandHandler());
-		commandHandlers.put(CommandEnum.GET_REPLICA.getCode(),
-				new GetReplicaCommandHandler());
-		commandHandlers.put(CommandEnum.DELETE_REPLICA.getCode(),
-				new DeleteReplicaCommandHandler());
 	}
 
 	public void handleAnnouncedFailure() throws InternalKVStoreFailureException {
@@ -161,26 +136,48 @@ public class ConsistentHash {
 	public void put(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
 		System.out.println("***************PUT******************");
+		long s = System.currentTimeMillis();
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
 
 		try {
-			List<String> coord = ChordTopologyService
-					.getCoordinatorAndReplicas(keyHash);
+			long e = System.currentTimeMillis();
+			System.out.print("YF1: " + (e - s) + "ms");
+			s = System.currentTimeMillis();
+
+			String coord = ChordTopologyService.getCoordinator(keyHash);
+
+			e = System.currentTimeMillis();
+			System.out.print("YF2: " + (e - s) + "ms");
+			s = System.currentTimeMillis();
+
 			ByteBuffer message = MessageUtilities.requestMessage(
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
 
-			if (coord.contains(KVStore.localHost)) {
+			e = System.currentTimeMillis();
+			System.out.print("YF3: " + (e - s) + "ms");
+			s = System.currentTimeMillis();
 
+			if (coord.trim().equals(KVStore.localHost.trim())) {
 				reply = this.local.put(keyHash, value);
-				coord.remove(KVStore.localHost);
+
+				e = System.currentTimeMillis();
+				System.out.print("YF4: " + (e - s) + "ms");
+				s = System.currentTimeMillis();
+
 				putToReplica(coord, handle, message, keyHash);
+
+				e = System.currentTimeMillis();
+				System.out.print("YF5: " + (e - s) + "ms");
 			} else {
+				s = System.currentTimeMillis();
 				ConnectionService.connectToNIORemote(
-						coord.get(0),
+						coord,
 						handle,
 						MessageUtilities.requestMessage(
-								CommandEnum.PUT.getCode(), key, value));
+								CommandEnum.PUT_COORD.getCode(), key, value));
+				e = System.currentTimeMillis();
+				System.out.print("YF NIO put CONNECT: " + (e - s) + "ms");
 				return;
 			}
 
@@ -205,9 +202,52 @@ public class ConsistentHash {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
-
+		s = System.currentTimeMillis();
 		Dispatcher.response(handle, reply);
+		long e = System.currentTimeMillis();
+		System.out.println("YF NIO put response: " + (e - s) + " ms");
 
+	}
+
+	public void putCoord(Selector selector, SelectionKey handle, byte[] key,
+			byte[] value) {
+		long s = System.currentTimeMillis();
+		Integer keyHash = Arrays.hashCode(key);
+		byte[] reply = null;
+		try {
+			reply = this.local.put(keyHash, value);
+
+			ByteBuffer message = MessageUtilities.requestMessage(
+					CommandEnum.PUT_REPLICA.getCode(), key, value);
+
+			long e = System.currentTimeMillis();
+			System.out.println("YF6: " + (e - s) + "ms");
+			s = System.currentTimeMillis();
+
+			putToReplica(KVStore.localHost.trim(), handle, message, keyHash);
+
+			e = System.currentTimeMillis();
+			System.out.println("YF7: " + (e - s) + "ms");
+		} catch (InexistentKeyException e) {
+			System.out.println("inexistent");
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
+		} catch (OutOfSpaceException e) {
+			System.out.println("outofspace");
+
+			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
+					.getCode());
+		} catch (Exception e) {
+			System.out.println("exception");
+			e.printStackTrace();
+
+			reply = MessageUtilities
+					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
+		}
+		s = System.currentTimeMillis();
+		Dispatcher.response(handle, reply);
+		long e = System.currentTimeMillis();
+		System.out.println("YF NIO put coord response: " + (e - s) + " ms");
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -239,20 +279,20 @@ public class ConsistentHash {
 		Integer keyHash = Arrays.hashCode(key);
 		System.out.println("***************GET******************");
 		byte[] replyMessage = null;
-		List<String> coords;
+		String coords;
 		try {
-			coords = ChordTopologyService.getCoordinatorAndReplicas(keyHash);
+			coords = ChordTopologyService.getCoordinator(keyHash);
 
 			try {
 
-				if (coords.contains(KVStore.localHost)) {
+				if (coords.trim().equals(KVStore.localHost.trim())) {
 					System.out.println("get local ");
 					replyMessage = this.local.get(keyHash);
 				} else {
 
 					System.out.println("get remote " + handle.isValid());
 					ConnectionService.connectToNIORemote(
-							coords.get(0),
+							coords.trim(),
 							handle,
 							MessageUtilities.requestMessage(
 									CommandEnum.GET.getCode(), key, value));
@@ -260,27 +300,26 @@ public class ConsistentHash {
 
 				}
 			} catch (InexistentKeyException e) {
-				e.printStackTrace();
-				ByteBuffer message = MessageUtilities.requestMessage(
-						CommandEnum.GET_REPLICA.getCode(), key, value);
-				coords.remove(KVStore.localHost);
-				try {
-					getFromReplica(coords, handle, message, keyHash);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				return;
+				replyMessage = MessageUtilities
+						.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 			} catch (InternalKVStoreFailureException e) {
-				e.printStackTrace();
 				replyMessage = MessageUtilities
 						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
 								.getCode());
 			} catch (Exception e) {
 				e.printStackTrace();
-				replyMessage = MessageUtilities
-						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
-								.getCode());
+				
+				System.out.println("************coord unreachable, get next succsessor********** " + handle.isValid());
+				try {
+					ConnectionService.connectToNIORemote(
+							ChordTopologyService.getSuccessor(coords),
+							handle,
+							MessageUtilities.requestMessage(
+									CommandEnum.GET.getCode(), key, value));
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+				return;
 			}
 		} catch (InexistentKeyException e1) {
 			// TODO Auto-generated catch block
@@ -342,8 +381,9 @@ public class ConsistentHash {
 
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] replyMessage = null;
+		ChordTopologyService chordTopology = new ChordTopologyService();
 		try {
-			List<String> coords = ChordTopologyService
+			List<String> coords = chordTopology
 					.getCoordinatorAndReplicas(keyHash);
 			if (coords.contains(KVStore.localHost)) {
 				replyMessage = this.local.remove(keyHash);
@@ -379,11 +419,43 @@ public class ConsistentHash {
 
 	}
 
-	public static void putToReplica(List<String> nodes, SelectionKey handle,
-			ByteBuffer message, Integer key) throws Exception {
-		for (String n : nodes) {
-			ConnectionService.connectToReplica(n, handle, message, key);
+	public void putToReplica(final String coord, final SelectionKey handle,
+			final ByteBuffer message, final Integer key) throws Exception {
+
+		Thread t = new Thread(new putToReplica(coord, handle, message, key));
+		t.start();
+
+	}
+
+	class putToReplica implements Runnable {
+
+		private String coord;
+		private SelectionKey handle;
+		private ByteBuffer message;
+		private Integer key;
+
+		public putToReplica(String coord, SelectionKey handle,
+				ByteBuffer message, Integer key) {
+			this.coord = coord;
+			this.handle = handle;
+			this.message = message;
+			this.key = key;
 		}
+
+		@Override
+		public void run() {
+
+			try {
+				List<String> nodes = ChordTopologyService.getSuccessors(coord);
+				for (String n : nodes) {
+					ConnectionService.connectToReplica(n, handle, message, key);
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 	public static void getFromReplica(List<String> nodes, SelectionKey handle,
