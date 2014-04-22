@@ -16,7 +16,7 @@ public class PlanetLabNode {
 	private ConcurrentHashMap<Integer, byte[]> values = new ConcurrentHashMap<Integer, byte[]>();
 	private ConcurrentHashMap<Integer, Integer> version = new ConcurrentHashMap<Integer, Integer>();
 
-	public byte[] put(Integer key, byte[] value) throws InexistentKeyException,
+	public byte[] put(Integer key, byte[] value) throws
 			OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
@@ -37,7 +37,7 @@ public class PlanetLabNode {
 	}
 
 	public boolean put_Local(Integer key, byte[] value)
-			throws InexistentKeyException, OutOfSpaceException {
+			throws OutOfSpaceException {
 		if (this.values.size() > 40000)
 			throw new OutOfSpaceException();
 
@@ -59,8 +59,8 @@ public class PlanetLabNode {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
 
-		System.out.println("get: "+ key);
-		
+		System.out.println("get: " + key);
+
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key));
 	}
@@ -68,18 +68,15 @@ public class PlanetLabNode {
 	public byte[] getReplica(Integer key) throws InexistentKeyException {
 		if (this.isInexistentKey(key))
 			throw new InexistentKeyException();
-		
-		System.out.println("get replica: "+ key);
+
+		System.out.println("get replica: " + key);
 
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), this.values.get(key),
 				this.version.get(key));
 	}
 
-	public byte[] remove(Integer key) throws InexistentKeyException {
-		if (this.isInexistentKey(key))
-			throw new InexistentKeyException();
-
+	public byte[] remove(Integer key) {
 		this.values.remove(key);
 		return MessageUtilities.formateReplyMessage(
 				ErrorEnum.SUCCESS.getCode(), null, null);

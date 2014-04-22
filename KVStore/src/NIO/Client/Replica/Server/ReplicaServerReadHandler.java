@@ -33,11 +33,20 @@ public class ReplicaServerReadHandler implements EventHandler {
 	public synchronized void handleEvent(SelectionKey handle) throws Exception {
 		this.socketChannel = ((SocketChannel) handle.channel());
 
-		this.socketChannel.read(this.commandBuffer);
-		this.commandBuffer.flip();
-		int c = this.commandBuffer.array()[0];
 		byte[] key = null;
 		byte[] value = null;
+		int c = 0;
+		
+		if (this.socketChannel.read(this.commandBuffer) != -1) {
+
+			this.commandBuffer.flip();
+			c = this.commandBuffer.array()[0];
+
+		} else {
+			handle.cancel();
+			this.socketChannel.close();
+			return;
+		}
 
 		if (MessageUtilities.isCheckRequestKey(c)) {
 			this.socketChannel.read(this.keyBuffer);

@@ -16,7 +16,7 @@ public class ChordTopologyService {
 	public ChordTopologyService() {
 	}
 
-	public static String getCoordinator(Integer key) throws InexistentKeyException,
+	public static String getCoordinator(Integer key) throws
 			InternalKVStoreFailureException {
 		if (chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
@@ -31,8 +31,8 @@ public class ChordTopologyService {
 		return chord.getChord().get(hash);
 	}
 
-	public List<String> getCoordinatorAndReplicas(Integer key)
-			throws InexistentKeyException, InternalKVStoreFailureException {
+	public static List<String> getCoordinatorAndReplicas(Integer key)
+			throws InternalKVStoreFailureException {
 		String coord = getCoordinator(key);
 		List<String> nodes = new ArrayList<String>();
 		nodes.add(coord);

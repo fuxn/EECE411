@@ -23,7 +23,7 @@ public class Chord {
 	public Chord() {
 		
 		participantingNodes.add("ricepl-1.cs.rice.edu");
-		participantingNodes.add("planetlab-01.vt.nodes.planet-lab.org");
+		//participantingNodes.add("planetlab-01.vt.nodes.planet-lab.org");
 		participantingNodes.add("planetlab1.csee.usf.edu");
 		participantingNodes.add("planetlab3.csee.usf.edu");
 		participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");

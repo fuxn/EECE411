@@ -136,55 +136,30 @@ public class ConsistentHash {
 	public void put(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
 		System.out.println("***************PUT******************");
-		long s = System.currentTimeMillis();
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
 
 		try {
-			long e = System.currentTimeMillis();
-			System.out.print("YF1: " + (e - s) + "ms");
-			s = System.currentTimeMillis();
-
 			String coord = ChordTopologyService.getCoordinator(keyHash);
-
-			e = System.currentTimeMillis();
-			System.out.print("YF2: " + (e - s) + "ms");
-			s = System.currentTimeMillis();
-
-			ByteBuffer message = MessageUtilities.requestMessage(
-					CommandEnum.PUT_REPLICA.getCode(), key, value);
-
-			e = System.currentTimeMillis();
-			System.out.print("YF3: " + (e - s) + "ms");
-			s = System.currentTimeMillis();
 
 			if (coord.trim().equals(KVStore.localHost.trim())) {
 				reply = this.local.put(keyHash, value);
-
-				e = System.currentTimeMillis();
-				System.out.print("YF4: " + (e - s) + "ms");
-				s = System.currentTimeMillis();
-
+				ByteBuffer message = MessageUtilities.requestMessage(
+						CommandEnum.PUT_REPLICA.getCode(), key, value);
 				putToReplica(coord, handle, message, keyHash);
 
-				e = System.currentTimeMillis();
-				System.out.print("YF5: " + (e - s) + "ms");
 			} else {
-				s = System.currentTimeMillis();
+				long s = System.currentTimeMillis();
 				ConnectionService.connectToNIORemote(
 						coord,
 						handle,
 						MessageUtilities.requestMessage(
 								CommandEnum.PUT_COORD.getCode(), key, value));
-				e = System.currentTimeMillis();
+				long e = System.currentTimeMillis();
 				System.out.print("YF NIO put CONNECT: " + (e - s) + "ms");
 				return;
 			}
 
-		} catch (InexistentKeyException e) {
-			System.out.println("inexistent");
-			reply = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (InternalKVStoreFailureException e) {
 			System.out.println("internal");
 
@@ -201,17 +176,16 @@ public class ConsistentHash {
 
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		}
-		s = System.currentTimeMillis();
-		Dispatcher.response(handle, reply);
-		long e = System.currentTimeMillis();
-		System.out.println("YF NIO put response: " + (e - s) + " ms");
-
+		} 
+			long s = System.currentTimeMillis();
+			Dispatcher.response(handle, reply);
+			long e = System.currentTimeMillis();
+			System.out.println("YF NIO put response: " + (e - s) + " ms");
+		
 	}
 
 	public void putCoord(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
-		long s = System.currentTimeMillis();
 		Integer keyHash = Arrays.hashCode(key);
 		byte[] reply = null;
 		try {
@@ -220,18 +194,8 @@ public class ConsistentHash {
 			ByteBuffer message = MessageUtilities.requestMessage(
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
 
-			long e = System.currentTimeMillis();
-			System.out.println("YF6: " + (e - s) + "ms");
-			s = System.currentTimeMillis();
-
 			putToReplica(KVStore.localHost.trim(), handle, message, keyHash);
 
-			e = System.currentTimeMillis();
-			System.out.println("YF7: " + (e - s) + "ms");
-		} catch (InexistentKeyException e) {
-			System.out.println("inexistent");
-			reply = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (OutOfSpaceException e) {
 			System.out.println("outofspace");
 
@@ -243,11 +207,12 @@ public class ConsistentHash {
 
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		}
-		s = System.currentTimeMillis();
-		Dispatcher.response(handle, reply);
-		long e = System.currentTimeMillis();
-		System.out.println("YF NIO put coord response: " + (e - s) + " ms");
+		} 
+			long s = System.currentTimeMillis();
+			Dispatcher.response(handle, reply);
+			long e = System.currentTimeMillis();
+			System.out.println("YF NIO put coord response: " + (e - s) + " ms");
+		
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -260,24 +225,18 @@ public class ConsistentHash {
 		try {
 			reply = this.local.put(keyHash, value);
 
-		} catch (InexistentKeyException e) {
-			e.printStackTrace();
-			reply = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (OutOfSpaceException e) {
 			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
 					.getCode());
-		} catch (Exception e) {
-			reply = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		}
-		Dispatcher.response(handle, reply);
+		} 
+			Dispatcher.response(handle, reply);
+		
 	}
 
 	public void get(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
 		Integer keyHash = Arrays.hashCode(key);
-		System.out.println("***************GET******************");
+		System.out.print("***************GET****************** " + keyHash);
 		byte[] replyMessage = null;
 		String coords;
 		try {
@@ -288,6 +247,7 @@ public class ConsistentHash {
 				if (coords.trim().equals(KVStore.localHost.trim())) {
 					System.out.println("get local ");
 					replyMessage = this.local.get(keyHash);
+					System.out.println(replyMessage);
 				} else {
 
 					System.out.println("get remote " + handle.isValid());
@@ -307,9 +267,9 @@ public class ConsistentHash {
 						.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE
 								.getCode());
 			} catch (Exception e) {
-				e.printStackTrace();
-				
-				System.out.println("************coord unreachable, get next succsessor********** " + handle.isValid());
+				System.out
+						.println("************coord unreachable, get next succsessor********** "
+								+ handle.isValid());
 				try {
 					ConnectionService.connectToNIORemote(
 							ChordTopologyService.getSuccessor(coords),
@@ -321,28 +281,25 @@ public class ConsistentHash {
 				}
 				return;
 			}
-		} catch (InexistentKeyException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
 		} catch (InternalKVStoreFailureException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
-		Dispatcher.response(handle, replyMessage);
-
+		} 
+			Dispatcher.response(handle, replyMessage);
+		
 	}
 
 	public void getReplica(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
-		System.out.println("***************GET REPLICA******************");
 
 		Integer keyHash = Arrays.hashCode(key);
+		System.out.print("***************GET REPLICA****************** "
+				+ keyHash);
 		byte[] replyMessage = null;
 		try {
 			replyMessage = this.local.getReplica(keyHash);
-
+			System.out.println(replyMessage);
 		} catch (InexistentKeyException e) {
-			e.printStackTrace();
 			replyMessage = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (Exception e) {
@@ -351,39 +308,36 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 
-		Dispatcher.response(handle, replyMessage);
-
+			Dispatcher.response(handle, replyMessage);
+		
 	}
 
 	public void removeReplica(Selector selector, SelectionKey handle,
 			byte[] key, byte[] value) {
-		System.out.println("***************REMOVE REPLICA******************");
-
 		Integer keyHash = Arrays.hashCode(key);
+		System.out.println("***************REMOVE REPLICA****************** "
+				+ keyHash);
 		byte[] reply = null;
 		try {
 			reply = this.local.remove(keyHash);
 
-		} catch (InexistentKeyException e) {
-			e.printStackTrace();
-			reply = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (Exception e) {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
-		}
-		Dispatcher.response(handle, reply);
+		} 
+			Dispatcher.response(handle, reply);
+		
 	}
 
 	public void remove(Selector selector, SelectionKey handle, byte[] key,
 			byte[] value) {
-		System.out.println("***************REMOVE******************");
 
 		Integer keyHash = Arrays.hashCode(key);
+		System.out
+				.println("***************REMOVE****************** " + keyHash);
 		byte[] replyMessage = null;
-		ChordTopologyService chordTopology = new ChordTopologyService();
 		try {
-			List<String> coords = chordTopology
+			List<String> coords = ChordTopologyService
 					.getCoordinatorAndReplicas(keyHash);
 			if (coords.contains(KVStore.localHost)) {
 				replyMessage = this.local.remove(keyHash);
@@ -401,10 +355,6 @@ public class ConsistentHash {
 				return;
 			}
 
-		} catch (InexistentKeyException e) {
-			e.printStackTrace();
-			replyMessage = MessageUtilities
-					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
 		} catch (InternalKVStoreFailureException e) {
 			e.printStackTrace();
 			replyMessage = MessageUtilities
@@ -415,8 +365,8 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 
-		Dispatcher.response(handle, replyMessage);
-
+			Dispatcher.response(handle, replyMessage);
+		
 	}
 
 	public void putToReplica(final String coord, final SelectionKey handle,
