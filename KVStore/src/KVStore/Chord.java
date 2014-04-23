@@ -16,8 +16,7 @@ import Exception.InternalKVStoreFailureException;
 
 public class Chord {
 
-	public static final int PARTICIPATING_NODES = 5;
-	public static final int numReplicas = 1;
+	public static final int numReplicas = 3;
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
 	private Map<Integer, Integer> chordFailCount = new HashMap<Integer, Integer>();
@@ -31,63 +30,67 @@ public class Chord {
 		participantingNodes.add("planetlab2.cs.ubc.ca");
 		participantingNodes.add("pl2.eecs.utk.edu");
 		participantingNodes.add("planetlab3.cesnet.cz");
-		// participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
+		participantingNodes.add("planetlab1.dojima.wide.ad.jp");
 
-		// participantingNodes.add("planetlab2.poly.edu");
-		// participantingNodes.add("salt.planetlab.cs.umd.edu");
-		// participantingNodes.add("miranda.planetlab.cs.umd.edu");
-		// participantingNodes.add("planetlab4.csee.usf.edu");
-		// participantingNodes.add("planetlab2.sfc.wide.ad.jp");
+		participantingNodes.add("planetlab1.netlab.uky.edu");
+		participantingNodes.add("planetlab-4.eecs.cwru.edu");
+		participantingNodes.add("planetlab-2.cs.auckland.ac.nz");
+		participantingNodes.add("planetlab2.ionio.gr");
+		participantingNodes.add("planetlab1.csuohio.edu");
 
-		/*
-		 * participantingNodes.add("planet-lab4.uba.ar");
-		 * participantingNodes.add("planetlab2.thlab.net");
-		 * participantingNodes.add("planetlab1.cs.uml.edu");
-		 * participantingNodes.add("plab-1.diegm.uniud.it");
-		 * participantingNodes.add("planetlab1.ionio.gr");
-		 * 
-		 * participantingNodes.add("plab4.ple.silweb.pl");
-		 * participantingNodes.add("planetlab-3.cs.ucy.ac.cy");
-		 * participantingNodes.add("planet-lab1.cs.ucr.edu");
-		 * participantingNodes.add("planetlab1.cs.pitt.edu");
-		 * participantingNodes.add("planetlab2.cis.upenn.edu");
-		 * 
-		 * participantingNodes.add("planetlab2.s3.kth.se");
-		 * participantingNodes.add("planetlab-1.cmcl.cs.cmu.edu");
-		 * participantingNodes.add("planetlab2.science.unitn.it");
-		 * participantingNodes.add("planetlab1.cs.stevens-tech.edu");
-		 * participantingNodes.add("planet-plc-3.mpi-sws.org");
-		 * 
-		 * participantingNodes.add("orval.infonet.fundp.ac.be");
-		 * participantingNodes.add("planetlab2.bgu.ac.il");
-		 * participantingNodes.add("kupl2.ittc.ku.edu");
-		 * participantingNodes.add("planet-lab2.uba.ar");
-		 * participantingNodes.add("planetlab2.ifi.uio.no");
-		 * 
-		 * participantingNodes.add("planetlab-1.ing.unimo.it");
-		 * participantingNodes.add("planetlab1.ifi.uio.no");
-		 * participantingNodes.add("planetlab2.eurecom.fr");
-		 * participantingNodes.add("node2.planetlab.mathcs.emory.edu");
-		 * participantingNodes.add("planetlab4.williams.edu");
-		 * 
-		 * participantingNodes.add("planetlab-13.e5.ijs.si");
-		 * participantingNodes.add("planetlab-coffee.ait.ie");
-		 * participantingNodes.add("ple2.tu.koszalin.pl");
-		 * participantingNodes.add("planetlab1.sics.se");
-		 * participantingNodes.add("planetlab1.lkn.ei.tum.de");
-		 * 
-		 * participantingNodes.add("aguila2.lsi.upc.edu");
-		 * participantingNodes.add("aguila1.lsi.upc.edu");
-		 * participantingNodes.add("planetlab1.exp-math.uni-essen.de");
-		 * participantingNodes.add("planet1.l3s.uni-hannover.de");
-		 * participantingNodes.add("planetlab1.tmit.bme.hu");
-		 * 
-		 * participantingNodes.add("planetlab3.hiit.fi");
-		 * participantingNodes.add("planetlab2.cs.uit.no");
-		 * participantingNodes.add("planetlab-12.e5.ijs.si");
-		 * participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
-		 * participantingNodes.add("ple2.dmcs.p.lodz.pl");
-		 */
+		participantingNodes.add("planetlab4.wail.wisc.edu");
+		participantingNodes.add("planetlab-coffee.ait.ie");
+		participantingNodes.add("ple2.tu.koszalin.pl");
+		participantingNodes.add("planetlab1.exp-math.uni-essen.de");
+		participantingNodes.add("planetlab-2.cmcl.cs.cmu.edu");
+
+		participantingNodes.add("planetlab2.cis.upenn.edu");
+		participantingNodes.add("planet-lab2.uba.ar");
+		participantingNodes.add("planet1.l3s.uni-hannover.de");
+		participantingNodes.add("planetlab1.pop-pa.rnp.br");
+		participantingNodes.add("planetlab2.dit.upm.es");
+
+		participantingNodes.add("planetvs2.informatik.uni-stuttgart.de");
+		participantingNodes.add("planetlab2.csie.nuk.edu.tw");
+		participantingNodes.add("planetlab1.tmit.bme.hu");
+		participantingNodes.add("plab-1.diegm.uniud.it");
+		participantingNodes.add("peeramidion.irisa.fr");
+
+		participantingNodes.add("planetlab-um00.di.uminho.pt");
+		participantingNodes.add("host2.planetlab.informatik.tu-darmstadt.de");
+		participantingNodes.add("plab4.ple.silweb.pl");
+		participantingNodes.add("planetlab-1.imag.fr");
+		participantingNodes.add("node2.planetlab.mathcs.emory.edu");
+
+		participantingNodes.add("planetlab1.informatik.uni-goettingen.de");
+		participantingNodes.add("planet2.l3s.uni-hannover.de");
+		participantingNodes.add("planetlab2.fct.ualg.pt");
+		participantingNodes.add("planetlab1.ionio.gr");
+		participantingNodes.add("planetlab2.science.unitn.it");
+
+		participantingNodes.add("planetlab1.ifi.uio.no");
+		participantingNodes.add("planetlab2.ifi.uio.no");
+		participantingNodes.add("planetlab2.eurecom.fr");
+		participantingNodes.add("planetlab4.hiit.fi");
+		participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
+
+		participantingNodes.add("planetlab2.lkn.ei.tum.de");
+		participantingNodes.add("planetlab2.mta.ac.il");
+		participantingNodes.add("planet1.unipr.it");
+		participantingNodes.add("pandora.we.po.opole.pl");
+		participantingNodes.add("planck227ple.test.ibbt.be");
+
+		participantingNodes.add("lim-planetlab-1.univ-reunion.fr");
+		participantingNodes.add("planet2.servers.ua.pt");
+		participantingNodes.add("planetlab4.williams.edu");
+		participantingNodes.add("planetlab6.goto.info.waseda.ac.jp");
+		participantingNodes.add("planetlab2.tamu.edu");
+
+		participantingNodes.add("planet2.unipr.it");
+		participantingNodes.add("gschembra3.diit.unict.it");
+		participantingNodes.add("planetlab-node3.it-sudparis.eu");
+		participantingNodes.add("planetlab1.tsuniv.edu");
+		participantingNodes.add("planetlab3.cs.uoregon.edu");
 
 		for (String node : participantingNodes) {
 			chord.put(node.hashCode(), node);

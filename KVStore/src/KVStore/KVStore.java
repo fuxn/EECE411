@@ -198,8 +198,8 @@ public class KVStore {
 			new ChordTopologyService();
 			cHash = new ConsistentHash();
 			kvStore.initiateReactiveServer(cHash);
-			kvStore.initiateReactiveClient();
-			kvStore.initiateReactiveReplica();
+			//kvStore.initiateReactiveClient();
+			//kvStore.initiateReactiveReplica();
 			kvStore.initiateReplicaReactiveServer(cHash);
 			// kvStore.initiateGossipServer(localHostName);
 

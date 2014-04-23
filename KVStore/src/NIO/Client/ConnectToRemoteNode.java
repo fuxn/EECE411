@@ -7,10 +7,14 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.util.List;
 
+import Exception.InternalKVStoreFailureException;
 import KVStore.KVStore;
 import NIO.Dispatcher;
 import Utilities.ChordTopologyService;
+import Utilities.CommandEnum;
+import Utilities.ConnectionService;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 
@@ -69,6 +73,20 @@ public class ConnectToRemoteNode implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			message[0] = Integer.valueOf(CommandEnum.GET_REPLICA.getCode())
+					.byteValue();
+			List<String> replicas;
+			try {
+				replicas = ChordTopologyService.getSuccessors(server);
+				for (String n : replicas) {
+					ConnectionService.connectToSocketReplica(n, serverHandle,
+							message, true);
+				}
+			} catch (InternalKVStoreFailureException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
 			ChordTopologyService.connectionFailed(server);
 		}
 

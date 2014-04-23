@@ -155,7 +155,11 @@ public class ConsistentHash {
 		byte[] message = MessageUtilities.formateRequestMessage(
 				CommandEnum.PUT_REPLICA.getCode(), key, value);
 		try {
-			putToReplica(handle, message);
+			List<String> nodes = ChordTopologyService.getMySuccessors();
+			for (String n : nodes) {
+				ConnectionService.connectToSocketReplica(n, handle,
+						message, false);
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
