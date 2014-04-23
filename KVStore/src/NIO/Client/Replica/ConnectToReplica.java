@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.channels.SelectionKey;
 
 import KVStore.KVStore;
 import NIO.Dispatcher;
+import Utilities.ChordTopologyService;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 
@@ -39,9 +41,19 @@ public class ConnectToReplica implements Runnable {
 
 			if ((errorCode == ErrorEnum.SUCCESS.getCode()) && waitForReply) {
 				byte[] reply = new byte[1024];
-				in.read(reply);
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < reply.length) {
+					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+							reply.length - totalBytesRcvd)) == -1) {
+						throw new SocketException(
+								"connection close prematurely.");
+					}
 
-				System.out.println("get from remote " + new String(reply));
+					totalBytesRcvd += bytesRcvd;
+				}
+
+				System.out.println("get from replica " + new String(reply));
 				Dispatcher.response(serverHandle,
 						MessageUtilities.formateReplyMessage(errorCode, reply));
 			}
@@ -49,6 +61,7 @@ public class ConnectToReplica implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			ChordTopologyService.connectionFailed(server);
 		}
 
 	}

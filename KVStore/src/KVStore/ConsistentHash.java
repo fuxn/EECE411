@@ -65,27 +65,7 @@ public class ConsistentHash {
 		this.local.removeAll();
 
 		// this.announceDataSent(nextNode);
-		this.announceLeaving(localHostHashCode);
-	}
-
-	public void announceLeaving(Integer hostNamehashCode)
-			throws InternalKVStoreFailureException {
-		List<String> randomNodes = ChordTopologyService.getAllNodes();
-
-		for (String node : randomNodes) {
-			try {
-				ConnectionService.connectToGossip(
-						CommandEnum.ANNOUNCE_LEAVING.getCode(),
-						MessageUtilities.intToByteArray(hostNamehashCode, 32),
-						null, node);
-			} catch (IOException e) {
-				ChordTopologyService.handleNodeLeaving(hostNamehashCode);
-				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
-					continue;
-
-				e.printStackTrace();
-			}
-		}
+		ChordTopologyService.announceLeaving(localHostHashCode);
 	}
 
 	public void handleNeighbourAnnouncedFailure(byte[] key, byte[] value)
@@ -145,9 +125,6 @@ public class ConsistentHash {
 
 			if (coord.equals(KVStore.localHost)) {
 				reply = this.local.put(keyHash, value);
-				byte[] message = MessageUtilities.formateRequestMessage(
-						CommandEnum.PUT_REPLICA.getCode(), key, value);
-				putToReplica(coord, handle, message, keyHash);
 			} else {
 				ConnectionService.connectToSocketRemote(coord, handle,
 						MessageUtilities.formateRequestMessage(
@@ -174,6 +151,16 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 		Dispatcher.response(handle, reply);
+
+		byte[] message = MessageUtilities.formateRequestMessage(
+				CommandEnum.PUT_REPLICA.getCode(), key, value);
+		try {
+			putToReplica(handle, message);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	public void putCoord(Selector selector, SelectionKey handle, byte[] key,
@@ -182,16 +169,6 @@ public class ConsistentHash {
 		byte[] reply = null;
 		try {
 			reply = this.local.put(keyHash, value);
-
-			byte[] message = MessageUtilities.formateRequestMessage(
-					CommandEnum.PUT_REPLICA.getCode(), key, value);
-			
-			List<String> nodes = ChordTopologyService.getSuccessors(KVStore.localHost);
-			for (String n : nodes) {
-				ConnectionService.connectToSocketReplica(n, handle,
-						message, false);
-			}
-
 		} catch (OutOfSpaceException e) {
 			System.out.println("outofspace");
 
@@ -205,6 +182,22 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 		Dispatcher.response(handle, reply);
+
+		byte[] message = MessageUtilities.formateRequestMessage(
+				CommandEnum.PUT_REPLICA.getCode(), key, value);
+
+		List<String> nodes;
+		try {
+			nodes = ChordTopologyService.getMySuccessors();
+			for (String n : nodes) {
+				ConnectionService.connectToSocketReplica(n, handle, message,
+						false);
+			}
+		} catch (InternalKVStoreFailureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	public void putReplica(Selector selector, SelectionKey handle, byte[] key,
@@ -234,7 +227,6 @@ public class ConsistentHash {
 		String coords;
 		try {
 			coords = ChordTopologyService.getCoordinator(keyHash);
-
 			try {
 
 				if (coords.equals(KVStore.localHost)) {
@@ -251,15 +243,19 @@ public class ConsistentHash {
 					return;
 
 				}
-			}  catch (Exception e) {
+			} catch (Exception e) {
 				System.out
 						.println("************coord unreachable, get next succsessor********** "
 								+ handle.isValid());
 				try {
-					ConnectionService.connectToSocketRemote(coords.trim(),
-							handle, MessageUtilities.formateRequestMessage(
-									CommandEnum.GET.getCode(), key, value),
-							true);
+					List<String> replicas = ChordTopologyService
+							.getSuccessors(coords);
+					for (String n : replicas) {
+						ConnectionService.connectToSocketReplica(n, handle,
+								MessageUtilities.formateRequestMessage(
+										CommandEnum.GET_REPLICA.getCode(), key,
+										value), true);
+					}
 					return;
 				} catch (Exception e1) {
 					e1.printStackTrace();
@@ -355,34 +351,28 @@ public class ConsistentHash {
 
 	}
 
-	public void putToReplica(final String coord, final SelectionKey handle,
-			final byte[] message, final Integer key) throws Exception {
+	public void putToReplica(final SelectionKey handle, final byte[] message)
+			throws Exception {
 
-		Thread t = new Thread(new putToReplica(coord, handle, message, key));
-		t.start();
+		KVStore.threadPool.execute(new putToReplica(handle, message));
 
 	}
 
 	class putToReplica implements Runnable {
 
-		private String coord;
 		private SelectionKey handle;
 		private byte[] message;
-		private Integer key;
 
-		public putToReplica(String coord, SelectionKey handle, byte[] message,
-				Integer key) {
-			this.coord = coord;
+		public putToReplica(SelectionKey handle, byte[] message) {
 			this.handle = handle;
 			this.message = message;
-			this.key = key;
 		}
 
 		@Override
 		public void run() {
 
 			try {
-				List<String> nodes = ChordTopologyService.getSuccessors(coord);
+				List<String> nodes = ChordTopologyService.getMySuccessors();
 				for (String n : nodes) {
 					ConnectionService.connectToSocketReplica(n, handle,
 							message, false);

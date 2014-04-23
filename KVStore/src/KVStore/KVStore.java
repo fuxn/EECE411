@@ -57,7 +57,7 @@ public class KVStore {
 	public static Executor threadPool;
 	
 
-	private static ConsistentHash cHash;
+	public static ConsistentHash cHash;
 	
 	public KVStore(){
 		threadPool = Executors.newFixedThreadPool(maxThreads);

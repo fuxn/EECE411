@@ -4,10 +4,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import Exception.InternalKVStoreFailureException;
 
@@ -17,73 +20,78 @@ public class Chord {
 	public static final int numReplicas = 1;
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
+	private Map<Integer, Integer> chordFailCount = new HashMap<Integer, Integer>();
 	private List<String> participantingNodes = new ArrayList<String>();
 	private List<String> successors = new ArrayList<String>();
+	private ConcurrentHashMap<Integer, List<String>> replica = new ConcurrentHashMap<Integer, List<String>>();
 
 	public Chord() {
-		
+
 		participantingNodes.add("pl-node-1.csl.sri.com");
 		participantingNodes.add("planetlab2.cs.ubc.ca");
 		participantingNodes.add("pl2.eecs.utk.edu");
 		participantingNodes.add("planetlab3.cesnet.cz");
-		//participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
-		
-		//participantingNodes.add("planetlab2.poly.edu");
-		//participantingNodes.add("salt.planetlab.cs.umd.edu");
-		//participantingNodes.add("miranda.planetlab.cs.umd.edu");
-		//participantingNodes.add("planetlab4.csee.usf.edu");
-		//participantingNodes.add("planetlab2.sfc.wide.ad.jp");
-		
-		/*participantingNodes.add("planet-lab4.uba.ar");
-		participantingNodes.add("planetlab2.thlab.net");
-		participantingNodes.add("planetlab1.cs.uml.edu");
-		participantingNodes.add("plab-1.diegm.uniud.it");
-		participantingNodes.add("planetlab1.ionio.gr");
-		
-		participantingNodes.add("plab4.ple.silweb.pl");
-		participantingNodes.add("planetlab-3.cs.ucy.ac.cy");
-		participantingNodes.add("planet-lab1.cs.ucr.edu");
-		participantingNodes.add("planetlab1.cs.pitt.edu");
-		participantingNodes.add("planetlab2.cis.upenn.edu");
-		
-		participantingNodes.add("planetlab2.s3.kth.se");
-		participantingNodes.add("planetlab-1.cmcl.cs.cmu.edu");
-		participantingNodes.add("planetlab2.science.unitn.it");
-		participantingNodes.add("planetlab1.cs.stevens-tech.edu");
-		participantingNodes.add("planet-plc-3.mpi-sws.org");
-		
-		participantingNodes.add("orval.infonet.fundp.ac.be");
-		participantingNodes.add("planetlab2.bgu.ac.il");
-		participantingNodes.add("kupl2.ittc.ku.edu");
-		participantingNodes.add("planet-lab2.uba.ar");
-		participantingNodes.add("planetlab2.ifi.uio.no");
+		// participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
 
-		participantingNodes.add("planetlab-1.ing.unimo.it");
-		participantingNodes.add("planetlab1.ifi.uio.no");
-		participantingNodes.add("planetlab2.eurecom.fr");
-		participantingNodes.add("node2.planetlab.mathcs.emory.edu");
-		participantingNodes.add("planetlab4.williams.edu");
+		// participantingNodes.add("planetlab2.poly.edu");
+		// participantingNodes.add("salt.planetlab.cs.umd.edu");
+		// participantingNodes.add("miranda.planetlab.cs.umd.edu");
+		// participantingNodes.add("planetlab4.csee.usf.edu");
+		// participantingNodes.add("planetlab2.sfc.wide.ad.jp");
 
-		participantingNodes.add("planetlab-13.e5.ijs.si");
-		participantingNodes.add("planetlab-coffee.ait.ie");
-		participantingNodes.add("ple2.tu.koszalin.pl");
-		participantingNodes.add("planetlab1.sics.se");
-		participantingNodes.add("planetlab1.lkn.ei.tum.de");
-		
-		participantingNodes.add("aguila2.lsi.upc.edu");
-		participantingNodes.add("aguila1.lsi.upc.edu");
-		participantingNodes.add("planetlab1.exp-math.uni-essen.de");
-		participantingNodes.add("planet1.l3s.uni-hannover.de");
-		participantingNodes.add("planetlab1.tmit.bme.hu");
-		
-		participantingNodes.add("planetlab3.hiit.fi");
-		participantingNodes.add("planetlab2.cs.uit.no");
-		participantingNodes.add("planetlab-12.e5.ijs.si");
-		participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
-		participantingNodes.add("ple2.dmcs.p.lodz.pl");*/
+		/*
+		 * participantingNodes.add("planet-lab4.uba.ar");
+		 * participantingNodes.add("planetlab2.thlab.net");
+		 * participantingNodes.add("planetlab1.cs.uml.edu");
+		 * participantingNodes.add("plab-1.diegm.uniud.it");
+		 * participantingNodes.add("planetlab1.ionio.gr");
+		 * 
+		 * participantingNodes.add("plab4.ple.silweb.pl");
+		 * participantingNodes.add("planetlab-3.cs.ucy.ac.cy");
+		 * participantingNodes.add("planet-lab1.cs.ucr.edu");
+		 * participantingNodes.add("planetlab1.cs.pitt.edu");
+		 * participantingNodes.add("planetlab2.cis.upenn.edu");
+		 * 
+		 * participantingNodes.add("planetlab2.s3.kth.se");
+		 * participantingNodes.add("planetlab-1.cmcl.cs.cmu.edu");
+		 * participantingNodes.add("planetlab2.science.unitn.it");
+		 * participantingNodes.add("planetlab1.cs.stevens-tech.edu");
+		 * participantingNodes.add("planet-plc-3.mpi-sws.org");
+		 * 
+		 * participantingNodes.add("orval.infonet.fundp.ac.be");
+		 * participantingNodes.add("planetlab2.bgu.ac.il");
+		 * participantingNodes.add("kupl2.ittc.ku.edu");
+		 * participantingNodes.add("planet-lab2.uba.ar");
+		 * participantingNodes.add("planetlab2.ifi.uio.no");
+		 * 
+		 * participantingNodes.add("planetlab-1.ing.unimo.it");
+		 * participantingNodes.add("planetlab1.ifi.uio.no");
+		 * participantingNodes.add("planetlab2.eurecom.fr");
+		 * participantingNodes.add("node2.planetlab.mathcs.emory.edu");
+		 * participantingNodes.add("planetlab4.williams.edu");
+		 * 
+		 * participantingNodes.add("planetlab-13.e5.ijs.si");
+		 * participantingNodes.add("planetlab-coffee.ait.ie");
+		 * participantingNodes.add("ple2.tu.koszalin.pl");
+		 * participantingNodes.add("planetlab1.sics.se");
+		 * participantingNodes.add("planetlab1.lkn.ei.tum.de");
+		 * 
+		 * participantingNodes.add("aguila2.lsi.upc.edu");
+		 * participantingNodes.add("aguila1.lsi.upc.edu");
+		 * participantingNodes.add("planetlab1.exp-math.uni-essen.de");
+		 * participantingNodes.add("planet1.l3s.uni-hannover.de");
+		 * participantingNodes.add("planetlab1.tmit.bme.hu");
+		 * 
+		 * participantingNodes.add("planetlab3.hiit.fi");
+		 * participantingNodes.add("planetlab2.cs.uit.no");
+		 * participantingNodes.add("planetlab-12.e5.ijs.si");
+		 * participantingNodes.add("planetlab4.cs.st-andrews.ac.uk");
+		 * participantingNodes.add("ple2.dmcs.p.lodz.pl");
+		 */
 
 		for (String node : participantingNodes) {
 			chord.put(node.hashCode(), node);
+			chordFailCount.put(node.hashCode(), 0);
 		}
 
 		try {
@@ -95,6 +103,14 @@ public class Chord {
 
 		for (Integer key : chord.keySet()) {
 			System.out.println("chord contains : " + chord.get(key));
+		}
+
+		for (Integer key : chord.keySet()) {
+			try {
+				replica.put(key, this.getSuccessors(chord.get(key)));
+			} catch (InternalKVStoreFailureException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -121,7 +137,7 @@ public class Chord {
 		return nodes;
 	}
 
-	public  String getNodeByIndex(int index) {
+	public String getNodeByIndex(int index) {
 		if (this.participantingNodes.size() > index)
 			return participantingNodes.get(index);
 
@@ -133,6 +149,13 @@ public class Chord {
 		if (chord.containsKey(hostNameHashCode)) {
 			participantingNodes.remove(chord.get(hostNameHashCode).trim());
 			chord.remove(hostNameHashCode);
+			replica.remove(hostNameHashCode);
+		}
+		try {
+			successors = getSuccessors(KVStore.localHost);
+		} catch (InternalKVStoreFailureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -144,13 +167,26 @@ public class Chord {
 		return chord;
 	}
 
+	public Map<Integer, Integer> getChordFailCount() {
+		return chordFailCount;
+	}
+
 	public List<String> getSuccessors() {
 		return successors;
 	}
+
 	/*
 	 * public void join(String hostName) { this.chord.put(hostName.hashCode(),
 	 * hostName); this.indexs.add(hostName.trim()); }
 	 */
+
+	public ConcurrentHashMap<Integer, List<String>> getReplica() {
+		return replica;
+	}
+
+	public void setReplica(ConcurrentHashMap<Integer, List<String>> replica) {
+		this.replica = replica;
+	}
 
 	/*
 	 * public void partition(List<String> nodes) { Integer hashSpace = (int)

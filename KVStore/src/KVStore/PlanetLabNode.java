@@ -55,7 +55,6 @@ public class PlanetLabNode {
 	}
 
 	public byte[] get(Integer key) {
-
 		byte[] value = this.values.get(key);
 		if (value == null)
 			return MessageUtilities

@@ -10,6 +10,7 @@ import java.nio.channels.SelectionKey;
 
 import KVStore.KVStore;
 import NIO.Dispatcher;
+import Utilities.ChordTopologyService;
 import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 
@@ -45,23 +46,18 @@ public class ConnectToRemoteNode implements Runnable {
 			if (waitForReply && (errorCode == ErrorEnum.SUCCESS.getCode())) {
 				byte[] reply = new byte[1024];
 
-				try {
-					int bytesRcvd;
-					int totalBytesRcvd = 0;
-					while (totalBytesRcvd < reply.length) {
-						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
-								reply.length - totalBytesRcvd)) == -1) {
-							throw new SocketException(
-									"connection close prematurely.");
-						}
-
-						totalBytesRcvd += bytesRcvd;
+				int bytesRcvd;
+				int totalBytesRcvd = 0;
+				while (totalBytesRcvd < reply.length) {
+					if ((bytesRcvd = in.read(reply, totalBytesRcvd,
+							reply.length - totalBytesRcvd)) == -1) {
+						throw new SocketException(
+								"connection close prematurely.");
 					}
 
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					totalBytesRcvd += bytesRcvd;
 				}
+
 				Dispatcher.response(serverHandle,
 						MessageUtilities.formateReplyMessage(errorCode, reply));
 			} else
@@ -73,6 +69,7 @@ public class ConnectToRemoteNode implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			ChordTopologyService.connectionFailed(server);
 		}
 
 	}

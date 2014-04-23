@@ -1,11 +1,13 @@
 package Utilities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedMap;
 
 import KVStore.Chord;
+import Utilities.Message.MessageUtilities;
 import Exception.InexistentKeyException;
 import Exception.InternalKVStoreFailureException;
 
@@ -16,8 +18,8 @@ public class ChordTopologyService {
 	public ChordTopologyService() {
 	}
 
-	public static String getCoordinator(Integer key) throws
-			InternalKVStoreFailureException {
+	public static String getCoordinator(Integer key)
+			throws InternalKVStoreFailureException {
 		if (chord.getChord().isEmpty())
 			throw new InternalKVStoreFailureException();
 
@@ -49,7 +51,7 @@ public class ChordTopologyService {
 
 	public static List<String> getSuccessors(String hostName)
 			throws InternalKVStoreFailureException {
-		return chord.getSuccessors(hostName);
+		return chord.getReplica().get(hostName.hashCode());
 	}
 
 	public static List<String> getMySuccessors()
@@ -97,6 +99,34 @@ public class ChordTopologyService {
 		}
 
 		return localHost.equals(successor);
+	}
+
+	public static void announceLeaving(Integer hostNamehashCode) {
+		List<String> randomNodes = getAllNodes();
+
+		for (String node : randomNodes) {
+			try {
+				ConnectionService.connectToGossip(
+						CommandEnum.ANNOUNCE_LEAVING.getCode(),
+						MessageUtilities.intToByteArray(hostNamehashCode, 32),
+						null, node);
+			} catch (IOException e) {
+				handleNodeLeaving(hostNamehashCode);
+				if (randomNodes.indexOf(node) != randomNodes.size() - 1)
+					continue;
+
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void connectionFailed(String host) {
+		int count = chord.getChordFailCount().get(host.hashCode());
+		if (count >= 3) {
+			announceLeaving(host.hashCode());
+			chord.getChordFailCount().put(host.hashCode(), 0);
+		} else
+			chord.getChordFailCount().put(host.hashCode(), count++);
 	}
 
 	/*
