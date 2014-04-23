@@ -16,9 +16,11 @@ public class ReplicaServerWriteHandler implements EventHandler {
 		SocketChannel socketChannel = (SocketChannel) handle.channel();
 		ByteBuffer buffer = (ByteBuffer) handle.attachment();
 
+		int totalByte = 0;
 		while (buffer.hasRemaining()) {
-			socketChannel.write(buffer);
+			totalByte+=socketChannel.write(buffer);
 		}
+		System.out.println("replica server write byte "+ totalByte);
 		buffer.flip();
 		socketChannel.close();// Close connection
 

@@ -17,6 +17,7 @@ import Exception.OutOfSpaceException;
 import Exception.UnrecognizedCommandException;
 import NIO.Dispatcher;
 import NIO.Client.Replica.ReplicaDispatcher;
+import NIO.Client.Replica.Server.ReplicaServerDispatcher;
 import Utilities.ChordTopologyService;
 import Utilities.CommandEnum;
 import Utilities.ConnectionService;
@@ -184,8 +185,12 @@ public class ConsistentHash {
 
 			byte[] message = MessageUtilities.formateRequestMessage(
 					CommandEnum.PUT_REPLICA.getCode(), key, value);
-
-			putToReplica(KVStore.localHost.trim(), handle, message, keyHash);
+			
+			List<String> nodes = ChordTopologyService.getSuccessors(KVStore.localHost);
+			for (String n : nodes) {
+				ConnectionService.connectToSocketReplica(n, handle,
+						message, false);
+			}
 
 		} catch (OutOfSpaceException e) {
 			System.out.println("outofspace");
@@ -216,7 +221,8 @@ public class ConsistentHash {
 			reply = MessageUtilities.formateReplyMessage(ErrorEnum.OUT_OF_SPACE
 					.getCode());
 		}
-		Dispatcher.response(handle, reply);
+		System.out.println("response to put replica ");
+		ReplicaServerDispatcher.response(handle, reply);
 
 	}
 
@@ -245,10 +251,7 @@ public class ConsistentHash {
 					return;
 
 				}
-			} catch (InexistentKeyException e) {
-				replyMessage = MessageUtilities
-						.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
-			} catch (Exception e) {
+			}  catch (Exception e) {
 				System.out
 						.println("************coord unreachable, get next succsessor********** "
 								+ handle.isValid());
@@ -267,7 +270,7 @@ public class ConsistentHash {
 			e1.printStackTrace();
 		}
 
-		System.out.println("reply to get: " + replyMessage);
+		System.out.println("reply to get: " + replyMessage[0]);
 
 		Dispatcher.response(handle, replyMessage);
 
@@ -292,7 +295,7 @@ public class ConsistentHash {
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
 
-		Dispatcher.response(handle, replyMessage);
+		ReplicaServerDispatcher.response(handle, replyMessage);
 
 	}
 
@@ -309,7 +312,7 @@ public class ConsistentHash {
 			reply = MessageUtilities
 					.formateReplyMessage(ErrorEnum.INTERNAL_FAILURE.getCode());
 		}
-		Dispatcher.response(handle, reply);
+		ReplicaServerDispatcher.response(handle, reply);
 
 	}
 

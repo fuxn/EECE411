@@ -219,7 +219,7 @@ public class KVStore {
 			e.printStackTrace();
 		}
 
-		/*Runtime.getRuntime().addShutdownHook(new Thread() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
 				try {
@@ -231,7 +231,7 @@ public class KVStore {
 				Dispatcher.stop();
 				ClientDispatcher.stop();
 			}
-		});*/
+		});
 
 		// server wait for incoming requests;
 	}

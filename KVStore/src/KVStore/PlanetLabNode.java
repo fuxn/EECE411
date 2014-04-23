@@ -54,14 +54,16 @@ public class PlanetLabNode {
 		return true;
 	}
 
-	public byte[] get(Integer key) throws InexistentKeyException {
-		try {
-			byte[] value = this.values.get(key);
-			return MessageUtilities.formateReplyMessage(
-					ErrorEnum.SUCCESS.getCode(), value);
-		} catch (NullPointerException e) {
-			throw new InexistentKeyException();
-		}
+	public byte[] get(Integer key) {
+
+		byte[] value = this.values.get(key);
+		if (value == null)
+			return MessageUtilities
+					.formateReplyMessage(ErrorEnum.INEXISTENT_KEY.getCode());
+
+		return MessageUtilities.formateReplyMessage(
+				ErrorEnum.SUCCESS.getCode(), value);
+
 	}
 
 	public byte[] getReplica(Integer key) throws InexistentKeyException {

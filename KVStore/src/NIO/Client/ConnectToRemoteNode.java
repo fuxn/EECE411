@@ -10,6 +10,7 @@ import java.nio.channels.SelectionKey;
 
 import KVStore.KVStore;
 import NIO.Dispatcher;
+import Utilities.ErrorEnum;
 import Utilities.Message.MessageUtilities;
 
 public class ConnectToRemoteNode implements Runnable {
@@ -38,9 +39,10 @@ public class ConnectToRemoteNode implements Runnable {
 			InputStream in = socket.getInputStream();
 
 			int errorCode = in.read();
-			System.out.println("connectToRemote command :"+message[0] + " error code :"+errorCode);
+			System.out.println("connectToRemote " + server + "command :"
+					+ message[0] + " error code :" + errorCode);
 
-			if (waitForReply) {
+			if (waitForReply && (errorCode == ErrorEnum.SUCCESS.getCode())) {
 				byte[] reply = new byte[1024];
 
 				try {
@@ -48,7 +50,7 @@ public class ConnectToRemoteNode implements Runnable {
 					int totalBytesRcvd = 0;
 					while (totalBytesRcvd < reply.length) {
 						if ((bytesRcvd = in.read(reply, totalBytesRcvd,
-								reply.length - totalBytesRcvd)) == -1){
+								reply.length - totalBytesRcvd)) == -1) {
 							throw new SocketException(
 									"connection close prematurely.");
 						}
@@ -65,6 +67,8 @@ public class ConnectToRemoteNode implements Runnable {
 			} else
 				Dispatcher.response(serverHandle,
 						MessageUtilities.formateReplyMessage(errorCode));
+
+			socket.close();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

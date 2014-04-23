@@ -74,8 +74,8 @@ public class Dispatcher implements Runnable {
 					if (handle.isValid() && handle.isReadable()) {
 						EventHandler handler = registeredHandlers
 								.get(SelectionKey.OP_READ);
-						handler.handleEvent(handle);
 						handleIterator.remove();
+						handler.handleEvent(handle);
 					}
 
 					if (handle.isValid() && handle.isWritable()) {

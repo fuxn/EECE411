@@ -14,7 +14,7 @@ import Exception.InternalKVStoreFailureException;
 public class Chord {
 
 	public static final int PARTICIPATING_NODES = 5;
-	public static final int numReplicas = 3;
+	public static final int numReplicas = 1;
 
 	private SortedMap<Integer, String> chord = new TreeMap<Integer, String>();
 	private List<String> participantingNodes = new ArrayList<String>();
@@ -22,11 +22,11 @@ public class Chord {
 
 	public Chord() {
 		
-		participantingNodes.add("ricepl-1.cs.rice.edu");
-		//participantingNodes.add("planetlab-01.vt.nodes.planet-lab.org");
-		participantingNodes.add("planetlab1.csee.usf.edu");
-		participantingNodes.add("planetlab3.csee.usf.edu");
-		participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
+		participantingNodes.add("pl-node-1.csl.sri.com");
+		participantingNodes.add("planetlab2.cs.ubc.ca");
+		participantingNodes.add("pl2.eecs.utk.edu");
+		participantingNodes.add("planetlab3.cesnet.cz");
+		//participantingNodes.add("pub1-s.ane.cmc.osaka-u.ac.jp");
 		
 		//participantingNodes.add("planetlab2.poly.edu");
 		//participantingNodes.add("salt.planetlab.cs.umd.edu");
