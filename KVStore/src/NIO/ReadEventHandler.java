@@ -46,13 +46,15 @@ public class ReadEventHandler implements EventHandler {
 		if (MessageUtilities.isCheckRequestKey(c)) {
 			this.socketChannel.read(this.keyBuffer);
 			this.keyBuffer.flip();
-			key = this.keyBuffer.array();
+			key = new byte[this.keyBuffer.limit()];
+			this.keyBuffer.get(key);
 		}
 
 		if (MessageUtilities.isCheckRequestValue(c)) {
 			this.socketChannel.read(this.valueBuffer);
 			this.valueBuffer.flip();
-			value = this.valueBuffer.array();
+			value = new byte[this.valueBuffer.limit()];
+			this.valueBuffer.get(value);
 		}
 
 		System.out.println("Server reading " + c);
@@ -68,10 +70,10 @@ public class ReadEventHandler implements EventHandler {
 
 	public void process(SelectionKey handle, SocketChannel socketChannel,
 			int command, byte[] key, byte[] value) {
-		System.out.println(command + " " + Arrays.hashCode(key) + " " + value);
+		System.out.println(command + " " + Arrays.hashCode(key));
 
 		if (command == CommandEnum.PUT.getCode()) {
-			this.cHash.put(this.selector, handle, key, value);
+			KVStore.KVStore.cHash.put(this.selector, handle, key, value);
 		} else if (command == CommandEnum.GET.getCode()) {
 			this.cHash.get(this.selector, handle, key, value);
 		} else if (command == CommandEnum.DELETE.getCode()) {

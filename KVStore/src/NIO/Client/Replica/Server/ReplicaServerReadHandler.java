@@ -47,13 +47,15 @@ public class ReplicaServerReadHandler implements EventHandler {
 		if (MessageUtilities.isCheckRequestKey(c)) {
 			this.socketChannel.read(this.keyBuffer);
 			this.keyBuffer.flip();
-			key = this.keyBuffer.array();
+			key = new byte[this.keyBuffer.limit()];
+			this.keyBuffer.get(key);
 		}
 
 		if (MessageUtilities.isCheckRequestValue(c)) {
 			this.socketChannel.read(this.valueBuffer);
 			this.valueBuffer.flip();
-			value = this.valueBuffer.array();
+			value = new byte[this.valueBuffer.limit()];
+			this.valueBuffer.get(value);
 		}
 
 		System.out.println("Replica Server reading " + c);
