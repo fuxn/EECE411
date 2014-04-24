@@ -129,7 +129,7 @@ public class ConsistentHash {
 				ConnectionService.connectToSocketRemote(coord, handle,
 						MessageUtilities.formateRequestMessage(
 								CommandEnum.PUT_COORD.getCode(), key, value),
-						false);
+						false, CommandEnum.PUT_COORD.getCode());
 				return;
 			}
 
@@ -157,8 +157,8 @@ public class ConsistentHash {
 		try {
 			List<String> nodes = ChordTopologyService.getMySuccessors();
 			for (String n : nodes) {
-				ConnectionService.connectToSocketReplica(n, handle,
-						message, false);
+				ConnectionService.connectToSocketReplica(n, handle, message,
+						false);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -231,39 +231,22 @@ public class ConsistentHash {
 		String coords;
 		try {
 			coords = ChordTopologyService.getCoordinator(keyHash);
-			try {
 
-				if (coords.equals(KVStore.localHost)) {
-					System.out.println("get local ");
-					replyMessage = this.local.get(keyHash);
-					System.out.println("get Reply size" + replyMessage.length);
-				} else {
+			if (coords.equals(KVStore.localHost)) {
+				System.out.println("get local ");
+				replyMessage = this.local.get(keyHash);
+				System.out.println("get Reply size" + replyMessage.length);
+			} else {
 
-					System.out.println("get remote " + handle.isValid());
-					ConnectionService.connectToSocketRemote(coords.trim(),
-							handle, MessageUtilities.formateRequestMessage(
-									CommandEnum.GET.getCode(), key, value),
-							true);
-					return;
+				System.out.println("get remote " + handle.isValid());
+				ConnectionService.connectToSocketRemote(
+						coords.trim(),
+						handle,
+						MessageUtilities.formateRequestMessage(
+								CommandEnum.GET.getCode(), key, value), true,
+						CommandEnum.GET_REPLICA.getCode());
+				return;
 
-				}
-			} catch (Exception e) {
-				System.out
-						.println("************coord unreachable, get next succsessor********** "
-								+ handle.isValid());
-				try {
-					List<String> replicas = ChordTopologyService
-							.getSuccessors(coords);
-					for (String n : replicas) {
-						ConnectionService.connectToSocketReplica(n, handle,
-								MessageUtilities.formateRequestMessage(
-										CommandEnum.GET_REPLICA.getCode(), key,
-										value), true);
-					}
-					return;
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}
 			}
 		} catch (InternalKVStoreFailureException e1) {
 			// TODO Auto-generated catch block
@@ -337,7 +320,7 @@ public class ConsistentHash {
 				ConnectionService.connectToSocketRemote(coords.get(0), handle,
 						MessageUtilities.formateRequestMessage(
 								CommandEnum.DELETE.getCode(), key, value),
-						false);
+						false, null);
 				return;
 			}
 

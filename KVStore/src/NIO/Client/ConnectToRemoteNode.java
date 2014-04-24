@@ -24,13 +24,16 @@ public class ConnectToRemoteNode implements Runnable {
 	private byte[] message;
 	private SelectionKey serverHandle;
 	private boolean waitForReply;
+	private Integer cmdForRollingFailure;
 
 	public ConnectToRemoteNode(String server, byte[] message,
-			SelectionKey serverHandle, boolean waitForReply) {
+			SelectionKey serverHandle, boolean waitForReply,
+			Integer cmdForRollingFailure) {
 		this.server = server;
 		this.message = message;
 		this.serverHandle = serverHandle;
 		this.waitForReply = waitForReply;
+		this.cmdForRollingFailure = cmdForRollingFailure;
 	}
 
 	@Override
@@ -72,9 +75,17 @@ public class ConnectToRemoteNode implements Runnable {
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-			message[0] = Integer.valueOf(CommandEnum.GET_REPLICA.getCode())
-					.byteValue();
+			handleRollingFailure();
+
+			ChordTopologyService.connectionFailed(server);
+		}
+	}
+
+	private void handleRollingFailure() {
+		if (this.cmdForRollingFailure == null)
+			return;
+
+		if (this.cmdForRollingFailure == CommandEnum.GET_REPLICA.getCode()) {
 			List<String> replicas;
 			try {
 				replicas = ChordTopologyService.getSuccessors(server);
@@ -83,13 +94,15 @@ public class ConnectToRemoteNode implements Runnable {
 							message, true);
 				}
 			} catch (InternalKVStoreFailureException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
 			}
-			
-			ChordTopologyService.connectionFailed(server);
+		} else if (this.cmdForRollingFailure == CommandEnum.PUT_COORD.getCode()) {
+			try {
+				String coord = ChordTopologyService.getSuccessor(server);
+				ConnectionService.connectToSocketRemote(coord, serverHandle,
+						message, false, CommandEnum.PUT_COORD.getCode());
+			} catch (InternalKVStoreFailureException e) {
+			}
 		}
-
 	}
 
 }

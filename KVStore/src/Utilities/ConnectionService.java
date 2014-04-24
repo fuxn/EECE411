@@ -34,17 +34,21 @@ public class ConnectionService {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void connectToSocketRemote(String host, SelectionKey handle, byte[] message, boolean waitForReply){
-		
-			KVStore.threadPool.execute(new ConnectToRemoteNode(host,message,handle,waitForReply));
-		
+
+	public static void connectToSocketRemote(String host, SelectionKey handle,
+			byte[] message, boolean waitForReply, Integer cmdForRollingFailure) {
+
+		KVStore.threadPool.execute(new ConnectToRemoteNode(host, message,
+				handle, waitForReply, cmdForRollingFailure));
+
 	}
-	
-	public static void connectToSocketReplica(String host, SelectionKey handle, byte[] message, boolean waitForReply){
-		
-			KVStore.threadPool.execute(new ConnectToReplica(host,message,handle,waitForReply));
-		
+
+	public static void connectToSocketReplica(String host, SelectionKey handle,
+			byte[] message, boolean waitForReply) {
+
+		KVStore.threadPool.execute(new ConnectToReplica(host, message, handle,
+				waitForReply));
+
 	}
 
 	public static void connectToReplica(String host, SelectionKey handle,
