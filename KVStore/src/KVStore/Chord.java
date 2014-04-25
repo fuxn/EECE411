@@ -92,6 +92,65 @@ public class Chord {
 		participantingNodes.add("planetlab1.tsuniv.edu");
 		participantingNodes.add("planetlab3.cs.uoregon.edu");
 
+		participantingNodes.add("planetlab1.cti.espol.edu.ec");
+		participantingNodes.add("planetlab2.cs.uoregon.edu");
+		participantingNodes.add("planetlab3.tamu.edu");
+		participantingNodes.add("planetlab1.ucsd.edu");
+		participantingNodes.add("pl1snu.koren.kr");
+
+		participantingNodes.add("planetlab4.mini.pw.edu.pl");
+		participantingNodes.add("ricepl-4.cs.rice.edu");
+		participantingNodes.add("pl1.csl.utoronto.ca");
+		participantingNodes.add("planetlab1.eecs.wsu.edu");
+		participantingNodes.add("planetlab4.goto.info.waseda.ac.jp");
+
+		participantingNodes.add("planetlab2.cs.unc.edu");
+		participantingNodes.add("planetlab1.pop-mg.rnp.br");
+		participantingNodes.add("planetlab2.cti.espol.edu.ec");
+		participantingNodes.add("planetlab2.williams.edu");
+		participantingNodes.add("planetlab1.bgu.ac.il");
+
+		participantingNodes.add("planetlab1.cs.uoregon.edu");
+		participantingNodes.add("pl2snu.koren.kr");
+		participantingNodes.add("pllx1.parc.xerox.com");
+		participantingNodes.add("roam1.cs.ou.edu");
+		participantingNodes.add("planetlab-2.research.netlab.hut.fi");
+
+		participantingNodes.add("planetlab1.pjwstk.edu.pl");
+		participantingNodes.add("planetlab3.cs.st-andrews.ac.uk");
+		participantingNodes.add("pl1.rcc.uottawa.ca");
+		participantingNodes.add("pluto.cs.brown.edu");
+
+		participantingNodes.add("plab1.create-net.org");
+		participantingNodes.add("pl1.eecs.utk.edu");
+		participantingNodes.add("planetlab2.cnis.nyit.edu");
+		participantingNodes.add("pl2.cs.yale.edu");
+		participantingNodes.add("planetlab1.cs.uit.no");
+
+		participantingNodes.add("planet4.cs.ucsb.edu");
+		participantingNodes.add("planetlab1.unr.edu");
+		participantingNodes.add("planetlab2.unr.edu");
+		participantingNodes.add("planetlab1.temple.edu");
+		participantingNodes.add("pl1.cs.yale.edu");
+
+		participantingNodes.add("planetlab1.rutgers.edu");
+		participantingNodes.add("planetlab2.xeno.cl.cam.ac.uk");
+		participantingNodes.add("planetlab1.nrl.eecs.qmul.ac.uk");
+		participantingNodes.add("planetlab2.aut.ac.nz");
+		participantingNodes.add("planetlab5.millennium.berkeley.edu");
+
+		participantingNodes.add("planetlab1.cs.umass.edu");
+		participantingNodes.add("planetlab2.ucsd.edu");
+		participantingNodes.add("planetlab4.cs.uoregon.edu");
+		participantingNodes.add("planetlab2.eecs.ucf.edu");
+		participantingNodes.add("planet-lab3.uba.ar");
+
+		participantingNodes.add("plab3.eece.ksu.edu");
+		participantingNodes.add("planetlab-2.ssvl.kth.se");
+		participantingNodes.add("planetlab1.comp.nus.edu.sg");
+		participantingNodes.add("planetlab3.williams.edu");
+		participantingNodes.add("planet-plc-4.mpi-sws.org");
+
 		for (String node : participantingNodes) {
 			chord.put(node.hashCode(), node);
 			chordFailCount.put(node.hashCode(), 0);

@@ -32,6 +32,10 @@ import NIO.Client.Replica.Server.AcceptReplicaHandler;
 import NIO.Client.Replica.Server.ReplicaServerDispatcher;
 import NIO.Client.Replica.Server.ReplicaServerReadHandler;
 import NIO.Client.Replica.Server.ReplicaServerWriteHandler;
+import NIO.Gossip.Server.AcceptGossipHandler;
+import NIO.Gossip.Server.GossipServerDispatcher;
+import NIO.Gossip.Server.GossipServerReadHandler;
+import NIO.Gossip.Server.GossipServerWriteHandler;
 import Utilities.ChordTopologyService;
 import Utilities.Message.MessageUtilities;
 import Utilities.Thread.ThreadPool;
@@ -48,7 +52,7 @@ public class KVStore {
 
 	private static Thread serverThread;
 	private static Thread clientThread;
-	private static Thread replicaThread;
+	private static Thread gossipThread;
 	private static Thread replicaServerThread;
 	
 	private static int maxThreads = 230;
@@ -132,21 +136,28 @@ public class KVStore {
 		clientThread.start();
 	}
 
-	public void initiateReactiveReplica() throws Exception {
+	public void initiateReactiveGossip(ConsistentHash cHash) throws Exception {
 
-		ReplicaDispatcher replicaDispatcher = new ReplicaDispatcher();
-		replicaDispatcher
+		System.out.println("Starting NIO server at port : " + NIO_GOSSIP_PORT);
+
+		ServerSocketChannel server = ServerSocketChannel.open();
+		server.socket().bind(
+				new InetSocketAddress(KVStore.localHost, NIO_GOSSIP_PORT));
+		server.configureBlocking(false);
+
+		
+		GossipServerDispatcher gossipDispatcher = new GossipServerDispatcher();
+		gossipDispatcher
 				.registerEventHandler(
-						SelectionKey.OP_CONNECT,
-						new ConnectReplicaHandler(ReplicaDispatcher
-								.getDemultiplexer()));
-		replicaDispatcher.registerEventHandler(SelectionKey.OP_WRITE,
-				new WriteReplicaHandler(ReplicaDispatcher.getDemultiplexer()));
-		replicaDispatcher.registerEventHandler(SelectionKey.OP_READ,
-				new ReadACKEventHandler());
+						SelectionKey.OP_ACCEPT,
+						new AcceptGossipHandler(GossipServerDispatcher.getDemultiplexer()));
+		gossipDispatcher.registerEventHandler(SelectionKey.OP_WRITE,
+				new GossipServerWriteHandler());
+		gossipDispatcher.registerEventHandler(SelectionKey.OP_READ,
+				new GossipServerReadHandler(GossipServerDispatcher.getDemultiplexer(),cHash));
 
-		replicaThread = new Thread(replicaDispatcher);
-		replicaThread.start();
+		gossipThread = new Thread(gossipDispatcher);
+		gossipThread.start();
 	}
 
 	public void initiateSocketServer(ConsistentHash cHash) throws Exception {
@@ -198,22 +209,12 @@ public class KVStore {
 			new ChordTopologyService();
 			cHash = new ConsistentHash();
 			kvStore.initiateReactiveServer(cHash);
+			kvStore.initiateReactiveGossip(cHash);
 			//kvStore.initiateReactiveClient();
 			//kvStore.initiateReactiveReplica();
 			kvStore.initiateReplicaReactiveServer(cHash);
 			// kvStore.initiateGossipServer(localHostName);
 
-			(new Thread() {
-				@Override
-				public void run() {
-					try {
-						kvStore.initiateSocketServer(cHash);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}).start();
 
 		} catch (Exception e) { // TODO Auto-generated catch block
 			e.printStackTrace();
